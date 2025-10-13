@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "email": "pean@outlook.dk",
+    "passwordHash": "$2a$11$3tl.giTwneeAboeuJpO47uFe6VVPxDFStohDLDTPQBmVyBk/JTUC2",
+    "firstName": "Peter",
+    "lastName": "Andersen",
+    "phoneNumber": "\u002B45 23 45 67 89",
+    "address": "N\u00F8rrebrogade 45, 2200 K\u00F8benhavn N",
+    "preferredLanguage": "da",
+    "createdAt": "2025-04-13T20:02:09.3634084Z",
+    "updatedAt": "2025-10-03T20:02:09.3634502Z",
+    "isDeleted": false,
+    "deletedAt": null
+  },
+  {
+    "id": 2,
+    "email": "odo@yahoo.dk",
+    "passwordHash": "$2a$11$ZP2r1l9ooiX9nfil7IqD9.HcuVySECZ3fg5shhdExgkK9cTPqAFSK",
+    "firstName": "Oskar",
+    "lastName": "Olsen",
+    "phoneNumber": "\u002B45 98 76 54 32",
+    "address": "Vesterbrogade 123, 1620 K\u00F8benhavn V",
+    "preferredLanguage": "da",
+    "createdAt": "2024-10-13T20:02:09.5092343Z",
+    "updatedAt": "2025-10-08T20:02:09.5092406Z",
+    "isDeleted": true,
+    "deletedAt": "2025-10-08T20:02:09.5092415Z"
+  },
+  {
+    "id": 3,
+    "email": "Joe@gmail.com",
+    "passwordHash": "$2a$11$DzHsBbIKcuIWbOsHYEQZ4.XSYi78RsjY/zHATS6L.YqAu1s1ndGRS",
+    "firstName": "Yusef",
+    "lastName": "Khafaji",
+    "phoneNumber": "\u002B45 12 34 56 78",
+    "address": "Amagerbrogade 78, 2300 K\u00F8benhavn S",
+    "preferredLanguage": "en",
+    "createdAt": "2025-07-13T20:02:09.6323945Z",
+    "updatedAt": "2025-10-11T20:02:09.6323953Z",
+    "isDeleted": false,
+    "deletedAt": null
+  }
+]
