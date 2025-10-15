@@ -66,5 +66,46 @@
     "agentAssignedAt": "2025-10-15T00:23:49.5268518Z",
     "inTransitAt": "2025-10-15T00:23:52.5683369Z",
     "deliveredAt": "2025-10-15T00:43:52.5683369Z"
+  },
+  {
+    "id": 3,
+    "customerId": 1,
+    "businessPartnerId": 2,
+    "items": [
+      {
+        "menuItemId": 1,
+        "menuItemName": "Salmon Nigiri (8 pcs)",
+        "unitPrice": 95.00,
+        "quantity": 3,
+        "totalPrice": 285.00
+      },
+      {
+        "menuItemId": 2,
+        "menuItemName": "Tuna Nigiri (8 pcs)",
+        "unitPrice": 105.00,
+        "quantity": 1,
+        "totalPrice": 105.00
+      },
+      {
+        "menuItemId": 5,
+        "menuItemName": "Edamame",
+        "unitPrice": 35.00,
+        "quantity": 10,
+        "totalPrice": 350.00
+      }
+    ],
+    "subTotal": 740.00,
+    "feePercentage": 3.87,
+    "feeAmount": 28.638000,
+    "totalAmount": 768.638000,
+    "status": 6,
+    "deliveryAddress": "Horsebakken 5D",
+    "agentId": null,
+    "placedAt": "2025-10-15T00:50:48.2561023Z",
+    "paidAt": "2025-10-15T00:50:55.0081649Z",
+    "preparingAt": "2025-10-15T00:51:00.0128431Z",
+    "agentAssignedAt": "2025-10-15T00:51:05.0197707Z",
+    "inTransitAt": "2025-10-15T00:51:05.0381888Z",
+    "deliveredAt": "2025-10-15T01:11:05.0381888Z"
   }
 ]
