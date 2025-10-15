@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "customerId": 1,
+    "businessPartnerId": 1,
+    "items": [
+      {
+        "menuItemId": 2,
+        "menuItemName": "Pepperoni Pizza",
+        "unitPrice": 109.00,
+        "quantity": 1,
+        "totalPrice": 109.00
+      },
+      {
+        "menuItemId": 6,
+        "menuItemName": "Coca Cola 0.5L",
+        "unitPrice": 25.00,
+        "quantity": 1,
+        "totalPrice": 25.00
+      }
+    ],
+    "subTotal": 134.00,
+    "feePercentage": 5.89,
+    "feeAmount": 7.892600,
+    "totalAmount": 141.892600,
+    "status": 6,
+    "deliveryAddress": "Horsebakken 5D",
+    "agentId": null,
+    "placedAt": "2025-10-15T00:15:01.5239964Z",
+    "paidAt": "2025-10-15T00:15:04.6135293Z",
+    "preparingAt": "2025-10-15T00:15:09.6318091Z",
+    "agentAssignedAt": "2025-10-15T00:15:14.6469476Z",
+    "inTransitAt": "2025-10-15T00:15:14.6553474Z",
+    "deliveredAt": "2025-10-15T00:35:14.6553474Z"
+  }
+]

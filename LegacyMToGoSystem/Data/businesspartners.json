@@ -1,0 +1,225 @@
+[
+  {
+    "id": 1,
+    "name": "Pizza Palace",
+    "description": "",
+    "address": "Store Kongensgade 12, 1264 K\u00F8benhavn K",
+    "phoneNumber": "",
+    "email": "",
+    "cuisineType": "Italian",
+    "menuItems": [
+      {
+        "id": 1,
+        "name": "Margherita Pizza",
+        "description": "Classic tomato and mozzarella",
+        "price": 89.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 2,
+        "name": "Pepperoni Pizza",
+        "description": "Spicy pepperoni and cheese",
+        "price": 109.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 3,
+        "name": "Vegetariana Pizza",
+        "description": "Fresh vegetables and mozzarella",
+        "price": 95.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 4,
+        "name": "Bruschetta",
+        "description": "Toasted bread with tomatoes and basil",
+        "price": 45.00,
+        "category": "Appetizer",
+        "isAvailable": true
+      },
+      {
+        "id": 5,
+        "name": "Tiramisu",
+        "description": "Classic Italian dessert",
+        "price": 55.00,
+        "category": "Dessert",
+        "isAvailable": true
+      },
+      {
+        "id": 6,
+        "name": "Coca Cola 0.5L",
+        "description": "Soft drink",
+        "price": 25.00,
+        "category": "Beverage",
+        "isAvailable": true
+      },
+      {
+        "id": 7,
+        "name": "Sparkling Water 0.5L",
+        "description": "Carbonated water",
+        "price": 20.00,
+        "category": "Beverage",
+        "isAvailable": true
+      }
+    ],
+    "isActive": true,
+    "createdAt": "2024-10-15T00:03:12.9426732Z"
+  },
+  {
+    "id": 2,
+    "name": "Sushi Station",
+    "description": "",
+    "address": "Gothersgade 87, 1123 K\u00F8benhavn K",
+    "phoneNumber": "",
+    "email": "",
+    "cuisineType": "Japanese",
+    "menuItems": [
+      {
+        "id": 1,
+        "name": "Salmon Nigiri (8 pcs)",
+        "description": "Fresh salmon nigiri sushi",
+        "price": 95.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 2,
+        "name": "Tuna Nigiri (8 pcs)",
+        "description": "Fresh tuna nigiri sushi",
+        "price": 105.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 3,
+        "name": "California Roll (8 pcs)",
+        "description": "Crab, avocado, cucumber",
+        "price": 85.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 4,
+        "name": "Spicy Tuna Roll (8 pcs)",
+        "description": "Tuna with spicy mayo",
+        "price": 95.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 5,
+        "name": "Edamame",
+        "description": "Steamed soybeans with sea salt",
+        "price": 35.00,
+        "category": "Appetizer",
+        "isAvailable": true
+      },
+      {
+        "id": 6,
+        "name": "Miso Soup",
+        "description": "Traditional Japanese soup",
+        "price": 30.00,
+        "category": "Appetizer",
+        "isAvailable": true
+      },
+      {
+        "id": 7,
+        "name": "Green Tea",
+        "description": "Hot Japanese green tea",
+        "price": 20.00,
+        "category": "Beverage",
+        "isAvailable": true
+      },
+      {
+        "id": 8,
+        "name": "Ramune",
+        "description": "Japanese soda",
+        "price": 25.00,
+        "category": "Beverage",
+        "isAvailable": true
+      }
+    ],
+    "isActive": true,
+    "createdAt": "2025-02-15T00:03:12.9427975Z"
+  },
+  {
+    "id": 3,
+    "name": "Burger House",
+    "description": "",
+    "address": "Istedgade 45, 1650 K\u00F8benhavn V",
+    "phoneNumber": "",
+    "email": "",
+    "cuisineType": "American",
+    "menuItems": [
+      {
+        "id": 1,
+        "name": "Classic Cheeseburger",
+        "description": "Beef patty with cheese, lettuce, tomato",
+        "price": 89.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 2,
+        "name": "Bacon Burger",
+        "description": "Beef patty with bacon and cheese",
+        "price": 99.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 3,
+        "name": "Veggie Burger",
+        "description": "Plant-based patty with vegetables",
+        "price": 85.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 4,
+        "name": "Chicken Burger",
+        "description": "Crispy chicken with special sauce",
+        "price": 89.00,
+        "category": "Main",
+        "isAvailable": true
+      },
+      {
+        "id": 5,
+        "name": "French Fries",
+        "description": "Golden crispy fries",
+        "price": 35.00,
+        "category": "Side",
+        "isAvailable": true
+      },
+      {
+        "id": 6,
+        "name": "Onion Rings",
+        "description": "Crispy battered onion rings",
+        "price": 40.00,
+        "category": "Side",
+        "isAvailable": true
+      },
+      {
+        "id": 7,
+        "name": "Milkshake",
+        "description": "Vanilla, chocolate, or strawberry",
+        "price": 45.00,
+        "category": "Beverage",
+        "isAvailable": true
+      },
+      {
+        "id": 8,
+        "name": "Iced Tea 0.5L",
+        "description": "Refreshing iced tea",
+        "price": 25.00,
+        "category": "Beverage",
+        "isAvailable": true
+      }
+    ],
+    "isActive": true,
+    "createdAt": "2025-04-15T00:03:12.9428053Z"
+  }
+]

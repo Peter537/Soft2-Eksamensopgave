@@ -1,4 +1,5 @@
 using LegacyMToGoSystem.Infrastructure;
+using LegacyMToGoSystem.Infrastructure.Messaging;
 using LegacyMToGoSystem.Repositories;
 using LegacyMToGoSystem.Services;
 
@@ -17,8 +18,23 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddSingleton<IDatabase, JsonFileDatabase>();
+
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+
+builder.Services.AddScoped<IBusinessPartnerRepository, BusinessPartnerRepository>();
+builder.Services.AddScoped<IBusinessPartnerService, BusinessPartnerService>();
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
+builder.Services.AddSingleton<RabbitMQProducer>();
+builder.Services.AddSingleton<KafkaProducer>();
+
+builder.Services.AddHostedService<NotificationService>();
+
 builder.Services.AddScoped<DatabaseSeeder>();
 
 var app = builder.Build();
@@ -42,7 +58,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+if (app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseAuthorization();
 app.MapControllers();
 
