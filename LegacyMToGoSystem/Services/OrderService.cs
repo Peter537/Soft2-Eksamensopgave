@@ -20,19 +20,22 @@ public class OrderService : IOrderService
     private readonly ICustomerRepository _customerRepository;
     private readonly RabbitMQProducer _rabbitMQ;
     private readonly KafkaProducer _kafka;
+    private readonly ILogger<OrderService> _logger;
 
     public OrderService(
         IOrderRepository orderRepository,
         IBusinessPartnerRepository businessPartnerRepository,
         ICustomerRepository customerRepository,
         RabbitMQProducer rabbitMQ,
-        KafkaProducer kafka)
+        KafkaProducer kafka,
+        ILogger<OrderService> logger)
     {
         _orderRepository = orderRepository;
         _businessPartnerRepository = businessPartnerRepository;
         _customerRepository = customerRepository;
         _rabbitMQ = rabbitMQ;
         _kafka = kafka;
+        _logger = logger;
     }
 
     public async Task<OrderResponseDto> PlaceOrderAsync(CreateOrderDto dto)
@@ -89,6 +92,9 @@ public class OrderService : IOrderService
 
         var created = await _orderRepository.CreateAsync(order);
 
+        _logger.LogInformation("📝 Order #{OrderId} placed: {ItemCount} items, Total: {Total} DKK (Fee: {Fee}%)", 
+            created.Id, created.Items.Count, created.TotalAmount, created.FeePercentage);
+
         _rabbitMQ.PublishMessage("orders", JsonSerializer.Serialize(new
         {
             orderId = created.Id,
@@ -125,8 +131,11 @@ public class OrderService : IOrderService
 
     private async Task ProcessOrderAsync(int orderId)
     {
+        _logger.LogInformation("🔄 Starting order processing for Order #{OrderId}", orderId);
+        
         await Task.Delay(1000);
         await UpdateOrderStatus(orderId, OrderStatus.PaymentProcessing);
+        _logger.LogInformation("💳 Order #{OrderId}: Payment processing started", orderId);
 
         _rabbitMQ.PublishMessage("payments", JsonSerializer.Serialize(new
         {
@@ -136,18 +145,22 @@ public class OrderService : IOrderService
 
         await Task.Delay(2000);
         await UpdateOrderStatus(orderId, OrderStatus.Paid);
+        _logger.LogInformation("✅ Order #{OrderId}: Payment successful", orderId);
 
         await Task.Delay(5000);
         await UpdateOrderStatus(orderId, OrderStatus.Preparing);
+        _logger.LogInformation("👨‍🍳 Order #{OrderId}: Restaurant is preparing your order", orderId);
 
         await _kafka.PublishEventAsync("order-events", "OrderPreparing", new { orderId, timestamp = DateTime.UtcNow });
 
         await Task.Delay(5000);
         await UpdateOrderStatus(orderId, OrderStatus.AgentAssigned);
+        _logger.LogInformation("🚴 Order #{OrderId}: Delivery agent assigned", orderId);
 
         await _kafka.PublishEventAsync("order-events", "AgentAssigned", new { orderId, timestamp = DateTime.UtcNow });
 
         await UpdateOrderStatus(orderId, OrderStatus.InTransit);
+        _logger.LogInformation("🚗 Order #{OrderId}: Order is on the way!", orderId);
 
         await _kafka.PublishEventAsync("order-events", "OrderInTransit", new { orderId, timestamp = DateTime.UtcNow });
 
@@ -158,6 +171,8 @@ public class OrderService : IOrderService
             order.Status = OrderStatus.Delivered;
             order.DeliveredAt = order.InTransitAt?.AddMinutes(20) ?? DateTime.UtcNow;
             await _orderRepository.UpdateAsync(order);
+            
+            _logger.LogInformation("🎉 Order #{OrderId}: Delivered! Enjoy your meal!", orderId);
 
             await _kafka.PublishEventAsync("order-events", "OrderDelivered", new { orderId, timestamp = order.DeliveredAt });
         }
@@ -205,11 +220,14 @@ public class OrderService : IOrderService
 
     private OrderResponseDto MapToResponseDto(Order order)
     {
+        var partner = _businessPartnerRepository.GetByIdAsync(order.BusinessPartnerId).GetAwaiter().GetResult();
+        
         return new OrderResponseDto
         {
             Id = order.Id,
             CustomerId = order.CustomerId,
             BusinessPartnerId = order.BusinessPartnerId,
+            BusinessPartnerName = partner?.Name ?? "",
             Items = order.Items.Select(i => new OrderItemDetailDto
             {
                 MenuItemId = i.MenuItemId,

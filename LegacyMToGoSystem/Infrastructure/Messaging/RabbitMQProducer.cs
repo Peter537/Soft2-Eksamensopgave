@@ -46,7 +46,7 @@ public class RabbitMQProducer : IDisposable
     {
         if (!_isAvailable)
         {
-            _logger.LogDebug("RabbitMQ unavailable. Message would have been sent to queue '{Queue}': {Message}", 
+            _logger.LogInformation("📤 [Fallback] RabbitMQ message to queue '{Queue}': {Message}", 
                 queue, JsonSerializer.Serialize(message));
             return;
         }
@@ -57,7 +57,7 @@ public class RabbitMQProducer : IDisposable
             var body = Encoding.UTF8.GetBytes(json);
 
             _channel!.BasicPublishAsync(exchange: "", routingKey: queue, body: body).GetAwaiter().GetResult();
-            _logger.LogDebug("Message published to RabbitMQ queue '{Queue}'", queue);
+            _logger.LogInformation("📤 Message published to RabbitMQ queue '{Queue}'", queue);
         }
         catch (Exception ex)
         {

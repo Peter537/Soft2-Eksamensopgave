@@ -7,7 +7,7 @@ public class KafkaProducer : IDisposable
 {
     private readonly IProducer<string, string>? _producer;
     private readonly ILogger<KafkaProducer> _logger;
-    private readonly bool _isAvailable;
+    private bool _isAvailable;
 
     public KafkaProducer(IConfiguration configuration, ILogger<KafkaProducer> logger)
     {
@@ -21,8 +21,7 @@ public class KafkaProducer : IDisposable
                 ClientId = "mtogo-legacy-system",
                 Acks = Acks.Leader,
                 MessageTimeoutMs = 3000,
-                LogConnectionClose = false,
-                Debug = ""
+                LogConnectionClose = false
             };
 
             _producer = new ProducerBuilder<string, string>(config)
@@ -35,7 +34,7 @@ public class KafkaProducer : IDisposable
                 })
                 .Build();
             _isAvailable = true;
-            _logger.LogInformation("✅ Kafka producer initialized successfully");
+            _logger.LogInformation("✅ Kafka producer initialized (waiting for first connection test)");
         }
         catch (Exception ex)
         {
@@ -48,8 +47,8 @@ public class KafkaProducer : IDisposable
     {
         if (!_isAvailable)
         {
-            _logger.LogDebug("Kafka unavailable. Event would have been published to topic '{Topic}': {Event}", 
-                topic, JsonSerializer.Serialize(eventData));
+            _logger.LogInformation("📡 [Fallback] Kafka event to topic '{Topic}' ({Key}): {Event}", 
+                topic, key, JsonSerializer.Serialize(eventData));
             return;
         }
 
@@ -63,7 +62,14 @@ public class KafkaProducer : IDisposable
             };
 
             var result = await _producer!.ProduceAsync(topic, message);
-            _logger.LogDebug("Event published to Kafka topic '{Topic}' at offset {Offset}", topic, result.Offset);
+            _logger.LogInformation("📡 Event published to Kafka topic '{Topic}' at offset {Offset}", topic, result.Offset);
+        }
+        catch (ProduceException<string, string> ex) when (ex.Error.Code == ErrorCode.Local_MsgTimedOut)
+        {
+            _isAvailable = false;
+            _logger.LogWarning("⚠️ Kafka is not available. Switching to fallback mode.");
+            _logger.LogInformation("📡 [Fallback] Kafka event to topic '{Topic}' ({Key}): {Event}", 
+                topic, key, JsonSerializer.Serialize(eventData));
         }
         catch (Exception ex)
         {

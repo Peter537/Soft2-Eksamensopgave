@@ -32,5 +32,39 @@
     "agentAssignedAt": "2025-10-15T00:15:14.6469476Z",
     "inTransitAt": "2025-10-15T00:15:14.6553474Z",
     "deliveredAt": "2025-10-15T00:35:14.6553474Z"
+  },
+  {
+    "id": 2,
+    "customerId": 1,
+    "businessPartnerId": 1,
+    "items": [
+      {
+        "menuItemId": 7,
+        "menuItemName": "Sparkling Water 0.5L",
+        "unitPrice": 20.00,
+        "quantity": 1,
+        "totalPrice": 20.00
+      },
+      {
+        "menuItemId": 5,
+        "menuItemName": "Tiramisu",
+        "unitPrice": 55.00,
+        "quantity": 1,
+        "totalPrice": 55.00
+      }
+    ],
+    "subTotal": 75.00,
+    "feePercentage": 6.0,
+    "feeAmount": 4.5000,
+    "totalAmount": 79.5000,
+    "status": 6,
+    "deliveryAddress": "Horsebakken 5D",
+    "agentId": null,
+    "placedAt": "2025-10-15T00:23:29.5671804Z",
+    "paidAt": "2025-10-15T00:23:36.4704028Z",
+    "preparingAt": "2025-10-15T00:23:41.4804399Z",
+    "agentAssignedAt": "2025-10-15T00:23:49.5268518Z",
+    "inTransitAt": "2025-10-15T00:23:52.5683369Z",
+    "deliveredAt": "2025-10-15T00:43:52.5683369Z"
   }
 ]
