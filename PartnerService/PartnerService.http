@@ -1,0 +1,6 @@
+@PartnerService_HostAddress = http://localhost:5220
+
+GET {{PartnerService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

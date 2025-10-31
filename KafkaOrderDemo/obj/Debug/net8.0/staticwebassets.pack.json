@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\KafkaOrderDemo.bundle.scp.css",
+      "PackagePath": "staticwebassets\\KafkaOrderDemo.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\wwwroot\\app.css",
+      "PackagePath": "staticwebassets\\app.css"
+    },
+    {
+      "Id": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\wwwroot\\bootstrap\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css"
+    },
+    {
+      "Id": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\wwwroot\\bootstrap\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\bootstrap\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\wwwroot\\favicon.png",
+      "PackagePath": "staticwebassets\\favicon.png"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.KafkaOrderDemo.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.KafkaOrderDemo.props",
+      "PackagePath": "build\\KafkaOrderDemo.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.KafkaOrderDemo.props",
+      "PackagePath": "buildMultiTargeting\\KafkaOrderDemo.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.KafkaOrderDemo.props",
+      "PackagePath": "buildTransitive\\KafkaOrderDemo.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

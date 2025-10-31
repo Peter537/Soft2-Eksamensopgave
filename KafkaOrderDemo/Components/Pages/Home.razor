@@ -1,0 +1,270 @@
+﻿@page "/"
+@inject KafkaOrderDemo.Services.ApiOrderService OrderService
+@inject NavigationManager Navigation
+
+<PageTitle>Order Food - Kafka Demo</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">🍕 Pizza Palace - Order Food</h3>
+                </div>
+                <div class="card-body">
+                    
+                    @if (!showPayment)
+                    {
+                        <!-- Menu Selection -->
+                        <h4>Select Your Food</h4>
+                        <div class="row mb-4">
+                            @foreach (var pizza in pizzas)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card @(selectedPizza == pizza.Name ? "border-primary" : "")">
+                                        <div class="card-body text-center">
+                                            <h5>@pizza.Name</h5>
+                                            <p class="text-muted">@pizza.Description</p>
+                                            <h4 class="text-primary">@pizza.Price kr</h4>
+                                            @if (selectedPizza == pizza.Name)
+                                            {
+                                                <button class="btn btn-success" @onclick="() => selectedPizza = null">
+                                                    ✅ Selected
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-primary" @onclick="() => selectedPizza = pizza.Name">
+                                                    Select
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <h4>Select Your Drink</h4>
+                        <div class="row mb-4">
+                            @foreach (var drink in drinks)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card @(selectedDrink == drink.Name ? "border-primary" : "")">
+                                        <div class="card-body text-center">
+                                            <h5>@drink.Name</h5>
+                                            <h4 class="text-primary">@drink.Price kr</h4>
+                                            @if (selectedDrink == drink.Name)
+                                            {
+                                                <button class="btn btn-success" @onclick="() => selectedDrink = null">
+                                                    ✅ Selected
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-outline-primary" @onclick="() => selectedDrink = drink.Name">
+                                                    Select
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Cart Summary -->
+                        @if (!string.IsNullOrEmpty(selectedPizza) || !string.IsNullOrEmpty(selectedDrink))
+                        {
+                            <div class="alert alert-info">
+                                <h5>Your Cart</h5>
+                                <ul class="list-unstyled mb-0">
+                                    @if (!string.IsNullOrEmpty(selectedPizza))
+                                    {
+                                        var pizza = pizzas.First(p => p.Name == selectedPizza);
+                                        <li>✅ 1x @pizza.Name - @pizza.Price kr</li>
+                                    }
+                                    @if (!string.IsNullOrEmpty(selectedDrink))
+                                    {
+                                        var drink = drinks.First(d => d.Name == selectedDrink);
+                                        <li>✅ 1x @drink.Name - @drink.Price kr</li>
+                                    }
+                                </ul>
+                                <hr />
+                                <strong>Total: @CalculateTotal() kr</strong>
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label">Your Name</label>
+                            <input type="text" class="form-control" @bind="customerName" placeholder="Enter your name" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Delivery Address</label>
+                            <input type="text" class="form-control" @bind="deliveryAddress" placeholder="Enter your address" />
+                        </div>
+
+                        <button class="btn btn-success btn-lg w-100" 
+                                @onclick="ShowPaymentPopup"
+                                disabled="@(!CanProceedToPayment())">
+                            Proceed to Payment →
+                        </button>
+                    }
+                    else
+                    {
+                        <!-- Payment Success -->
+                        <div class="text-center">
+                            <div class="alert alert-success">
+                                <h4>✅ Payment Successful!</h4>
+                                <p>Your order has been placed and sent to the restaurant.</p>
+                                <p><strong>Order ID:</strong> <code>@orderId</code></p>
+                            </div>
+                            <button class="btn btn-primary me-2" @onclick="ResetOrder">Place Another Order</button>
+                            <a href="/kitchen" class="btn btn-info">View Kitchen Display →</a>
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Popup Modal -->
+@if (showPaymentPopup)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">💳 Payment</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="ClosePaymentPopup"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="mb-3">
+                        <img src="https://www.gstatic.com/images/branding/product/2x/googlepay_color_92x36dp.png" 
+                             alt="Google Pay" style="height: 40px;" />
+                    </div>
+                    <h4>@CalculateTotal() kr</h4>
+                    <p class="text-muted">Pizza Palace</p>
+                    <hr />
+                    
+                    @if (!isProcessing)
+                    {
+                        <button class="btn btn-success btn-lg px-5" @onclick="ProcessPayment">
+                            <i class="bi bi-lock-fill"></i> Pay Now
+                        </button>
+                        <br />
+                        <button class="btn btn-link mt-2" @onclick="ClosePaymentPopup">Cancel</button>
+                    }
+                    else
+                    {
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <p class="mt-2">Processing payment...</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool showPayment = false;
+    private bool showPaymentPopup = false;
+    private bool isProcessing = false;
+    private string customerName = "Demo Customer";
+    private string deliveryAddress = "Nørrebrogade 20, 2200 Copenhagen";
+    private string orderId = "";
+    private string? selectedPizza = null;
+    private string? selectedDrink = null;
+
+    private List<MenuItem> pizzas = new()
+    {
+        new MenuItem { Name = "Margherita", Description = "Tomato, mozzarella, basil", Price = 89.00m },
+        new MenuItem { Name = "Pepperoni", Description = "Tomato, mozzarella, pepperoni", Price = 99.00m },
+        new MenuItem { Name = "Veggie Supreme", Description = "Tomato, mozzarella, mixed vegetables", Price = 95.00m }
+    };
+
+    private List<MenuItem> drinks = new()
+    {
+        new MenuItem { Name = "Coca Cola", Description = "", Price = 25.00m },
+        new MenuItem { Name = "Fanta", Description = "", Price = 25.00m },
+        new MenuItem { Name = "Sprite", Description = "", Price = 25.00m }
+    };
+
+    private decimal CalculateTotal()
+    {
+        decimal total = 0;
+        if (!string.IsNullOrEmpty(selectedPizza))
+        {
+            total += pizzas.First(p => p.Name == selectedPizza).Price;
+        }
+        if (!string.IsNullOrEmpty(selectedDrink))
+        {
+            total += drinks.First(d => d.Name == selectedDrink).Price;
+        }
+        return total;
+    }
+
+    private bool CanProceedToPayment()
+    {
+        return !string.IsNullOrWhiteSpace(customerName) &&
+               !string.IsNullOrWhiteSpace(deliveryAddress) &&
+               (!string.IsNullOrEmpty(selectedPizza) || !string.IsNullOrEmpty(selectedDrink));
+    }
+
+    private void ShowPaymentPopup()
+    {
+        if (!CanProceedToPayment())
+        {
+            return;
+        }
+        showPaymentPopup = true;
+    }
+
+    private void ClosePaymentPopup()
+    {
+        showPaymentPopup = false;
+        isProcessing = false;
+    }
+
+    private async Task ProcessPayment()
+    {
+        isProcessing = true;
+        await Task.Delay(1500); // Simulate payment processing
+        
+        // Create order items list
+        var items = new List<string>();
+        if (!string.IsNullOrEmpty(selectedPizza))
+        {
+            items.Add($"1x {selectedPizza}");
+        }
+        if (!string.IsNullOrEmpty(selectedDrink))
+        {
+            items.Add($"1x {selectedDrink}");
+        }
+
+        // Create order via CentralHub.API
+        orderId = await OrderService.CreateOrder(customerName, deliveryAddress, items, CalculateTotal());
+        
+        showPaymentPopup = false;
+        showPayment = true;
+        isProcessing = false;
+    }
+
+    private void ResetOrder()
+    {
+        showPayment = false;
+        orderId = "";
+        selectedPizza = null;
+        selectedDrink = null;
+    }
+
+    private class MenuItem
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public decimal Price { get; set; }
+    }
+}

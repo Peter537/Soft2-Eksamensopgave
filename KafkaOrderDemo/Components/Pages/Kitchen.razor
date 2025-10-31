@@ -1,0 +1,223 @@
+@page "/kitchen"
+@inject KafkaOrderDemo.Services.ApiOrderService OrderService
+@implements IDisposable
+
+<PageTitle>Kitchen Display - Pizza Palace</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0">🍳 Kitchen Display System - Pizza Palace</h3>
+        </div>
+        <div class="card-body">
+            
+            @if (orders.Count == 0)
+            {
+                <div class="alert alert-warning text-center">
+                    <h5>No active orders</h5>
+                    <p>Waiting for new orders...</p>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var order in orders)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-@GetStatusColor(order.Status)">
+                                <div class="card-header bg-@GetStatusColor(order.Status) text-white">
+                                    <strong>Order: @order.OrderId</strong>
+                                    <br />
+                                    <small>@order.CreatedAt.ToString("HH:mm:ss")</small>
+                                </div>
+                                <div class="card-body">
+                                    <h6>📍 Delivery Address:</h6>
+                                    <p class="text-muted">@order.DeliveryAddress</p>
+                                    
+                                    <h6>🍕 Items:</h6>
+                                    <p>@order.OrderDetails</p>
+                                    
+                                    <hr />
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-@GetStatusColor(order.Status)">@order.Status</span>
+                                        <strong>@order.TotalPrice kr</strong>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        @if (order.Status == "Pending")
+                                        {
+                                            <div class="alert alert-warning mb-0">
+                                                ⏳ Waiting for acceptance...
+                                            </div>
+                                        }
+                                        else if (order.Status == "Accepted" || order.Status == "New")
+                                        {
+                                            <button class="btn btn-success w-100" @onclick="() => MarkAsPreparing(order.OrderId)">
+                                                👨‍🍳 Start Preparing
+                                            </button>
+                                        }
+                                        else if (order.Status == "Preparing")
+                                        {
+                                            <button class="btn btn-warning w-100" @onclick="() => MarkAsReady(order.OrderId)">
+                                                ✅ Ready for Pickup
+                                            </button>
+                                        }
+                                        else if (order.Status == "Ready")
+                                        {
+                                            <button class="btn btn-primary w-100" @onclick="() => MarkAsPickedUp(order.OrderId)">
+                                                🚗 Mark as Picked Up
+                                            </button>
+                                        }
+                                        else if (order.Status == "PickedUp")
+                                        {
+                                            <div class="alert alert-info mb-0">
+                                                🚚 Out for delivery...
+                                            </div>
+                                        }
+                                        else if (order.Status == "Delivered")
+                                        {
+                                            <div class="alert alert-success mb-0">
+                                                ✅ Delivered!
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            
+        </div>
+    </div>
+</div>
+
+<!-- Accept/Reject Popup for Pending Orders -->
+@if (showAcceptRejectPopup && selectedOrder != null)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">🔔 New Order Request</h5>
+                </div>
+                <div class="modal-body">
+                    <h6><strong>Order:</strong> @selectedOrder.OrderId</h6>
+                    <p><strong>Customer:</strong> @selectedOrder.CustomerName</p>
+                    <p><strong>📍 Delivery Address:</strong><br/>@selectedOrder.DeliveryAddress</p>
+                    <p><strong>🍕 Items:</strong><br/>@selectedOrder.OrderDetails</p>
+                    <hr />
+                    <h5 class="text-primary">Total: @selectedOrder.TotalPrice kr</h5>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" @onclick="RejectOrder">
+                        ❌ Reject Order
+                    </button>
+                    <button class="btn btn-success" @onclick="AcceptOrder">
+                        ✅ Accept Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<KafkaOrderDemo.Services.ApiOrderService.Order> orders = new();
+    private KafkaOrderDemo.Services.ApiOrderService.Order? selectedOrder = null;
+    private bool showAcceptRejectPopup = false;
+    private System.Threading.Timer? _pollingTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        OrderService.OnOrdersChanged += async () => await LoadOrders();
+        await LoadOrders();
+        CheckForPendingOrders();
+        
+        // Poll for updates every 2 seconds
+        _pollingTimer = new System.Threading.Timer(async _ =>
+        {
+            await LoadOrders();
+        }, null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
+    }
+
+    private async Task LoadOrders()
+    {
+        orders = await OrderService.GetActiveOrders();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CheckForPendingOrders()
+    {
+        var pendingOrder = orders.FirstOrDefault(o => o.Status == "Pending");
+        if (pendingOrder != null && selectedOrder == null)
+        {
+            selectedOrder = pendingOrder;
+            showAcceptRejectPopup = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AcceptOrder()
+    {
+        if (selectedOrder != null)
+        {
+            await OrderService.AcceptOrder(selectedOrder.OrderId);
+            showAcceptRejectPopup = false;
+            selectedOrder = null;
+            await LoadOrders();
+            CheckForPendingOrders();
+        }
+    }
+
+    private async Task RejectOrder()
+    {
+        if (selectedOrder != null)
+        {
+            await OrderService.RejectOrder(selectedOrder.OrderId);
+            showAcceptRejectPopup = false;
+            selectedOrder = null;
+            await LoadOrders();
+            CheckForPendingOrders();
+        }
+    }
+
+    private async Task MarkAsPreparing(string orderId)
+    {
+        await OrderService.UpdateOrderStatus(orderId, "Preparing");
+        await LoadOrders();
+    }
+
+    private async Task MarkAsReady(string orderId)
+    {
+        await OrderService.UpdateOrderStatus(orderId, "Ready");
+        await LoadOrders();
+    }
+
+    private async Task MarkAsPickedUp(string orderId)
+    {
+        await OrderService.UpdateOrderStatus(orderId, "PickedUp");
+        await LoadOrders();
+    }
+
+    private string GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Pending" => "warning",
+            "New" => "primary",
+            "Preparing" => "warning",
+            "Ready" => "success",
+            "PickedUp" => "info",
+            "Delivered" => "secondary",
+            "Rejected" => "danger",
+            _ => "dark"
+        };
+    }
+
+    public void Dispose()
+    {
+        _pollingTimer?.Dispose();
+    }
+}

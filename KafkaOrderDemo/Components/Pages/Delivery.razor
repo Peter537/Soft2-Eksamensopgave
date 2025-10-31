@@ -1,0 +1,165 @@
+@page "/delivery"
+@inject KafkaOrderDemo.Services.ApiOrderService OrderService
+@implements IDisposable
+
+<PageTitle>Delivery Agent - Active Deliveries</PageTitle>
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">🚚 Active Deliveries</h3>
+        </div>
+        <div class="card-body">
+            
+            @if (deliveries.Count == 0)
+            {
+                <div class="alert alert-info text-center">
+                    <h5>No active deliveries</h5>
+                    <p>All orders delivered! 🎉</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var delivery in deliveries)
+                {
+                    <div class="card mb-3 border-success">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Order: @delivery.OrderId</h5>
+                                    <p class="mb-1">
+                                        <strong>📍 Delivery Address:</strong><br />
+                                        @delivery.DeliveryAddress
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>🍕 Items:</strong> @delivery.OrderDetails
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>💰 Total:</strong> @delivery.TotalPrice kr
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button class="btn btn-primary btn-lg" @onclick="() => ShowDeliveryConfirm(delivery.OrderId)">
+                                        ✅ Mark as Delivered
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            
+        </div>
+    </div>
+</div>
+
+<!-- Delivery Confirmation Popup -->
+@if (showDeliveryPopup)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">📸 Confirm Delivery</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseDeliveryPopup"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Order: @selectedOrderId</h6>
+                    <hr />
+                    
+                    <div class="text-center mb-3">
+                        @if (photoTaken)
+                        {
+                            <div class="alert alert-success">
+                                <i class="bi bi-camera-fill" style="font-size: 3rem;"></i>
+                                <p class="mt-2">✅ Photo captured!</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-camera" style="font-size: 3rem;"></i>
+                                <p class="mt-2">Take a photo of delivered order</p>
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (!photoTaken)
+                    {
+                        <button class="btn btn-primary w-100 mb-2" @onclick="TakePhoto">
+                            📸 Take Photo (Mocked)
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success w-100 mb-2" @onclick="ConfirmDelivery">
+                            ✅ Confirm Delivery
+                        </button>
+                    }
+                    
+                    <button class="btn btn-secondary w-100" @onclick="CloseDeliveryPopup">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<KafkaOrderDemo.Services.ApiOrderService.Order> deliveries = new();
+    private bool showDeliveryPopup = false;
+    private bool photoTaken = false;
+    private string selectedOrderId = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeliveries();
+        OrderService.OnOrdersChanged += HandleOrdersChanged;
+    }
+
+    private async Task LoadDeliveries()
+    {
+        deliveries = await OrderService.GetPickedUpOrders();
+    }
+
+    private async void HandleOrdersChanged()
+    {
+        await LoadDeliveries();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ShowDeliveryConfirm(string orderId)
+    {
+        selectedOrderId = orderId;
+        photoTaken = false;
+        showDeliveryPopup = true;
+    }
+
+    private void CloseDeliveryPopup()
+    {
+        showDeliveryPopup = false;
+        photoTaken = false;
+        selectedOrderId = "";
+    }
+
+    private void TakePhoto()
+    {
+        // Mock photo capture
+        photoTaken = true;
+    }
+
+    private async Task ConfirmDelivery()
+    {
+        if (!string.IsNullOrEmpty(selectedOrderId))
+        {
+            await OrderService.UpdateOrderStatus(selectedOrderId, "Delivered");
+        }
+        
+        CloseDeliveryPopup();
+        await LoadDeliveries();
+    }
+
+    public void Dispose()
+    {
+        OrderService.OnOrdersChanged -= HandleOrdersChanged;
+    }
+}
