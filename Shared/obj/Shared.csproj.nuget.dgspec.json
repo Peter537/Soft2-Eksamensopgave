@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\Shared.csproj": {}
+    "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\Shared.csproj": {}
   },
   "projects": {
-    "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\Shared.csproj": {
+    "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\Shared.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\Shared.csproj",
+        "projectUniqueName": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\Shared.csproj",
         "projectName": "Shared",
-        "projectPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\Shared.csproj",
+        "projectPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\Shared.csproj",
         "packagesPath": "C:\\Users\\yusef\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\obj\\",
+        "outputPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\yusef\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocketpartnerservice
+  namespace: kafka-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: websocketpartnerservice
+  template:
+    metadata:
+      labels:
+        app: websocketpartnerservice
+    spec:
+      containers:
+      - name: websocketpartnerservice
+        image: websocketpartnerservice:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: Kafka__BootstrapServers
+          value: "kafka:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocketpartnerservice
+  namespace: kafka-demo
+spec:
+  selector:
+    app: websocketpartnerservice
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30003
+  type: NodePort

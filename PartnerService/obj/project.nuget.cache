@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "uGdE/bIVkAo=",
+  "dgSpecHash": "cvvdfsmzNZU=",
   "success": true,
-  "projectFilePath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\PartnerService\\PartnerService.csproj",
+  "projectFilePath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\PartnerService\\PartnerService.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\yusef\\.nuget\\packages\\confluent.kafka\\2.12.0\\confluent.kafka.2.12.0.nupkg.sha512",
     "C:\\Users\\yusef\\.nuget\\packages\\librdkafka.redist\\2.12.0\\librdkafka.redist.2.12.0.nupkg.sha512",

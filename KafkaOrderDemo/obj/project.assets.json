@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\KafkaOrderDemo.csproj",
+      "projectUniqueName": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\KafkaOrderDemo\\KafkaOrderDemo.csproj",
       "projectName": "KafkaOrderDemo",
-      "projectPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\KafkaOrderDemo.csproj",
+      "projectPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\KafkaOrderDemo\\KafkaOrderDemo.csproj",
       "packagesPath": "C:\\Users\\yusef\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\KafkaOrderDemo\\obj\\",
+      "outputPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\KafkaOrderDemo\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\yusef\\AppData\\Roaming\\NuGet\\NuGet.Config"

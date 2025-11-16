@@ -12,6 +12,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PartnerService", "PartnerSe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{22F72E50-B86A-48A6-4252-6FDC98C636E8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService", "OrderService\OrderService.csproj", "{B1C3D5E7-4F8A-9B2C-3D6E-A8F7C9E1B4D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebsocketPartnerService", "WebsocketPartnerService\WebsocketPartnerService.csproj", "{C2D4E6F8-5G9B-0C3D-4E7F-B9G8D0F2C5E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +42,14 @@ Global
 		{22F72E50-B86A-48A6-4252-6FDC98C636E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22F72E50-B86A-48A6-4252-6FDC98C636E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22F72E50-B86A-48A6-4252-6FDC98C636E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1C3D5E7-4F8A-9B2C-3D6E-A8F7C9E1B4D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1C3D5E7-4F8A-9B2C-3D6E-A8F7C9E1B4D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1C3D5E7-4F8A-9B2C-3D6E-A8F7C9E1B4D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1C3D5E7-4F8A-9B2C-3D6E-A8F7C9E1B4D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2D4E6F8-5G9B-0C3D-4E7F-B9G8D0F2C5E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2D4E6F8-5G9B-0C3D-4E7F-B9G8D0F2C5E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2D4E6F8-5G9B-0C3D-4E7F-B9G8D0F2C5E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2D4E6F8-5G9B-0C3D-4E7F-B9G8D0F2C5E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

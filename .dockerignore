@@ -1,0 +1,38 @@
+# Ignore build outputs
+**/bin/
+**/obj/
+
+# Ignore IDE files
+**/.vs/
+**/.vscode/
+**/.idea/
+
+# Ignore git
+.git/
+.gitignore
+.gitattributes
+
+# Ignore documentation
+*.md
+!README.md
+
+# Ignore test files
+**/TestResults/
+
+# Ignore node modules (if any)
+**/node_modules/
+
+# Ignore user-specific files
+**/*.user
+**/*.suo
+
+# Ignore kubernetes files
+k8s/
+*.yaml
+
+# Ignore scripts
+*.ps1
+
+# Ignore Docker files
+Dockerfile*
+docker-compose.yml

@@ -89,37 +89,6 @@ public class OrdersController : ControllerBase
         return Ok(new { message = "Order rejected", orderId = id });
     }
 
-    [HttpPost("{id}/prepare")]
-    public async Task<IActionResult> StartPreparing(string id)
-    {
-        var order = _orderRepository.GetOrder(id);
-        if (order == null)
-            return NotFound($"Order {id} not found");
-
-        Console.WriteLine("\n┌─────────────────────────────────────────────────────────┐");
-        Console.WriteLine("│  👨‍🍳 RESTAURANT STARTED PREPARING                        │");
-        Console.WriteLine("└─────────────────────────────────────────────────────────┘");
-        Console.WriteLine($"   Order ID: {id}");
-
-        var startedAt = DateTime.UtcNow;
-        _orderRepository.UpdateOrderStatus(id, "Preparing", startedAt);
-
-        Console.WriteLine($"   ✅ Status updated to 'Preparing' in database");
-        Console.WriteLine($"   📤 Publishing to Kafka topic: {KafkaTopics.OrderPreparing}");
-
-        var preparingEvent = new OrderPreparingEvent
-        {
-            OrderId = id,
-            StartedAt = startedAt
-        };
-
-        await _kafkaProducer.PublishAsync(KafkaTopics.OrderPreparing, id, preparingEvent);
-
-        Console.WriteLine($"   🎉 Customer notified: 'Restaurant is preparing your food!'\n");
-
-        return Ok(new { message = "Order preparation started", orderId = id });
-    }
-
     [HttpPost("{id}/ready")]
     public async Task<IActionResult> MarkReady(string id)
     {
@@ -182,6 +151,47 @@ public class OrdersController : ControllerBase
         Console.WriteLine($"   🎉 Customer notified: 'Driver is on the way!'\n");
 
         return Ok(new { message = "Order picked up", orderId = id });
+    }
+
+    [HttpPost("{id}/delivered")]
+    public async Task<IActionResult> MarkAsDelivered(string id)
+    {
+        var order = _orderRepository.GetOrder(id);
+        if (order == null)
+            return NotFound($"Order {id} not found");
+
+        Console.WriteLine("\n┌─────────────────────────────────────────────────────────┐");
+        Console.WriteLine("│  📦 ORDER DELIVERED                                      │");
+        Console.WriteLine("└─────────────────────────────────────────────────────────┘");
+        Console.WriteLine($"   Order ID: {id}");
+
+        var deliveredAt = DateTime.UtcNow;
+        _orderRepository.UpdateOrderStatus(id, "Delivered", deliveredAt);
+
+        Console.WriteLine($"   ✅ Status updated to 'Delivered' in database");
+        Console.WriteLine($"   📤 Publishing to Kafka topic: {KafkaTopics.OrderDelivered}");
+
+        var deliveredEvent = new OrderDeliveredEvent
+        {
+            OrderId = id,
+            DeliveredAt = deliveredAt
+        };
+
+        await _kafkaProducer.PublishAsync(KafkaTopics.OrderDelivered, id, deliveredEvent);
+
+        Console.WriteLine($"   🎉 Customer notified: 'Your order has been delivered!'\n");
+
+        return Ok(new { message = "Order delivered", orderId = id });
+    }
+
+    [HttpGet("{id}")]
+    public IActionResult GetOrder(string id)
+    {
+        var order = _orderRepository.GetOrder(id);
+        if (order == null)
+            return NotFound($"Order {id} not found");
+            
+        return Ok(order);
     }
 
     [HttpGet]

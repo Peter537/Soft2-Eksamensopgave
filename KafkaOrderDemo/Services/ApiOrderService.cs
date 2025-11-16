@@ -1,16 +1,20 @@
+using Microsoft.Extensions.Configuration;
+
 namespace KafkaOrderDemo.Services;
 
 public class ApiOrderService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _centralHubUrl = "http://localhost:5288";
-    private readonly string _partnerServiceUrl = "http://localhost:5220";
+    private readonly string _centralHubUrl;
+    private readonly string _partnerServiceUrl;
 
     public event Action? OnOrdersChanged;
 
-    public ApiOrderService(HttpClient httpClient)
+    public ApiOrderService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
+        _centralHubUrl = configuration["ApiUrls:CentralHub"] ?? "http://localhost:5288";
+        _partnerServiceUrl = configuration["ApiUrls:PartnerService"] ?? "http://localhost:5220";
     }
 
     public async Task<string> CreateOrder(string customerName, string deliveryAddress, List<string> items, decimal totalPrice)
@@ -41,7 +45,8 @@ public class ApiOrderService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<Order>>($"{_partnerServiceUrl}/api/orders");
+            // Route through CentralHub gateway
+            var response = await _httpClient.GetFromJsonAsync<List<Order>>($"{_centralHubUrl}/api/orders");
             return response ?? new List<Order>();
         }
         catch
@@ -61,7 +66,8 @@ public class ApiOrderService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<Order>>($"{_partnerServiceUrl}/api/orders/pending");
+            // Route through CentralHub gateway
+            var response = await _httpClient.GetFromJsonAsync<List<Order>>($"{_centralHubUrl}/api/orders/pending");
             return response ?? new List<Order>();
         }
         catch
@@ -78,25 +84,28 @@ public class ApiOrderService
 
     public async Task AcceptOrder(string orderId)
     {
-        var response = await _httpClient.PostAsync($"{_partnerServiceUrl}/api/orders/{orderId}/accept", null);
+        // Route through CentralHub gateway
+        var response = await _httpClient.PostAsync($"{_centralHubUrl}/api/orders/{orderId}/accept", null);
         response.EnsureSuccessStatusCode();
         OnOrdersChanged?.Invoke();
     }
 
     public async Task RejectOrder(string orderId)
     {
-        var response = await _httpClient.PostAsJsonAsync($"{_partnerServiceUrl}/api/orders/{orderId}/reject", "Restaurant is busy");
+        // Route through CentralHub gateway
+        var response = await _httpClient.PostAsJsonAsync($"{_centralHubUrl}/api/orders/{orderId}/reject", "Restaurant is busy");
         response.EnsureSuccessStatusCode();
         OnOrdersChanged?.Invoke();
     }
 
     public async Task UpdateOrderStatus(string orderId, string newStatus)
     {
+        // Route through CentralHub gateway
         string endpoint = newStatus switch
         {
-            "Preparing" => $"{_partnerServiceUrl}/api/orders/{orderId}/prepare",
-            "Ready" => $"{_partnerServiceUrl}/api/orders/{orderId}/ready",
-            "PickedUp" => $"{_partnerServiceUrl}/api/orders/{orderId}/pickup",
+            "Ready" => $"{_centralHubUrl}/api/orders/{orderId}/ready",
+            "PickedUp" => $"{_centralHubUrl}/api/orders/{orderId}/pickup",
+            "Delivered" => $"{_centralHubUrl}/api/orders/{orderId}/delivered",
             _ => throw new ArgumentException($"Invalid status: {newStatus}")
         };
 

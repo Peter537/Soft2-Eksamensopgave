@@ -3,10 +3,11 @@ using NotificationService.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Kafka config
-builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
+// Add Kafka config (allow override from environment variables)
+var kafkaBootstrapServers = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
+builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 {
-    ["Kafka:BootstrapServers"] = "localhost:9092"
+    ["Kafka:BootstrapServers"] = kafkaBootstrapServers
 });
 
 // Add services
@@ -29,8 +30,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<NotificationRepository>();
 
 // Add background Kafka consumers
+// NOTE: OrderPreparing removed - implicit after acceptance
 builder.Services.AddHostedService<OrderAcceptedConsumer>();
-builder.Services.AddHostedService<OrderPreparingConsumer>();
 builder.Services.AddHostedService<OrderReadyConsumer>();
 builder.Services.AddHostedService<OrderPickedUpConsumer>();
 builder.Services.AddHostedService<DriverArrivingConsumer>();

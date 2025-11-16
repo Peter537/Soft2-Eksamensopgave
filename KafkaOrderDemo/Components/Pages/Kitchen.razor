@@ -53,14 +53,9 @@
                                         }
                                         else if (order.Status == "Accepted" || order.Status == "New")
                                         {
-                                            <button class="btn btn-success w-100" @onclick="() => MarkAsPreparing(order.OrderId)">
-                                                👨‍🍳 Start Preparing
-                                            </button>
-                                        }
-                                        else if (order.Status == "Preparing")
-                                        {
-                                            <button class="btn btn-warning w-100" @onclick="() => MarkAsReady(order.OrderId)">
-                                                ✅ Ready for Pickup
+                                            @* Preparing is implicit - restaurant makes food when accepted *@
+                                            <button class="btn btn-success w-100" @onclick="() => MarkAsReady(order.OrderId)">
+                                                ✅ Mark Ready for Pickup
                                             </button>
                                         }
                                         else if (order.Status == "Ready")
@@ -183,12 +178,6 @@
         }
     }
 
-    private async Task MarkAsPreparing(string orderId)
-    {
-        await OrderService.UpdateOrderStatus(orderId, "Preparing");
-        await LoadOrders();
-    }
-
     private async Task MarkAsReady(string orderId)
     {
         await OrderService.UpdateOrderStatus(orderId, "Ready");
@@ -207,7 +196,7 @@
         {
             "Pending" => "warning",
             "New" => "primary",
-            "Preparing" => "warning",
+            "Accepted" => "info",
             "Ready" => "success",
             "PickedUp" => "info",
             "Delivered" => "secondary",

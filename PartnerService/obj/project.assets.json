@@ -884,11 +884,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\PartnerService\\PartnerService.csproj",
+      "projectUniqueName": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\PartnerService\\PartnerService.csproj",
       "projectName": "PartnerService",
-      "projectPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\PartnerService\\PartnerService.csproj",
+      "projectPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\PartnerService\\PartnerService.csproj",
       "packagesPath": "C:\\Users\\yusef\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\PartnerService\\obj\\",
+      "outputPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\PartnerService\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\yusef\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -903,8 +903,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\Shared.csproj": {
-              "projectPath": "C:\\Users\\yusef\\Documents\\DevProjects\\BACHELOR\\Shared\\Shared.csproj"
+            "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\Shared.csproj": {
+              "projectPath": "C:\\Users\\yusef\\Documents\\GitHub\\Soft2-Eksamensopgave\\Shared\\Shared.csproj"
             }
           }
         }

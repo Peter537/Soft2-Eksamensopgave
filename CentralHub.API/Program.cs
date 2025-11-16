@@ -1,6 +1,3 @@
-using CentralHub.API.Services;
-using Shared.Kafka;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -8,12 +5,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Register application services
-builder.Services.AddSingleton<OrderRepository>();
-
-// Register Kafka producer
-var kafkaBootstrapServers = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
-builder.Services.AddSingleton(new KafkaProducerService(kafkaBootstrapServers));
+// Register HttpClient for routing to backend services
+builder.Services.AddHttpClient();
 
 // Add CORS for Blazor frontend
 builder.Services.AddCors(options =>
@@ -41,9 +34,11 @@ app.MapControllers();
 
 // Startup message
 Console.WriteLine("\n╔════════════════════════════════════════════════════════╗");
-Console.WriteLine("║        🌟 CENTRALHUB.API - CUSTOMER GATEWAY 🌟        ║");
+Console.WriteLine("║          🌟 CENTRALHUB - API GATEWAY 🌟               ║");
 Console.WriteLine("╚════════════════════════════════════════════════════════╝");
-Console.WriteLine($"📡 Kafka Connected: {kafkaBootstrapServers}");
-Console.WriteLine("🚀 Ready to receive customer orders...\n");
+Console.WriteLine("� Gateway Mode: Routes requests to backend services");
+Console.WriteLine("� OrderService: http://localhost:5100");
+Console.WriteLine("📍 PartnerService: http://localhost:5220");
+Console.WriteLine("🚀 No business logic - pure routing layer\n");
 
 app.Run();

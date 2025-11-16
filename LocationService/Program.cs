@@ -2,10 +2,11 @@ using LocationService.BackgroundServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Kafka config
-builder.Configuration.AddInMemoryCollection(new Dictionary<string, string>
+// Add Kafka config (allow override from environment variables)
+var kafkaBootstrapServers = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
+builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 {
-    ["Kafka:BootstrapServers"] = "localhost:9092"
+    ["Kafka:BootstrapServers"] = kafkaBootstrapServers
 });
 
 // Add background Kafka consumer

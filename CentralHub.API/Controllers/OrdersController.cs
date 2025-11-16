@@ -1,94 +1,275 @@
 using Microsoft.AspNetCore.Mvc;
 using CentralHub.API.Models;
-using CentralHub.API.Services;
-using Shared.Kafka;
-using Shared.Events;
 
 namespace CentralHub.API.Controllers;
 
+/// <summary>
+/// API Gateway Controller - Routes requests to backend services.
+/// NO BUSINESS LOGIC HERE - just coordination and routing.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class OrdersController : ControllerBase
 {
-    private readonly OrderRepository _orderRepository;
-    private readonly KafkaProducerService _kafkaProducer;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<OrdersController> _logger;
+    private readonly string _orderServiceUrl;
+    private readonly string _partnerServiceUrl;
 
     public OrdersController(
-        OrderRepository orderRepository, 
-        KafkaProducerService kafkaProducer,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration,
         ILogger<OrdersController> logger)
     {
-        _orderRepository = orderRepository;
-        _kafkaProducer = kafkaProducer;
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
+        _orderServiceUrl = configuration["ServiceUrls:OrderService"] ?? "http://localhost:5100";
+        _partnerServiceUrl = configuration["ServiceUrls:PartnerService"] ?? "http://localhost:5220";
     }
 
+    /// <summary>
+    /// Gateway endpoint: Creates an order by routing to OrderService.
+    /// OrderService handles: DB save + Kafka event publishing.
+    /// </summary>
     [HttpPost]
-    public async Task<ActionResult<Order>> CreateOrder([FromBody] CreateOrderRequest request)
+    public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
         try
         {
             Console.WriteLine("\n┌─────────────────────────────────────────────────────────┐");
-            Console.WriteLine("│  📥 INCOMING ORDER FROM CUSTOMER                        │");
+            Console.WriteLine("│  � GATEWAY: Routing order creation to OrderService     │");
             Console.WriteLine("└─────────────────────────────────────────────────────────┘");
             Console.WriteLine($"   Customer: {request.CustomerName}");
-            Console.WriteLine($"   Address: {request.DeliveryAddress}");
-            Console.WriteLine($"   Items: {string.Join(", ", request.Items)}");
-            Console.WriteLine($"   Total: {request.TotalPrice:C}");
+            Console.WriteLine($"   Routing to: {_orderServiceUrl}/api/orders");
 
-            // 1. Save to local database
-            var order = _orderRepository.CreateOrder(
-                request.CustomerName,
-                request.DeliveryAddress,
-                request.Items,
-                request.TotalPrice
-            );
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync($"{_orderServiceUrl}/api/orders", request);
 
-            Console.WriteLine($"\n   ✅ Order saved to database: {order.OrderId}");
-            _logger.LogInformation("✅ Order created: {OrderId}", order.OrderId);
-
-            // 2. Emit Kafka event
-            Console.WriteLine($"   📤 Publishing to Kafka topic: {KafkaTopics.OrderCreated}");
-            
-            var orderEvent = new OrderCreatedEvent
+            if (response.IsSuccessStatusCode)
             {
-                OrderId = order.OrderId,
-                CustomerName = order.CustomerName,
-                DeliveryAddress = order.DeliveryAddress,
-                OrderDetails = order.OrderDetails,
-                TotalPrice = order.TotalPrice,
-                CreatedAt = order.CreatedAt
-            };
-
-            await _kafkaProducer.PublishAsync(KafkaTopics.OrderCreated, order.OrderId, orderEvent);
-
-            Console.WriteLine($"   🎉 Event published! Waiting for restaurant to accept...\n");
-
-            return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, order);
+                var order = await response.Content.ReadFromJsonAsync<Order>();
+                Console.WriteLine($"   ✅ Gateway: Order routed successfully\n");
+                return CreatedAtAction(nameof(GetOrder), new { id = order?.OrderId }, order);
+            }
+            else
+            {
+                Console.WriteLine($"   ❌ Gateway: OrderService returned {response.StatusCode}\n");
+                return StatusCode((int)response.StatusCode, "Failed to create order");
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   ❌ ERROR: {ex.Message}\n");
-            _logger.LogError(ex, "❌ Failed to create order");
-            return StatusCode(500, "Failed to create order");
+            Console.WriteLine($"   ❌ GATEWAY ERROR: {ex.Message}\n");
+            _logger.LogError(ex, "❌ Failed to route order creation");
+            return StatusCode(500, "Gateway error: Failed to route request");
         }
     }
 
+    /// <summary>
+    /// Gateway endpoint: Get order by ID.
+    /// Checks PartnerService first (has full order lifecycle), then OrderService.
+    /// </summary>
     [HttpGet("{id}")]
-    public ActionResult<Order> GetOrder(string id)
+    public async Task<IActionResult> GetOrder(string id)
     {
-        var order = _orderRepository.GetOrder(id);
-        
-        if (order == null)
-            return NotFound($"Order {id} not found");
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            
+            // Try PartnerService first (has order state)
+            var response = await client.GetAsync($"{_partnerServiceUrl}/api/orders/{id}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var order = await response.Content.ReadFromJsonAsync<Order>();
+                return Ok(order);
+            }
+            
+            // Fallback to OrderService
+            response = await client.GetAsync($"{_orderServiceUrl}/api/orders/{id}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var order = await response.Content.ReadFromJsonAsync<Order>();
+                return Ok(order);
+            }
 
-        return Ok(order);
+            return NotFound($"Order {id} not found");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get order {OrderId}", id);
+            return StatusCode(500, "Gateway error");
+        }
     }
 
+    /// <summary>
+    /// Gateway endpoint: Get all orders from PartnerService.
+    /// PartnerService manages order state after creation.
+    /// </summary>
     [HttpGet]
-    public ActionResult<List<Order>> GetAllOrders()
+    public async Task<IActionResult> GetAllOrders()
     {
-        return Ok(_orderRepository.GetAllOrders());
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync($"{_partnerServiceUrl}/api/orders");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var orders = await response.Content.ReadFromJsonAsync<List<Order>>();
+                return Ok(orders);
+            }
+
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get all orders");
+            return StatusCode(500, "Gateway error");
+        }
+    }
+
+    /// <summary>
+    /// Gateway endpoint: Accept order (routes to PartnerService).
+    /// Business logic handled by PartnerService.
+    /// </summary>
+    [HttpPost("{id}/accept")]
+    public async Task<IActionResult> AcceptOrder(string id)
+    {
+        try
+        {
+            Console.WriteLine($"\n🔀 Gateway: Routing accept request to PartnerService for order {id}");
+            
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync($"{_partnerServiceUrl}/api/orders/{id}/accept", null);
+
+            Console.WriteLine($"   ✅ Gateway: Accept request routed\n");
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to route accept for order {OrderId}", id);
+            return StatusCode(500, "Gateway error");
+        }
+    }
+
+    /// <summary>
+    /// Gateway endpoint: Reject order (routes to PartnerService).
+    /// Business logic handled by PartnerService.
+    /// </summary>
+    [HttpPost("{id}/reject")]
+    public async Task<IActionResult> RejectOrder(string id, [FromBody] string reason)
+    {
+        try
+        {
+            Console.WriteLine($"\n🔀 Gateway: Routing reject request to PartnerService for order {id}");
+            
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync($"{_partnerServiceUrl}/api/orders/{id}/reject", reason);
+
+            Console.WriteLine($"   ✅ Gateway: Reject request routed\n");
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to route reject for order {OrderId}", id);
+            return StatusCode(500, "Gateway error");
+        }
+    }
+
+    /// <summary>
+    /// Gateway endpoint: Mark order as ready (routes to PartnerService).
+    /// </summary>
+    [HttpPost("{id}/ready")]
+    public async Task<IActionResult> MarkOrderReady(string id)
+    {
+        try
+        {
+            Console.WriteLine($"\n🔀 Gateway: Routing ready request to PartnerService for order {id}");
+            
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync($"{_partnerServiceUrl}/api/orders/{id}/ready", null);
+
+            Console.WriteLine($"   ✅ Gateway: Ready request routed\n");
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to route ready for order {OrderId}", id);
+            return StatusCode(500, "Gateway error");
+        }
+    }
+
+    /// <summary>
+    /// Gateway endpoint: Mark order as picked up (routes to PartnerService).
+    /// </summary>
+    [HttpPost("{id}/pickup")]
+    public async Task<IActionResult> MarkOrderPickedUp(string id)
+    {
+        try
+        {
+            Console.WriteLine($"\n🔀 Gateway: Routing pickup request to PartnerService for order {id}");
+            
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync($"{_partnerServiceUrl}/api/orders/{id}/pickup", null);
+
+            Console.WriteLine($"   ✅ Gateway: Pickup request routed\n");
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to route pickup for order {OrderId}", id);
+            return StatusCode(500, "Gateway error");
+        }
+    }
+
+    /// <summary>
+    /// Gateway endpoint: Get pending orders (routes to PartnerService).
+    /// </summary>
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetPendingOrders()
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync($"{_partnerServiceUrl}/api/orders/pending");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var orders = await response.Content.ReadFromJsonAsync<List<Order>>();
+                return Ok(orders);
+            }
+
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get pending orders");
+            return StatusCode(500, "Gateway error");
+        }
+    }
+
+    /// <summary>
+    /// Gateway endpoint: Mark order as delivered (routes to PartnerService).
+    /// </summary>
+    [HttpPost("{id}/delivered")]
+    public async Task<IActionResult> MarkOrderDelivered(string id)
+    {
+        try
+        {
+            Console.WriteLine($"\n🔀 Gateway: Routing delivered request to PartnerService for order {id}");
+            
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync($"{_partnerServiceUrl}/api/orders/{id}/delivered", null);
+
+            Console.WriteLine($"   ✅ Gateway: Delivered request routed\n");
+            return StatusCode((int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to route delivered for order {OrderId}", id);
+            return StatusCode(500, "Gateway error");
+        }
     }
 }

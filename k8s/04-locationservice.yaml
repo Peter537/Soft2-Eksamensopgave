@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locationservice
+  namespace: kafka-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locationservice
+  template:
+    metadata:
+      labels:
+        app: locationservice
+    spec:
+      containers:
+      - name: locationservice
+        image: locationservice:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: Kafka__BootstrapServers
+          value: "kafka:9092"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: locationservice
+  namespace: kafka-demo
+spec:
+  selector:
+    app: locationservice
+  ports:
+  - port: 8080
+    targetPort: 8080

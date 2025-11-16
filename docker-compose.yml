@@ -27,6 +27,107 @@ services:
     networks:
       - kafka-network
 
+  # Gateway - Routes requests, no business logic
+  centralhub:
+    build:
+      context: ./CentralHub.API
+      dockerfile: Dockerfile
+    container_name: centralhub-gateway
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ServiceUrls__OrderService=http://orderservice:8080
+      - ServiceUrls__PartnerService=http://partnerservice:8080
+    depends_on:
+      - kafka
+      - orderservice
+      - partnerservice
+    networks:
+      - kafka-network
+
+  # Order Service - Handles order business logic and DB
+  orderservice:
+    build:
+      context: ./OrderService
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
+
+  # Partner Service - Handles partner operations
+  partnerservice:
+    build:
+      context: ./PartnerService
+      dockerfile: Dockerfile
+    container_name: partner-service
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
+
+  # WebSocket Partner Service - Real-time updates to restaurant partners
+  websocketpartnerservice:
+    build:
+      context: ./WebsocketPartnerService
+      dockerfile: Dockerfile
+    container_name: websocket-partner-service
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
+
+  # Notification Service - Customer notifications
+  notificationservice:
+    build:
+      context: ./NotificationService
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - kafka-network
+
+  # Frontend - Blazor UI
+  frontend:
+    build:
+      context: ./KafkaOrderDemo
+      dockerfile: Dockerfile
+    container_name: frontend-ui
+    ports:
+      - "5005:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - CentralHubUrl=http://centralhub:8080
+      - WebSocketServiceUrl=ws://websocketpartnerservice:8080
+    depends_on:
+      - centralhub
+      - websocketpartnerservice
+    networks:
+      - kafka-network
+
 networks:
   kafka-network:
     driver: bridge
