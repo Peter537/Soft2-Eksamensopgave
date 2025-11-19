@@ -1,0 +1,64 @@
+name: Bug Report
+description: Template for reporting bugs
+title: "[BUG]: "
+labels: ["bug"]
+
+body:
+  - type: checkboxes
+    id: existing-issue
+    attributes:
+      label: "Is there an existing issue for this?"
+      description: "Please search to see if an issue already exists for your bug."
+      options:
+        - label: "I have searched the existing issues"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: "What happened?"
+      description: "Describe the observed behaviour."
+      placeholder: "What happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "Steps to reproduce (optional)"
+      description: "List the steps to reproduce the bug, one per line."
+      placeholder: "1. Step one\n2. Step two\n3. Step three"
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: "Expected behaviour (optional)"
+      description: "Describe what you expected to happen instead."
+      placeholder: "Expected result"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "Severity (optional)"
+      description: "How severe is the issue?"
+      options:
+        - label: "Low"
+        - label: "Medium"
+        - label: "High"
+        - label: "Critical"
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Environment (optional)"
+      description: "OS, browser, app version, device, etc."
+      placeholder: "e.g. Windows 11, Chrome 120, backend v1.2.3"
+    validations:
+      required: false
