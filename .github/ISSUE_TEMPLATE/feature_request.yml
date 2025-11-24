@@ -1,0 +1,23 @@
+name: Issue Template
+description: Template for user stories or technical stories
+title: "[ISSUE]: "
+labels: ["feature"]
+
+body:
+  - type: textarea
+    id: user_story
+    attributes:
+      label: "User Story / Technical Story"
+      description: "Describe the user story (As a <role>, I want <goal>, so that <benefit>) or the technical story with context and motivation."
+      placeholder: "As a <role>, I want <feature>, so that <benefit>."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "List acceptance criteria, one per line. Use '- [ ]' for checklist items or separate lines."
+      placeholder: "- [] Acceptance criteria 1\n- [] Acceptance criteria 2\n- [] Acceptance criteria 3"
+    validations:
+      required: true
