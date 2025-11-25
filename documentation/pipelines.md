@@ -41,8 +41,5 @@ Dette dokument beskriver alle pipelines, der anvendes i udviklingen af MToGo-sys
 - **dora_metrics.yml**:  
   Scheduled DORA metrics workflow, der indsamler og opdaterer DORA-målinger for repositoriet.
 
-- **dependabot.yml**:  
-  Konfiguration af GitHub Dependabot. Scheduled auto-scan af dependencies; opretter automatisk PR for opdateringer og flagger sikkerhedsrisici.
-
 - **terraform.yml**:  
   Workflow til opsætning og opdatering af IaC. Bruges til at oprette/opdatere infrastrukturen (Kubernetes, databaser, osv.) på en kontrolleret måde.
