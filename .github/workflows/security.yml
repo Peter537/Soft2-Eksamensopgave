@@ -1,0 +1,1304 @@
+name: Security Gates
+
+on:
+  workflow_run:
+    workflows: ["CI / CD Pipeline"]
+    types: ["completed"]
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+  packages: read
+
+jobs:
+  # Check if CI succeeded
+  check_ci_cd_status:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
+    steps:
+      - name: Check CI/CD workflow result
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+            echo "CI/CD workflow failed, stopping security scans"
+            exit 1
+          fi
+
+  detect_changed_services:
+    name: Detect changed services
+    runs-on: ubuntu-latest
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      agentbonus: ${{ steps.filter.outputs.agentbonus }}
+      agentservice: ${{ steps.filter.outputs.agentservice }}
+      customerservice: ${{ steps.filter.outputs.customerservice }}
+      feedbackhub: ${{ steps.filter.outputs.feedbackhub }}
+      gateway: ${{ steps.filter.outputs.gateway }}
+      notification: ${{ steps.filter.outputs.notification }}
+      order: ${{ steps.filter.outputs.order }}
+      partner: ${{ steps.filter.outputs.partner }}
+      website: ${{ steps.filter.outputs.website }}
+      websocketagent: ${{ steps.filter.outputs.websocketagent }}
+      websocketcustomer: ${{ steps.filter.outputs.websocketcustomer }}
+      websocketpartner: ${{ steps.filter.outputs.websocketpartner }}
+      legacy: ${{ steps.filter.outputs.legacy }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          filters: |
+            # Fælles kode / config der påvirker flere services
+            shared:
+              - 'MToGo/src/MToGo.Shared/**'
+              - 'MToGo/Directory.Packages.props'
+              - 'MToGo/*.sln'
+              - '.github/workflows/**'
+
+            agentbonus:
+              - 'MToGo/src/MToGo.AgentBonusService/**'
+              - 'MToGo/tests/MToGo.AgentBonusService.Tests/**'
+
+            agentservice:
+              - 'MToGo/src/MToGo.AgentService/**'
+              - 'MToGo/tests/MToGo.AgentService.Tests/**'
+
+            customerservice:
+              - 'MToGo/src/MToGo.CustomerService/**'
+              - 'MToGo/tests/MToGo.CustomerService.Tests/**'
+
+            feedbackhub:
+              - 'MToGo/src/MToGo.FeedbackHubService/**'
+              - 'MToGo/tests/MToGo.FeedbackHubService.Tests/**'
+
+            gateway:
+              - 'MToGo/src/MToGo.Gateway/**'
+              - 'MToGo/tests/MToGo.Gateway.Tests/**'
+
+            notification:
+              - 'MToGo/src/MToGo.NotificationService/**'
+              - 'MToGo/tests/MToGo.NotificationService.Tests/**'
+
+            order:
+              - 'MToGo/src/MToGo.OrderService/**'
+              - 'MToGo/tests/MToGo.OrderService.Tests/**'
+
+            partner:
+              - 'MToGo/src/MToGo.PartnerService/**'
+              - 'MToGo/tests/MToGo.PartnerService.Tests/**'
+
+            website:
+              - 'MToGo/src/MToGo.Website/**'
+              - 'MToGo/tests/MToGo.Website.Tests/**'
+
+            websocketagent:
+              - 'MToGo/src/MToGo.WebSocketAgentService/**'
+              - 'MToGo/tests/MToGo.WebSocketAgentService.Tests/**'
+
+            websocketcustomer:
+              - 'MToGo/src/MToGo.WebSocketCustomerService/**'
+              - 'MToGo/tests/MToGo.WebSocketCustomerService.Tests/**'
+
+            websocketpartner:
+              - 'MToGo/src/MToGo.WebSocketPartnerService/**'
+              - 'MToGo/tests/MToGo.WebSocketPartnerService.Tests/**'
+
+            legacy:
+              - 'LegacyMToGo/**'
+
+  codeql:
+    name: CodeQL - repo-wide analysis
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.agentbonus == 'true' || needs.detect_changed_services.outputs.agentservice == 'true' || needs.detect_changed_services.outputs.customerservice == 'true' || needs.detect_changed_services.outputs.feedbackhub == 'true' || needs.detect_changed_services.outputs.gateway == 'true' || needs.detect_changed_services.outputs.notification == 'true' || needs.detect_changed_services.outputs.order == 'true' || needs.detect_changed_services.outputs.partner == 'true' || needs.detect_changed_services.outputs.website == 'true' || needs.detect_changed_services.outputs.websocketagent == 'true' || needs.detect_changed_services.outputs.websocketcustomer == 'true' || needs.detect_changed_services.outputs.websocketpartner == 'true' || needs.detect_changed_services.outputs.legacy == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          build-mode: manual
+
+      - name: Build for CodeQL
+        run: |
+          if [[ "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building AgentBonus service for CodeQL"
+            dotnet restore MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj
+            dotnet build MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building AgentService for CodeQL"
+            dotnet restore MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj
+            dotnet build MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.customerservice }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building CustomerService for CodeQL"
+            dotnet restore MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj
+            dotnet build MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.feedbackhub }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building FeedbackHub for CodeQL"
+            dotnet restore MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj
+            dotnet build MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.gateway }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building Gateway for CodeQL"
+            dotnet restore MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj
+            dotnet build MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.notification }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building Notification for CodeQL"
+            dotnet restore MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj
+            dotnet build MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.order }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building Order for CodeQL"
+            dotnet restore MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj
+            dotnet build MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.partner }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building Partner for CodeQL"
+            dotnet restore MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj
+            dotnet build MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.website }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building Website for CodeQL"
+            dotnet restore MToGo/src/MToGo.Website/MToGo.Website.csproj
+            dotnet build MToGo/src/MToGo.Website/MToGo.Website.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.websocketagent }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building WebSocketAgent for CodeQL"
+            dotnet restore MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj
+            dotnet build MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.websocketcustomer }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building WebSocketCustomer for CodeQL"
+            dotnet restore MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj
+            dotnet build MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.websocketpartner }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building WebSocketPartner for CodeQL"
+            dotnet restore MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj
+            dotnet build MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj -c Release --no-restore
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building LegacyMToGo for CodeQL"
+            dotnet restore LegacyMToGo/LegacyMToGo.csproj
+            dotnet build LegacyMToGo/LegacyMToGo.csproj -c Release --no-restore
+          fi
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+
+  security_customerservice:
+    name: CustomerService - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.customerservice == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull CustomerService image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (CustomerService)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.CustomerService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (CustomerService, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.CustomerService
+          format: sarif
+          output: trivy-customerservice-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (CustomerService, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-customerservice-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (CustomerService)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-customerservice-fs.sarif
+          category: trivy-customerservice-fs
+
+      - name: Upload Trivy image SARIF (CustomerService)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-customerservice-image.sarif
+          category: trivy-customerservice-image
+
+  security_order:
+    name: Order & Delivery - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.order == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Order & Delivery image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (Order & Delivery)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.OrderService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (Order & Delivery, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.OrderService
+          format: sarif
+          output: trivy-order-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (Order & Delivery, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-order-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (Order & Delivery)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-order-fs.sarif
+          category: trivy-order-fs
+
+      - name: Upload Trivy image SARIF (Order & Delivery)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-order-image.sarif
+          category: trivy-order-image
+
+  security_agentbonus:
+    name: AgentBonus - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.agentbonus == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull AgentBonus image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (AgentBonus)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.AgentBonusService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (AgentBonus, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.AgentBonusService
+          format: sarif
+          output: trivy-agentbonus-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (AgentBonus, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-agentbonus-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (AgentBonus)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-agentbonus-fs.sarif
+          category: trivy-agentbonus-fs
+
+      - name: Upload Trivy image SARIF (AgentBonus)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-agentbonus-image.sarif
+          category: trivy-agentbonus-image
+
+  security_agentservice:
+    name: AgentService - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.agentservice == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull AgentService image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (AgentService)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.AgentService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (AgentService, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.AgentService
+          format: sarif
+          output: trivy-agentservice-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (AgentService, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-agentservice-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (AgentService)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-agentservice-fs.sarif
+          category: trivy-agentservice-fs
+
+      - name: Upload Trivy image SARIF (AgentService)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-agentservice-image.sarif
+          category: trivy-agentservice-image
+
+  security_customerservice:
+    name: CustomerService - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.customerservice == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull CustomerService image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (CustomerService)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.CustomerService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (CustomerService, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.CustomerService
+          format: sarif
+          output: trivy-customerservice-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (CustomerService, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-customerservice-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (CustomerService)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-customerservice-fs.sarif
+          category: trivy-customerservice-fs
+
+      - name: Upload Trivy image SARIF (CustomerService)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-customerservice-image.sarif
+          category: trivy-customerservice-image
+
+  security_feedbackhub:
+    name: FeedbackHub - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.feedbackhub == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull FeedbackHub image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (FeedbackHub)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.FeedbackHubService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (FeedbackHub, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.FeedbackHubService
+          format: sarif
+          output: trivy-feedbackhub-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (FeedbackHub, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-feedbackhub-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (FeedbackHub)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-feedbackhub-fs.sarif
+          category: trivy-feedbackhub-fs
+
+      - name: Upload Trivy image SARIF (FeedbackHub)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-feedbackhub-image.sarif
+          category: trivy-feedbackhub-image
+
+  security_gateway:
+    name: Gateway - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.gateway == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Gateway image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (Gateway)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.Gateway \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (Gateway, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.Gateway
+          format: sarif
+          output: trivy-gateway-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (Gateway, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-gateway-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (Gateway)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-gateway-fs.sarif
+          category: trivy-gateway-fs
+
+      - name: Upload Trivy image SARIF (Gateway)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-gateway-image.sarif
+          category: trivy-gateway-image
+
+  security_notification:
+    name: Notification - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.notification == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Notification image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (Notification)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.NotificationService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (Notification, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.NotificationService
+          format: sarif
+          output: trivy-notification-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (Notification, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-notification-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (Notification)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-notification-fs.sarif
+          category: trivy-notification-fs
+
+      - name: Upload Trivy image SARIF (Notification)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-notification-image.sarif
+          category: trivy-notification-image
+
+  security_partner:
+    name: Partner - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.partner == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Partner image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (Partner)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.PartnerService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (Partner, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.PartnerService
+          format: sarif
+          output: trivy-partner-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (Partner, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-partner-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (Partner)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-partner-fs.sarif
+          category: trivy-partner-fs
+
+      - name: Upload Trivy image SARIF (Partner)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-partner-image.sarif
+          category: trivy-partner-image
+
+  security_website:
+    name: Website - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.website == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Website image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (Website)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.Website \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (Website, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.Website
+          format: sarif
+          output: trivy-website-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (Website, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-website-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (Website)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-website-fs.sarif
+          category: trivy-website-fs
+
+      - name: Upload Trivy image SARIF (Website)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-website-image.sarif
+          category: trivy-website-image
+
+  security_websocketagent:
+    name: WebSocketAgent - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.websocketagent == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull WebSocketAgent image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (WebSocketAgent)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.WebSocketAgentService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (WebSocketAgent, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.WebSocketAgentService
+          format: sarif
+          output: trivy-websocketagent-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (WebSocketAgent, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-websocketagent-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (WebSocketAgent)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-websocketagent-fs.sarif
+          category: trivy-websocketagent-fs
+
+      - name: Upload Trivy image SARIF (WebSocketAgent)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-websocketagent-image.sarif
+          category: trivy-websocketagent-image
+
+  security_websocketcustomer:
+    name: WebSocketCustomer - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.websocketcustomer == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull WebSocketCustomer image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (WebSocketCustomer)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.WebSocketCustomerService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (WebSocketCustomer, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.WebSocketCustomerService
+          format: sarif
+          output: trivy-websocketcustomer-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (WebSocketCustomer, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-websocketcustomer-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (WebSocketCustomer)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-websocketcustomer-fs.sarif
+          category: trivy-websocketcustomer-fs
+
+      - name: Upload Trivy image SARIF (WebSocketCustomer)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-websocketcustomer-image.sarif
+          category: trivy-websocketcustomer-image
+
+  security_websocketpartner:
+    name: WebSocketPartner - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.websocketpartner == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull WebSocketPartner image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (WebSocketPartner)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.WebSocketPartnerService \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (WebSocketPartner, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.WebSocketPartnerService
+          format: sarif
+          output: trivy-websocketpartner-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (WebSocketPartner, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-websocketpartner-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (WebSocketPartner)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-websocketpartner-fs.sarif
+          category: trivy-websocketpartner-fs
+
+      - name: Upload Trivy image SARIF (WebSocketPartner)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-websocketpartner-image.sarif
+          category: trivy-websocketpartner-image
+
+  security_legacy:
+    name: LegacyMToGo - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.legacy == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull LegacyMToGo image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ github.event.workflow_run.head_sha }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (LegacyMToGo)
+        run: |
+          gitleaks detect \
+            --source LegacyMToGo \
+            --config .gitleaks.toml \
+            -v
+
+      - name: Trivy FS scan (LegacyMToGo, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: fs
+          scan-ref: LegacyMToGo
+          format: sarif
+          output: trivy-legacy-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Trivy image scan (LegacyMToGo, HIGH/CRITICAL fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ github.event.workflow_run.head_sha }}
+          format: sarif
+          output: trivy-legacy-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy FS SARIF (LegacyMToGo)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-legacy-fs.sarif
+          category: trivy-legacy-fs
+
+      - name: Upload Trivy image SARIF (LegacyMToGo)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-legacy-image.sarif
+          category: trivy-legacy-image
+
+  security_all_checks:
+    name: Security - all checks
+    runs-on: ubuntu-latest
+    needs:
+      - check_ci_cd_status
+      - detect_changed_services
+      - codeql
+      - security_agentbonus
+      - security_agentservice
+      - security_customerservice
+      - security_feedbackhub
+      - security_gateway
+      - security_notification
+      - security_order
+      - security_partner
+      - security_website
+      - security_websocketagent
+      - security_websocketcustomer
+      - security_websocketpartner
+      - security_legacy
+    # Always run so we can explicitly fail even if others failed
+    if: always()
+
+    steps:
+      - name: Evaluate security job results
+        run: |
+          echo "check_ci_cd_status:        ${{ needs.check_ci_cd_status.result }}"
+          echo "detect_changed_services: ${{ needs.detect_changed_services.result }}"
+          echo "codeql:                 ${{ needs.codeql.result }}"
+          echo "security_agentbonus:    ${{ needs.security_agentbonus.result }}"
+          echo "security_agentservice:  ${{ needs.security_agentservice.result }}"
+          echo "security_customerservice: ${{ needs.security_customerservice.result }}"
+          echo "security_feedbackhub:   ${{ needs.security_feedbackhub.result }}"
+          echo "security_gateway:       ${{ needs.security_gateway.result }}"
+          echo "security_notification:  ${{ needs.security_notification.result }}"
+          echo "security_order:         ${{ needs.security_order.result }}"
+          echo "security_partner:       ${{ needs.security_partner.result }}"
+          echo "security_website:       ${{ needs.security_website.result }}"
+          echo "security_websocketagent: ${{ needs.security_websocketagent.result }}"
+          echo "security_websocketcustomer: ${{ needs.security_websocketcustomer.result }}"
+          echo "security_websocketpartner: ${{ needs.security_websocketpartner.result }}"
+          echo "security_legacy:        ${{ needs.security_legacy.result }}"
+
+          failed=false
+
+          for result in \
+            "${{ needs.check_ci_cd_status.result }}" \
+            "${{ needs.codeql.result }}" \
+            "${{ needs.security_agentbonus.result }}" \
+            "${{ needs.security_agentservice.result }}" \
+            "${{ needs.security_customerservice.result }}" \
+            "${{ needs.security_feedbackhub.result }}" \
+            "${{ needs.security_gateway.result }}" \
+            "${{ needs.security_notification.result }}" \
+            "${{ needs.security_order.result }}" \
+            "${{ needs.security_partner.result }}" \
+            "${{ needs.security_website.result }}" \
+            "${{ needs.security_websocketagent.result }}" \
+            "${{ needs.security_websocketcustomer.result }}" \
+            "${{ needs.security_websocketpartner.result }}" \
+            "${{ needs.security_legacy.result }}"; do
+
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              failed=true
+            fi
+          done
+
+          if [ "$failed" = true ]; then
+            echo "One or more security jobs failed or were cancelled."
+            exit 1
+          fi
+
+          echo "All required security jobs succeeded (or were skipped)."
