@@ -1,0 +1,20 @@
+[global]
+verbose = true
+
+[allowlist]
+description = "global allowlist"
+paths = [
+    '''\.git/''',
+    '''\.env''',
+    '''appsettings\.json''',
+    '''appsettings\.Development\.json''',
+    '''bin/''',
+    '''obj/''',
+    '''\.vscode/''',
+    '''\.vs/''',
+    '''test/''',
+    '''tests/''',
+]
+
+[extend]
+useDefault = true
