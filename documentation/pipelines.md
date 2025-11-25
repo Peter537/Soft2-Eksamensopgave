@@ -31,7 +31,7 @@ Dette dokument beskriver alle pipelines, der anvendes i udviklingen af MToGo-sys
 
 ## Main/shared Workflows & Automations
 
-- **scheduled_codeql.yml**:  
+- **weekly_codeql.yml**:  
   Ekstra CodeQL-scan, som kører ugentligt på main for at fange eventuelle nye sårbarheder i eksisterende kode.
 
 - **performance.yml**:  
