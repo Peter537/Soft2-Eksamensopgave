@@ -31,7 +31,7 @@ Dette dokument beskriver alle pipelines, der anvendes i udviklingen af MToGo-sys
 
 ## Main/shared Workflows & Automations
 
-- **scheduled_codeql**:  
+- **scheduled_codeql.yml**:  
   Ekstra CodeQL-scan, som kører ugentligt på main for at fange eventuelle nye sårbarheder i eksisterende kode.
 
 - **performance.yml**:  
@@ -43,9 +43,6 @@ Dette dokument beskriver alle pipelines, der anvendes i udviklingen af MToGo-sys
 
 - **dependabot.yml**:  
   Konfiguration af GitHub Dependabot. Scheduled auto-scan af dependencies; opretter automatisk PR for opdateringer og flagger sikkerhedsrisici.
-
-- **issue-labeler.yml / .github/issue-labeler.yml**:  
-  issue-labeler.yml (workflow) bruger konfigurationen i .github/issue-labeler.yml til automatisk at tilføje labels baseret på issue-tekst.
 
 - **terraform.yml**:  
   Workflow til opsætning og opdatering af IaC. Bruges til at oprette/opdatere infrastrukturen (Kubernetes, databaser, osv.) på en kontrolleret måde.
