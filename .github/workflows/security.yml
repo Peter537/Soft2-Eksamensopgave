@@ -50,11 +50,25 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
+      - name: Get base commit for comparison
+        id: get-base
+        run: |
+          if [ "${{ github.event.workflow_run.event }}" == "pull_request" ]; then
+            # For PRs, compare against the PR base
+            BASE_SHA=$(git merge-base ${{ github.event.workflow_run.head_sha }} origin/main)
+          else
+            # For push events, compare against the parent commit
+            BASE_SHA=$(git rev-parse ${{ github.event.workflow_run.head_sha }}^)
+          fi
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+
       - name: Detect changed paths
         id: filter
         uses: dorny/paths-filter@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ steps.get-base.outputs.base_sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
           filters: |
             # Fælles kode / config der påvirker flere services
             shared:
