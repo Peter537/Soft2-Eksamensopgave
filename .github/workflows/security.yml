@@ -36,7 +36,7 @@ permissions:
 
 jobs:
   wait_for_cicd:
-    name: Wait for CI/CD → images & artifact
+    name: Wait for CI/CD images & artifact
     runs-on: ubuntu-latest
     outputs:
       cicd-run-id: ${{ steps.wait.outputs.run_id }}
@@ -47,8 +47,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           checkName: Save build outputs
-          ref: ${{ github.event.pull_request.head.sha }}
-          repo: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           intervalSeconds: 15
           timeoutSeconds: 1800
 
