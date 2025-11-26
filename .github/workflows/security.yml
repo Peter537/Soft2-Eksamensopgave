@@ -39,7 +39,7 @@ jobs:
     name: Wait for CI/CD images & artifact
     runs-on: ubuntu-latest
     outputs:
-      cicd-run-id: ${{ steps.wait.outputs.run_id }}
+      cicd-run-id: ${{ steps.get-run-id.outputs.run_id }}
     steps:
       - name: Wait for CI/CD workflow to complete
         uses: fountainhead/action-wait-for-check@v1.2.0
@@ -57,6 +57,27 @@ jobs:
             echo "CI/CD pipeline did not succeed (conclusion: ${{ steps.wait.outputs.conclusion }})"
             exit 1
           fi
+
+      - name: Get CI/CD workflow run ID
+        id: get-run-id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          echo "Looking for CI/CD workflow run for commit: $SHA"
+
+          RUN_ID=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/actions/workflows/cicd.yml/runs?head_sha=$SHA&status=completed" \
+            --jq '.workflow_runs[0].id')
+
+          if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
+            echo "Error: Could not find CI/CD workflow run for SHA $SHA"
+            exit 1
+          fi
+
+          echo "Found CI/CD workflow run ID: $RUN_ID"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
 
   detect_changed_services:
     name: Detect changed services
@@ -85,6 +106,7 @@ jobs:
           name: build-outputs
           path: .
           run-id: ${{ needs.wait_for_cicd.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Parse build outputs
         id: parse
