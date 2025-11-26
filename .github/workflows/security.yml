@@ -1,9 +1,32 @@
 name: Security Gates
 
 on:
-  workflow_run:
-    workflows: ["CI / CD Pipeline"]
-    types: ["completed"]
+  push:
+    branches: [main]
+    paths:
+      - "MToGo/src/**"
+      - "MToGo/tests/**"
+      - "LegacyMToGo/**"
+      - "MToGo/*.sln"
+      - "MToGo/Directory.Packages.props"
+      - "MToGo/.dockerignore"
+      - "LegacyMToGo/.dockerignore"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "MToGo/src/**"
+      - "MToGo/tests/**"
+      - "LegacyMToGo/**"
+      - "MToGo/*.sln"
+      - "MToGo/Directory.Packages.props"
+      - "MToGo/.dockerignore"
+      - "LegacyMToGo/.dockerignore"
+      - ".github/workflows/**"
+
+concurrency:
+  group: security-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -12,20 +35,33 @@ permissions:
   packages: read
 
 jobs:
-  check_ci_cd_status:
+  wait_for_cicd:
+    name: Wait for CI/CD → images & artifact
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_run'
+    outputs:
+      cicd-run-id: ${{ steps.wait.outputs.run_id }}
     steps:
-      - name: Check CI/CD workflow result
+      - name: Wait for CI/CD workflow to complete
+        uses: fountainhead/action-wait-for-check@v1.2.0
+        id: wait
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Save build outputs
+          ref: ${{ github.event.pull_request.head.sha }}
+          repo: ${{ github.repository }}
+          intervalSeconds: 15
+          timeoutSeconds: 1800
+
+      - name: Verify CI/CD succeeded
         run: |
-          if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-            echo "CI/CD workflow failed, stopping security scans"
+          if [[ "${{ steps.wait.outputs.conclusion }}" != "success" ]]; then
+            echo "CI/CD pipeline did not succeed (conclusion: ${{ steps.wait.outputs.conclusion }})"
             exit 1
           fi
 
   detect_changed_services:
     name: Detect changed services
-    needs: check_ci_cd_status
+    needs: wait_for_cicd
     runs-on: ubuntu-latest
     outputs:
       shared: ${{ steps.parse.outputs.shared }}
@@ -44,12 +80,12 @@ jobs:
       legacy: ${{ steps.parse.outputs.legacy }}
 
     steps:
-      - name: Download build outputs from CI/CD
+      - name: Download build-outputs.json from the completed CI/CD run
         uses: actions/download-artifact@v4
         with:
           name: build-outputs
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          path: .
+          run-id: ${{ needs.wait_for_cicd.outputs.cicd-run-id }}
 
       - name: Parse build outputs
         id: parse
@@ -1272,7 +1308,7 @@ jobs:
     name: Security - all checks
     runs-on: ubuntu-latest
     needs:
-      - check_ci_cd_status
+      - wait_for_cicd
       - detect_changed_services
       - codeql
       - security_agentbonus
@@ -1294,7 +1330,7 @@ jobs:
     steps:
       - name: Evaluate security job results
         run: |
-          echo "check_ci_cd_status:        ${{ needs.check_ci_cd_status.result }}"
+          echo "wait_for_cicd:        ${{ needs.wait_for_cicd.result }}"
           echo "detect_changed_services: ${{ needs.detect_changed_services.result }}"
           echo "codeql:                 ${{ needs.codeql.result }}"
           echo "security_agentbonus:    ${{ needs.security_agentbonus.result }}"
@@ -1314,7 +1350,7 @@ jobs:
           failed=false
 
           for result in \
-            "${{ needs.check_ci_cd_status.result }}" \
+            "${{ needs.wait_for_cicd.result }}" \
             "${{ needs.detect_changed_services.result }}" \
             "${{ needs.codeql.result }}" \
             "${{ needs.security_agentbonus.result }}" \
