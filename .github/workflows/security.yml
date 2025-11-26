@@ -13,7 +13,6 @@ permissions:
   packages: read
 
 jobs:
-  # Check if CI succeeded
   check_ci_cd_status:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_run'
