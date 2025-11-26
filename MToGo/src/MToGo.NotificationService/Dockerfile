@@ -9,7 +9,7 @@ RUN dotnet restore "src/MToGo.NotificationService/MToGo.NotificationService.cspr
 COPY ["Directory.Packages.props", "."]
 COPY ["src/MToGo.Shared", "src/MToGo.Shared/"]
 COPY ["src/MToGo.NotificationService", "src/MToGo.NotificationService/"]
-WORKDIR "/src/MToGo.NotificationService"
+WORKDIR "/src/src/MToGo.NotificationService"
 RUN dotnet build "MToGo.NotificationService.csproj" -c Release -o /app/build
 
 # Publish stage

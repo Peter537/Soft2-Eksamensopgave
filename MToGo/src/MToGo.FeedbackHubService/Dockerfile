@@ -9,7 +9,7 @@ RUN dotnet restore "src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj
 COPY ["Directory.Packages.props", "."]
 COPY ["src/MToGo.Shared", "src/MToGo.Shared/"]
 COPY ["src/MToGo.FeedbackHubService", "src/MToGo.FeedbackHubService/"]
-WORKDIR "/src/MToGo.FeedbackHubService"
+WORKDIR "/src/src/MToGo.FeedbackHubService"
 RUN dotnet build "MToGo.FeedbackHubService.csproj" -c Release -o /app/build
 
 # Publish stage

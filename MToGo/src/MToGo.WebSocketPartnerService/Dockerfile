@@ -9,7 +9,7 @@ RUN dotnet restore "src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerServ
 COPY ["Directory.Packages.props", "."]
 COPY ["src/MToGo.Shared", "src/MToGo.Shared/"]
 COPY ["src/MToGo.WebSocketPartnerService", "src/MToGo.WebSocketPartnerService/"]
-WORKDIR "/src/MToGo.WebSocketPartnerService"
+WORKDIR "/src/src/MToGo.WebSocketPartnerService"
 RUN dotnet build "MToGo.WebSocketPartnerService.csproj" -c Release -o /app/build
 
 # Publish stage

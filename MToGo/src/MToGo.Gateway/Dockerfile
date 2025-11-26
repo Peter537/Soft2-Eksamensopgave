@@ -9,7 +9,7 @@ RUN dotnet restore "src/MToGo.Gateway/MToGo.Gateway.csproj"
 COPY ["Directory.Packages.props", "."]
 COPY ["src/MToGo.Shared", "src/MToGo.Shared/"]
 COPY ["src/MToGo.Gateway", "src/MToGo.Gateway/"]
-WORKDIR "/src/MToGo.Gateway"
+WORKDIR "/src/src/MToGo.Gateway"
 RUN dotnet build "MToGo.Gateway.csproj" -c Release -o /app/build
 
 # Publish stage

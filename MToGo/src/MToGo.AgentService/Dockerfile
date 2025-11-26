@@ -9,7 +9,7 @@ RUN dotnet restore "src/MToGo.AgentService/MToGo.AgentService.csproj"
 COPY ["Directory.Packages.props", "."]
 COPY ["src/MToGo.Shared", "src/MToGo.Shared/"]
 COPY ["src/MToGo.AgentService", "src/MToGo.AgentService/"]
-WORKDIR "/src/MToGo.AgentService"
+WORKDIR "/src/src/MToGo.AgentService"
 RUN dotnet build "MToGo.AgentService.csproj" -c Release -o /app/build
 
 # Publish stage

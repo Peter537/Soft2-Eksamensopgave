@@ -9,7 +9,7 @@ RUN dotnet restore "src/MToGo.Website/MToGo.Website.csproj"
 COPY ["Directory.Packages.props", "."]
 COPY ["src/MToGo.Shared", "src/MToGo.Shared/"]
 COPY ["src/MToGo.Website", "src/MToGo.Website/"]
-WORKDIR "/src/MToGo.Website"
+WORKDIR "/src/src/MToGo.Website"
 RUN dotnet build "MToGo.Website.csproj" -c Release -o /app/build
 
 # Publish stage
