@@ -655,3 +655,54 @@ jobs:
             LegacyMToGo/
 
           docker push "$IMAGE"
+
+  # Save build outputs for security workflow
+  save_build_outputs:
+    name: Save build outputs
+    needs:
+      - detect_changes
+      - agentbonus_ci
+      - agentservice_ci
+      - customerservice_ci
+      - feedbackhub_ci
+      - gateway_ci
+      - notification_ci
+      - order_ci
+      - partner_ci
+      - website_ci
+      - websocketagent_ci
+      - websocketcustomer_ci
+      - websocketpartner_ci
+      - legacy_ci
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create build outputs file
+        run: |
+          cat << EOF > build-outputs.json
+          {
+            "shared": "${{ needs.detect_changes.outputs.shared }}",
+            "agentbonus": "${{ needs.detect_changes.outputs.agentbonus }}",
+            "agentservice": "${{ needs.detect_changes.outputs.agentservice }}",
+            "customerservice": "${{ needs.detect_changes.outputs.customerservice }}",
+            "feedbackhub": "${{ needs.detect_changes.outputs.feedbackhub }}",
+            "gateway": "${{ needs.detect_changes.outputs.gateway }}",
+            "notification": "${{ needs.detect_changes.outputs.notification }}",
+            "order": "${{ needs.detect_changes.outputs.order }}",
+            "partner": "${{ needs.detect_changes.outputs.partner }}",
+            "website": "${{ needs.detect_changes.outputs.website }}",
+            "websocketagent": "${{ needs.detect_changes.outputs.websocketagent }}",
+            "websocketcustomer": "${{ needs.detect_changes.outputs.websocketcustomer }}",
+            "websocketpartner": "${{ needs.detect_changes.outputs.websocketpartner }}",
+            "legacy": "${{ needs.detect_changes.outputs.legacy }}"
+          }
+          EOF
+          cat build-outputs.json
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-outputs
+          path: build-outputs.json
+          retention-days: 1

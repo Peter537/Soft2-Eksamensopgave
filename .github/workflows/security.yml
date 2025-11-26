@@ -28,104 +28,47 @@ jobs:
     needs: check_ci_cd_status
     runs-on: ubuntu-latest
     outputs:
-      shared: ${{ steps.filter.outputs.shared }}
-      agentbonus: ${{ steps.filter.outputs.agentbonus }}
-      agentservice: ${{ steps.filter.outputs.agentservice }}
-      customerservice: ${{ steps.filter.outputs.customerservice }}
-      feedbackhub: ${{ steps.filter.outputs.feedbackhub }}
-      gateway: ${{ steps.filter.outputs.gateway }}
-      notification: ${{ steps.filter.outputs.notification }}
-      order: ${{ steps.filter.outputs.order }}
-      partner: ${{ steps.filter.outputs.partner }}
-      website: ${{ steps.filter.outputs.website }}
-      websocketagent: ${{ steps.filter.outputs.websocketagent }}
-      websocketcustomer: ${{ steps.filter.outputs.websocketcustomer }}
-      websocketpartner: ${{ steps.filter.outputs.websocketpartner }}
-      legacy: ${{ steps.filter.outputs.legacy }}
+      shared: ${{ steps.parse.outputs.shared }}
+      agentbonus: ${{ steps.parse.outputs.agentbonus }}
+      agentservice: ${{ steps.parse.outputs.agentservice }}
+      customerservice: ${{ steps.parse.outputs.customerservice }}
+      feedbackhub: ${{ steps.parse.outputs.feedbackhub }}
+      gateway: ${{ steps.parse.outputs.gateway }}
+      notification: ${{ steps.parse.outputs.notification }}
+      order: ${{ steps.parse.outputs.order }}
+      partner: ${{ steps.parse.outputs.partner }}
+      website: ${{ steps.parse.outputs.website }}
+      websocketagent: ${{ steps.parse.outputs.websocketagent }}
+      websocketcustomer: ${{ steps.parse.outputs.websocketcustomer }}
+      websocketpartner: ${{ steps.parse.outputs.websocketpartner }}
+      legacy: ${{ steps.parse.outputs.legacy }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download build outputs from CI/CD
+        uses: actions/download-artifact@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
+          name: build-outputs
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Get base commit for comparison
-        id: get-base
+      - name: Parse build outputs
+        id: parse
         run: |
-          if [ "${{ github.event.workflow_run.event }}" == "pull_request" ]; then
-            # For PRs, compare against the PR base
-            BASE_SHA=$(git merge-base ${{ github.event.workflow_run.head_sha }} origin/main)
-          else
-            # For push events, compare against the parent commit
-            BASE_SHA=$(git rev-parse ${{ github.event.workflow_run.head_sha }}^)
-          fi
-          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
-
-      - name: Detect changed paths
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ steps.get-base.outputs.base_sha }}
-          ref: ${{ github.event.workflow_run.head_sha }}
-          filters: |
-            # Fælles kode / config der påvirker flere services
-            shared:
-              - 'MToGo/src/MToGo.Shared/**'
-              - 'MToGo/Directory.Packages.props'
-              - 'MToGo/*.sln'
-              - '.github/workflows/**'
-
-            agentbonus:
-              - 'MToGo/src/MToGo.AgentBonusService/**'
-              - 'MToGo/tests/MToGo.AgentBonusService.Tests/**'
-
-            agentservice:
-              - 'MToGo/src/MToGo.AgentService/**'
-              - 'MToGo/tests/MToGo.AgentService.Tests/**'
-
-            customerservice:
-              - 'MToGo/src/MToGo.CustomerService/**'
-              - 'MToGo/tests/MToGo.CustomerService.Tests/**'
-
-            feedbackhub:
-              - 'MToGo/src/MToGo.FeedbackHubService/**'
-              - 'MToGo/tests/MToGo.FeedbackHubService.Tests/**'
-
-            gateway:
-              - 'MToGo/src/MToGo.Gateway/**'
-
-            notification:
-              - 'MToGo/src/MToGo.NotificationService/**'
-              - 'MToGo/tests/MToGo.NotificationService.Tests/**'
-
-            order:
-              - 'MToGo/src/MToGo.OrderService/**'
-              - 'MToGo/tests/MToGo.OrderService.Tests/**'
-
-            partner:
-              - 'MToGo/src/MToGo.PartnerService/**'
-              - 'MToGo/tests/MToGo.PartnerService.Tests/**'
-
-            website:
-              - 'MToGo/src/MToGo.Website/**'
-              - 'MToGo/tests/MToGo.Website.Tests/**'
-
-            websocketagent:
-              - 'MToGo/src/MToGo.WebSocketAgentService/**'
-              - 'MToGo/tests/MToGo.WebSocketAgentService.Tests/**'
-
-            websocketcustomer:
-              - 'MToGo/src/MToGo.WebSocketCustomerService/**'
-              - 'MToGo/tests/MToGo.WebSocketCustomerService.Tests/**'
-
-            websocketpartner:
-              - 'MToGo/src/MToGo.WebSocketPartnerService/**'
-              - 'MToGo/tests/MToGo.WebSocketPartnerService.Tests/**'
-
-            legacy:
-              - 'LegacyMToGo/**'
+          cat build-outputs.json
+          echo "shared=$(jq -r '.shared' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "agentbonus=$(jq -r '.agentbonus' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "agentservice=$(jq -r '.agentservice' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "customerservice=$(jq -r '.customerservice' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "feedbackhub=$(jq -r '.feedbackhub' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "gateway=$(jq -r '.gateway' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "notification=$(jq -r '.notification' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "order=$(jq -r '.order' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "partner=$(jq -r '.partner' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "website=$(jq -r '.website' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "websocketagent=$(jq -r '.websocketagent' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "websocketcustomer=$(jq -r '.websocketcustomer' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "websocketpartner=$(jq -r '.websocketpartner' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "legacy=$(jq -r '.legacy' build-outputs.json)" >> "$GITHUB_OUTPUT"
 
   codeql:
     name: CodeQL - repo-wide analysis
