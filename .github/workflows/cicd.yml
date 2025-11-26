@@ -28,6 +28,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  IMAGE_TAG: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   detect_changes:
     name: Detect changed services
@@ -149,7 +152,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-agentbonus"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.AgentBonusService/Dockerfile \
@@ -191,7 +194,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-agentservice"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.AgentService/Dockerfile \
@@ -233,7 +236,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-customerservice"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.CustomerService/Dockerfile \
@@ -275,7 +278,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-feedbackhub"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.FeedbackHubService/Dockerfile \
@@ -314,7 +317,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-gateway"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.Gateway/Dockerfile \
@@ -356,7 +359,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-notification"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.NotificationService/Dockerfile \
@@ -398,7 +401,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-order"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.OrderService/Dockerfile \
@@ -440,7 +443,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-partner"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.PartnerService/Dockerfile \
@@ -482,7 +485,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-website"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.Website/Dockerfile \
@@ -524,7 +527,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketagent"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketAgentService/Dockerfile \
@@ -566,7 +569,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketcustomer"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketCustomerService/Dockerfile \
@@ -608,7 +611,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketpartner"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketPartnerService/Dockerfile \
@@ -647,7 +650,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-legacy"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f LegacyMToGo/Dockerfile \
@@ -655,3 +658,54 @@ jobs:
             LegacyMToGo/
 
           docker push "$IMAGE"
+
+  # Save build outputs for security workflow
+  save_build_outputs:
+    name: Save build outputs
+    needs:
+      - detect_changes
+      - agentbonus_ci
+      - agentservice_ci
+      - customerservice_ci
+      - feedbackhub_ci
+      - gateway_ci
+      - notification_ci
+      - order_ci
+      - partner_ci
+      - website_ci
+      - websocketagent_ci
+      - websocketcustomer_ci
+      - websocketpartner_ci
+      - legacy_ci
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create build outputs file
+        run: |
+          cat << EOF > build-outputs.json
+          {
+            "shared": "${{ needs.detect_changes.outputs.shared }}",
+            "agentbonus": "${{ needs.detect_changes.outputs.agentbonus }}",
+            "agentservice": "${{ needs.detect_changes.outputs.agentservice }}",
+            "customerservice": "${{ needs.detect_changes.outputs.customerservice }}",
+            "feedbackhub": "${{ needs.detect_changes.outputs.feedbackhub }}",
+            "gateway": "${{ needs.detect_changes.outputs.gateway }}",
+            "notification": "${{ needs.detect_changes.outputs.notification }}",
+            "order": "${{ needs.detect_changes.outputs.order }}",
+            "partner": "${{ needs.detect_changes.outputs.partner }}",
+            "website": "${{ needs.detect_changes.outputs.website }}",
+            "websocketagent": "${{ needs.detect_changes.outputs.websocketagent }}",
+            "websocketcustomer": "${{ needs.detect_changes.outputs.websocketcustomer }}",
+            "websocketpartner": "${{ needs.detect_changes.outputs.websocketpartner }}",
+            "legacy": "${{ needs.detect_changes.outputs.legacy }}"
+          }
+          EOF
+          cat build-outputs.json
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-outputs
+          path: build-outputs.json
+          retention-days: 1
