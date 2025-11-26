@@ -28,6 +28,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  IMAGE_TAG: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   detect_changes:
     name: Detect changed services
@@ -149,7 +152,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-agentbonus"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.AgentBonusService/Dockerfile \
@@ -191,7 +194,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-agentservice"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.AgentService/Dockerfile \
@@ -233,7 +236,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-customerservice"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.CustomerService/Dockerfile \
@@ -275,7 +278,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-feedbackhub"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.FeedbackHubService/Dockerfile \
@@ -314,7 +317,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-gateway"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.Gateway/Dockerfile \
@@ -356,7 +359,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-notification"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.NotificationService/Dockerfile \
@@ -398,7 +401,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-order"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.OrderService/Dockerfile \
@@ -440,7 +443,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-partner"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.PartnerService/Dockerfile \
@@ -482,7 +485,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-website"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.Website/Dockerfile \
@@ -524,7 +527,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketagent"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketAgentService/Dockerfile \
@@ -566,7 +569,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketcustomer"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketCustomerService/Dockerfile \
@@ -608,7 +611,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketpartner"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketPartnerService/Dockerfile \
@@ -647,7 +650,7 @@ jobs:
         run: |
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-legacy"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${GITHUB_SHA}"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
 
           docker build \
             -f LegacyMToGo/Dockerfile \
