@@ -1,0 +1,44 @@
+name: Weekly CodeQL - Full repository
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    name: Weekly CodeQL - repo-wide analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          build-mode: manual
+
+      - name: Build for CodeQL
+        run: |
+          echo "Restoring and building MToGo services"
+          dotnet restore MToGo/MToGo.sln
+          dotnet build MToGo/MToGo.sln -c Release --no-restore
+
+          echo "Restoring and building LegacyMToGo"
+          dotnet restore LegacyMToGo/LegacyMToGo.csproj
+          dotnet build LegacyMToGo/LegacyMToGo.csproj -c Release --no-restore
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4

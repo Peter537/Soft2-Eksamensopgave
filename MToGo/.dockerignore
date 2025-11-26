@@ -1,0 +1,16 @@
+bin/
+obj/
+*.user
+*.tmp
+.git/
+.github/
+.vscode/
+.vs/
+*.log
+Dockerfile
+.dockerignore
+**/bin/
+**/obj/
+**/*.user
+**/*.tmp
+**/*.log
