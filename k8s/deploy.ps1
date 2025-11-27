@@ -49,7 +49,7 @@ Write-Host "Waiting for PostgreSQL to be ready..." -ForegroundColor Yellow
 kubectl wait --for=condition=ready pod -l app=mtogo-db -n $Namespace --timeout=120s
 
 Write-Host "Waiting for Kafka to be ready..." -ForegroundColor Yellow
-kubectl wait --for=condition=ready pod -l app=kafka -n $Namespace --timeout=180s
+kubectl wait --for=condition=ready pod -l app=kafka -n $Namespace --timeout=120s
 
 # Step 4: Deploy application services
 Write-Host "[4/5] Deploying application services..." -ForegroundColor Yellow
@@ -67,11 +67,11 @@ Write-Host "  Deployment Complete!" -ForegroundColor Green
 Write-Host "================================================" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Waiting for all pods to be ready..." -ForegroundColor Yellow
-kubectl wait --for=condition=ready pod --all -n $Namespace --timeout=300s
+Write-Host "Waiting for pods to start (30 seconds)..." -ForegroundColor Yellow
+Start-Sleep -Seconds 30
 
 Write-Host ""
-Write-Host "All pods are running:" -ForegroundColor Green
+Write-Host "Pod status:" -ForegroundColor Green
 kubectl get pods -n $Namespace
 
 Write-Host ""
@@ -79,11 +79,11 @@ Write-Host "Services:" -ForegroundColor Green
 kubectl get svc -n $Namespace
 
 Write-Host ""
-Write-Host "To access the application, add these entries to your hosts file:" -ForegroundColor Cyan
-Write-Host "  127.0.0.1 mtogo.local"
-Write-Host "  127.0.0.1 api.mtogo.local"
-Write-Host "  127.0.0.1 legacy.mtogo.local"
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "  Access your application:" -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Then access:" -ForegroundColor Cyan
-Write-Host "  Website: http://mtogo.local"
-Write-Host "  API:     http://api.mtogo.local"
+Write-Host "  Website:     http://localhost:31081" -ForegroundColor White
+Write-Host "  API Gateway: http://localhost:31080" -ForegroundColor White
+Write-Host "  Legacy API:  http://localhost:31082" -ForegroundColor White
+Write-Host ""

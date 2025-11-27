@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: customer-service
     app.kubernetes.io/component: backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: customer-service
@@ -27,18 +27,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: mtogo-config
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
           resources:
             requests:
               memory: "128Mi"

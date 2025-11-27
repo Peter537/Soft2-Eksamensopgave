@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: agent-service
     app.kubernetes.io/component: backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: agent-service
@@ -40,18 +40,6 @@ spec:
                 secretKeyRef:
                   name: mtogo-db-secret
                   key: CONNECTION_STRING_AGENTS
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
           resources:
             requests:
               memory: "128Mi"

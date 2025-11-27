@@ -8,4 +8,4 @@ metadata:
 data:
   ASPNETCORE_ENVIRONMENT: "Development"
   ASPNETCORE_URLS: "http://+:8080"
-  Kafka__BootstrapServers: "kafka:29092"
+  Kafka__BootstrapServers: "kafka:9092"

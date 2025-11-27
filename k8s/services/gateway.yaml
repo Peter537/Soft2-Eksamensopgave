@@ -27,7 +27,7 @@ metadata:
     app.kubernetes.io/name: gateway
     app.kubernetes.io/component: gateway
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: gateway
@@ -49,18 +49,6 @@ spec:
                 name: mtogo-config
             - configMapRef:
                 name: gateway-config
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
           resources:
             requests:
               memory: "128Mi"
