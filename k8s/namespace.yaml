@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mtogo
+  labels:
+    app.kubernetes.io/name: mtogo
+    app.kubernetes.io/part-of: mtogo-platform
