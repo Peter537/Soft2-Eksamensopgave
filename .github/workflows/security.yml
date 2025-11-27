@@ -3,26 +3,8 @@ name: Security Gates
 on:
   push:
     branches: [main]
-    paths:
-      - "MToGo/src/**"
-      - "MToGo/tests/**"
-      - "LegacyMToGo/**"
-      - "MToGo/*.sln"
-      - "MToGo/Directory.Packages.props"
-      - "MToGo/.dockerignore"
-      - "LegacyMToGo/.dockerignore"
-      - ".github/workflows/**"
   pull_request:
     branches: [main]
-    paths:
-      - "MToGo/src/**"
-      - "MToGo/tests/**"
-      - "LegacyMToGo/**"
-      - "MToGo/*.sln"
-      - "MToGo/Directory.Packages.props"
-      - "MToGo/.dockerignore"
-      - "LegacyMToGo/.dockerignore"
-      - ".github/workflows/**"
 
 concurrency:
   group: security-${{ github.head_ref || github.run_id }}
