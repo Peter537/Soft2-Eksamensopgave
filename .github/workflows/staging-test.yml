@@ -1,0 +1,322 @@
+# ===========================================
+# Staging Environment Deploy & Test Workflow
+# ===========================================
+# Deploys to a staging environment and runs integration/E2E tests.
+# Can be triggered on PRs or manually.
+
+name: Deploy & Test Staging
+
+on:
+  # Run on PRs to main (optional - can be expensive)
+  # pull_request:
+  #   branches: [main]
+  #   types: [opened, synchronize]
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      run_load_tests:
+        description: "Run load/performance tests"
+        required: false
+        default: false
+        type: boolean
+      keep_environment:
+        description: "Keep staging environment after tests (for debugging)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+  checks: write
+
+env:
+  TERRAFORM_VERSION: "1.6.0"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  # ===========================================
+  # Deploy Staging Environment
+  # ===========================================
+  deploy-staging:
+    name: Deploy staging environment
+    runs-on: ubuntu-latest
+    outputs:
+      website_url: ${{ steps.outputs.outputs.website_url }}
+      api_url: ${{ steps.outputs.outputs.api_url }}
+      ingress_ip: ${{ steps.outputs.outputs.ingress_ip }}
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply (Staging)
+        run: |
+          terraform apply -auto-approve \
+            -var="environment=staging" \
+            -var="image_tag=${{ github.sha }}" \
+            -var="node_count=2" \
+            -var="node_count_max=3" \
+            -var="enable_auto_scaling=false" \
+            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            -var="github_repository_owner=${{ github.repository_owner }}" \
+            -var="ghcr_username=${{ github.actor }}" \
+            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Get Terraform Outputs
+        id: outputs
+        run: |
+          echo "website_url=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
+          echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
+          echo "ingress_ip=$(terraform output -raw ingress_ip)" >> $GITHUB_OUTPUT
+
+      - name: Wait for ingress IP
+        run: |
+          echo "Waiting for Load Balancer IP..."
+          for i in {1..30}; do
+            IP=$(terraform output -raw ingress_ip 2>/dev/null || echo "pending")
+            if [ "$IP" != "pending" ] && [ -n "$IP" ]; then
+              echo "Got IP: $IP"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 10
+          done
+
+  # ===========================================
+  # Wait for Services to be Ready
+  # ===========================================
+  wait-for-ready:
+    name: Wait for services
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group rg-mtogo-staging \
+            --name aks-mtogo-staging \
+            --overwrite-existing
+
+      - name: Wait for all deployments
+        run: |
+          echo "Waiting for deployments to be ready..."
+          kubectl wait --for=condition=available --timeout=600s deployment --all -n mtogo
+
+          echo ""
+          echo "All deployments ready!"
+          kubectl get pods -n mtogo
+
+  # ===========================================
+  # Smoke Tests
+  # ===========================================
+  smoke-tests:
+    name: Smoke tests
+    needs: [deploy-staging, wait-for-ready]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          BASE_URL="${{ needs.deploy-staging.outputs.website_url }}"
+          API_URL="${{ needs.deploy-staging.outputs.api_url }}"
+
+          echo "============================================"
+          echo "Running Smoke Tests"
+          echo "Website: $BASE_URL"
+          echo "API: $API_URL"
+          echo "============================================"
+
+          # Test website is reachable
+          echo "Testing website..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL" --max-time 30 || echo "000")
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Website returned HTTP $HTTP_STATUS"
+          else
+            echo "❌ Website returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+          # Test API gateway health
+          echo "Testing API gateway..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL" --max-time 30 || echo "000")
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 500 ]; then
+            echo "✅ API Gateway returned HTTP $HTTP_STATUS"
+          else
+            echo "❌ API Gateway returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+
+          echo ""
+          echo "============================================"
+          echo "✅ All smoke tests passed!"
+          echo "============================================"
+
+  # ===========================================
+  # Integration Tests
+  # ===========================================
+  integration-tests:
+    name: Integration tests
+    needs: [deploy-staging, smoke-tests]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run integration tests
+        env:
+          MTOGO_API_URL: ${{ needs.deploy-staging.outputs.api_url }}
+          MTOGO_WEBSITE_URL: ${{ needs.deploy-staging.outputs.website_url }}
+        run: |
+          echo "Running integration tests against staging..."
+          echo "API URL: $MTOGO_API_URL"
+
+          # Run integration tests if they exist
+          if [ -d "MToGo/tests/MToGo.IntegrationTests" ]; then
+            dotnet test MToGo/tests/MToGo.IntegrationTests/ \
+              --configuration Release \
+              --logger "trx;LogFileName=integration-results.trx"
+          else
+            echo "No integration test project found. Skipping..."
+            echo "To add integration tests, create: MToGo/tests/MToGo.IntegrationTests/"
+          fi
+
+  # ===========================================
+  # Load Tests (Optional)
+  # ===========================================
+  load-tests:
+    name: Load tests
+    needs: [deploy-staging, integration-tests]
+    if: ${{ github.event.inputs.run_load_tests == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run load tests
+        env:
+          API_URL: ${{ needs.deploy-staging.outputs.api_url }}
+        run: |
+          if [ -f "tests/load/k6-script.js" ]; then
+            k6 run tests/load/k6-script.js --env API_URL=$API_URL
+          else
+            echo "No load test script found at tests/load/k6-script.js"
+            echo "Creating a basic load test..."
+            
+            mkdir -p tests/load
+            cat > /tmp/basic-load-test.js << 'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
+
+          export const options = {
+            stages: [
+              { duration: '30s', target: 10 },  // Ramp up to 10 users
+              { duration: '1m', target: 10 },   // Stay at 10 users
+              { duration: '30s', target: 0 },   // Ramp down
+            ],
+            thresholds: {
+              http_req_duration: ['p(95)<500'], // 95% of requests under 500ms
+              http_req_failed: ['rate<0.1'],    // Less than 10% failures
+            },
+          };
+
+          export default function () {
+            const res = http.get(`${__ENV.API_URL}`);
+            check(res, {
+              'status is 200-399': (r) => r.status >= 200 && r.status < 400,
+            });
+            sleep(1);
+          }
+          EOF
+            
+            k6 run /tmp/basic-load-test.js --env API_URL=$API_URL
+          fi
+
+  # ===========================================
+  # Cleanup (Destroy Staging)
+  # ===========================================
+  cleanup:
+    name: Cleanup staging
+    needs: [deploy-staging, smoke-tests, integration-tests, load-tests]
+    if: ${{ always() && github.event.inputs.keep_environment != 'true' }}
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy (Staging)
+        run: |
+          echo "Destroying staging environment..."
+          terraform destroy -auto-approve \
+            -var="environment=staging" \
+            -var="image_tag=${{ github.sha }}" \
+            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            -var="github_repository_owner=${{ github.repository_owner }}" \
+            -var="ghcr_username=${{ github.actor }}" \
+            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Summary
+        run: |
+          echo "## 🧪 Staging Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Staging environment has been cleaned up." >> $GITHUB_STEP_SUMMARY
