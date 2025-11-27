@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-mtogo
+  namespace: mtogo
+  labels:
+    app.kubernetes.io/name: legacy-mtogo
+    app.kubernetes.io/component: legacy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-mtogo
+  template:
+    metadata:
+      labels:
+        app: legacy-mtogo
+        app.kubernetes.io/name: legacy-mtogo
+    spec:
+      containers:
+        - name: legacy-mtogo
+          image: mtogo/legacy-mtogo:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ASPNETCORE_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: ASPNETCORE_URLS
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: mtogo-db-secret
+                  key: CONNECTION_STRING_LEGACY
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: legacy-mtogo
+  namespace: mtogo
+  labels:
+    app.kubernetes.io/name: legacy-mtogo
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+      nodePort: 31082
+  selector:
+    app: legacy-mtogo

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-partner-service
+  namespace: mtogo
+  labels:
+    app.kubernetes.io/name: websocket-partner-service
+    app.kubernetes.io/component: websocket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: websocket-partner-service
+  template:
+    metadata:
+      labels:
+        app: websocket-partner-service
+        app.kubernetes.io/name: websocket-partner-service
+    spec:
+      containers:
+        - name: websocket-partner-service
+          image: mtogo/websocket-partner-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ASPNETCORE_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: ASPNETCORE_URLS
+            - name: Kafka__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: Kafka__BootstrapServers
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-partner-service
+  namespace: mtogo
+  labels:
+    app.kubernetes.io/name: websocket-partner-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: websocket-partner-service

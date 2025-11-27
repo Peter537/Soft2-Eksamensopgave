@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-agent-service
+  namespace: mtogo
+  labels:
+    app.kubernetes.io/name: websocket-agent-service
+    app.kubernetes.io/component: websocket
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: websocket-agent-service
+  template:
+    metadata:
+      labels:
+        app: websocket-agent-service
+        app.kubernetes.io/name: websocket-agent-service
+    spec:
+      containers:
+        - name: websocket-agent-service
+          image: mtogo/websocket-agent-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ASPNETCORE_URLS
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: ASPNETCORE_URLS
+            - name: Kafka__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: mtogo-config
+                  key: Kafka__BootstrapServers
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket-agent-service
+  namespace: mtogo
+  labels:
+    app.kubernetes.io/name: websocket-agent-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  selector:
+    app: websocket-agent-service
