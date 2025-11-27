@@ -1,0 +1,19 @@
+# ===========================================
+# Example Terraform Variables File (Local)
+# ===========================================
+# Copy this file to terraform.tfvars if you need to customize
+
+# Kubernetes configuration
+# kubeconfig_path    = "~/.kube/config"
+# kubeconfig_context = "docker-desktop"  # or "minikube"
+
+# Image configuration (for local images built with build-images.ps1)
+image_registry = "mtogo"
+image_tag      = "latest"
+
+# Database credentials
+postgres_admin_username = "mtogo"
+postgres_admin_password = "mtogo_password"
+
+# Install NGINX ingress controller
+install_ingress = true

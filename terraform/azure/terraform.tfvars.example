@@ -1,0 +1,36 @@
+# ===========================================
+# Example Terraform Variables File
+# ===========================================
+# Copy this file to terraform.tfvars and fill in your values
+# NEVER commit terraform.tfvars to version control!
+
+# Azure region
+location = "West Europe"
+
+# Environment (dev, staging, prod)
+environment = "prod"
+
+# Project name (used in resource names)
+project_name = "mtogo"
+
+# Kubernetes version
+kubernetes_version = "1.29"
+
+# Node pool configuration
+node_count         = 2              # Min nodes (or fixed count if auto-scaling disabled)
+node_count_max     = 5              # Max nodes when auto-scaling
+enable_auto_scaling = true          # Enable/disable cluster auto-scaling
+node_vm_size       = "Standard_B2s"
+
+# PostgreSQL credentials
+postgres_admin_username = "mtogoadmin"
+postgres_admin_password = "CHANGE_ME_TO_A_STRONG_PASSWORD"
+
+# GitHub Container Registry credentials
+# Create a Personal Access Token (PAT) with read:packages scope
+github_repository_owner = "your-github-username"
+ghcr_username          = "your-github-username"
+ghcr_token             = "ghp_your_personal_access_token"
+
+# Docker image tag (usually the commit SHA)
+image_tag = "latest"
