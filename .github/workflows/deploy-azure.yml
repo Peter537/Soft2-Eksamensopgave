@@ -1,0 +1,214 @@
+# ===========================================
+# Azure Infrastructure Deploy Workflow
+# ===========================================
+# This workflow deploys the MToGo platform to Azure Kubernetes Service.
+# It can be triggered manually or after successful CI builds on main.
+#
+# Prerequisites:
+#   1. Azure Service Principal with Contributor access
+#   2. GitHub secrets configured (see documentation)
+
+name: Deploy to Azure
+
+on:
+  # Manual trigger with inputs
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "prod"
+        type: choice
+        options:
+          - prod
+          - staging
+      image_tag:
+        description: "Docker image tag to deploy (leave empty for latest main)"
+        required: false
+        default: ""
+      node_count:
+        description: "Number of AKS nodes"
+        required: false
+        default: "2"
+      action:
+        description: "Terraform action"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TERRAFORM_VERSION: "1.6.0"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  # ===========================================
+  # Determine Image Tag
+  # ===========================================
+  prepare:
+    name: Prepare deployment
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.get_tag.outputs.tag }}
+      environment: ${{ github.event.inputs.environment || 'prod' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: get_tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display deployment info
+        run: |
+          echo "============================================"
+          echo "Deployment Information"
+          echo "============================================"
+          echo "Environment: ${{ github.event.inputs.environment || 'prod' }}"
+          echo "Image Tag: ${{ steps.get_tag.outputs.tag }}"
+          echo "Action: ${{ github.event.inputs.action || 'apply' }}"
+          echo "Node Count: ${{ github.event.inputs.node_count || '2' }}"
+          echo "============================================"
+
+  # ===========================================
+  # Terraform Plan/Apply
+  # ===========================================
+  terraform:
+    name: Terraform ${{ github.event.inputs.action || 'apply' }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prepare.outputs.environment }}
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var="environment=${{ needs.prepare.outputs.environment }}" \
+            -var="image_tag=${{ needs.prepare.outputs.image_tag }}" \
+            -var="node_count=${{ github.event.inputs.node_count || 2 }}" \
+            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            -var="github_repository_owner=${{ github.repository_owner }}" \
+            -var="ghcr_username=${{ github.actor }}" \
+            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}" \
+            -out=tfplan \
+            -no-color
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get Terraform Outputs
+        if: github.event.inputs.action == 'apply'
+        id: outputs
+        run: |
+          echo "## Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group | $(terraform output -raw resource_group_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AKS Cluster | $(terraform output -raw aks_cluster_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| PostgreSQL FQDN | $(terraform output -raw postgres_fqdn) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Website URL | $(terraform output -raw website_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "| API URL | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          terraform output -raw connect_instructions >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================
+  # Post-Deployment Verification
+  # ===========================================
+  verify:
+    name: Verify deployment
+    needs: [prepare, terraform]
+    if: github.event.inputs.action == 'apply'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group rg-mtogo-${{ needs.prepare.outputs.environment }} \
+            --name aks-mtogo-${{ needs.prepare.outputs.environment }} \
+            --overwrite-existing
+
+      - name: Wait for deployments
+        run: |
+          echo "Waiting for deployments to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment --all -n mtogo || true
+
+      - name: Check pod status
+        run: |
+          echo "============================================"
+          echo "Pod Status"
+          echo "============================================"
+          kubectl get pods -n mtogo -o wide
+
+          echo ""
+          echo "============================================"
+          echo "Services"
+          echo "============================================"
+          kubectl get svc -n mtogo
+
+      - name: Display access URLs
+        run: |
+          INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+
+          echo "============================================"
+          echo "Access URLs"
+          echo "============================================"
+          echo "Website: http://${INGRESS_IP}/"
+          echo "API Gateway: http://${INGRESS_IP}/api"
+          echo "Legacy API: http://${INGRESS_IP}/legacy"
+          echo "============================================"

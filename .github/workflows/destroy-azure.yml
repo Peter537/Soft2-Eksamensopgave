@@ -1,0 +1,113 @@
+# ===========================================
+# Azure Infrastructure Destroy Workflow
+# ===========================================
+# This workflow destroys the Azure infrastructure.
+# Use with CAUTION - this will delete all resources!
+#
+# Requires manual confirmation via input.
+
+name: Destroy Azure Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to destroy"
+        required: true
+        default: "prod"
+        type: choice
+        options:
+          - prod
+          - staging
+      confirm:
+        description: 'Type "DESTROY" to confirm deletion'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TERRAFORM_VERSION: "1.6.0"
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+jobs:
+  # ===========================================
+  # Confirmation Check
+  # ===========================================
+  confirm:
+    name: Confirm destruction
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DESTROY" ]; then
+            echo "❌ Confirmation failed. You must type 'DESTROY' to confirm."
+            exit 1
+          fi
+          echo "✅ Confirmation accepted. Proceeding with destruction..."
+
+  # ===========================================
+  # Terraform Destroy
+  # ===========================================
+  destroy:
+    name: Destroy infrastructure
+    needs: confirm
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy Plan
+        run: |
+          echo "============================================"
+          echo "⚠️  DESTROYING ENVIRONMENT: ${{ github.event.inputs.environment }}"
+          echo "============================================"
+
+          terraform plan -destroy \
+            -var="environment=${{ github.event.inputs.environment }}" \
+            -var="image_tag=latest" \
+            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            -var="github_repository_owner=${{ github.repository_owner }}" \
+            -var="ghcr_username=${{ github.actor }}" \
+            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}" \
+            -no-color
+
+      - name: Terraform Destroy
+        run: |
+          terraform destroy -auto-approve \
+            -var="environment=${{ github.event.inputs.environment }}" \
+            -var="image_tag=latest" \
+            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
+            -var="github_repository_owner=${{ github.repository_owner }}" \
+            -var="ghcr_username=${{ github.actor }}" \
+            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Summary
+        run: |
+          echo "## 🗑️ Infrastructure Destroyed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Environment **${{ github.event.inputs.environment }}** has been destroyed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Resources removed:" >> $GITHUB_STEP_SUMMARY
+          echo "- AKS Cluster: aks-mtogo-${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- PostgreSQL Server: psql-mtogo-${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Resource Group: rg-mtogo-${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
