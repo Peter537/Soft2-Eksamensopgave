@@ -1,0 +1,294 @@
+# ===========================================
+# Local Development for Docker Compose
+# ===========================================
+# This file provides a simple way to run all MToGo services locally
+# without Kubernetes. Perfect for local development and testing.
+#
+# Usage:
+#   docker-compose up -d                    # Start all services
+#   docker-compose up -d --build            # Rebuild and start
+#   docker-compose up <service> -d --build  # Rebuild and start a specific service
+#   docker-compose down                     # Stop all services
+#   docker-compose down -v                  # Stop and remove volumes
+#   docker-compose logs -f <service>        # Follow logs for a service
+#
+# Access points:
+#   - Website:     http://localhost:8081
+#   - API Gateway: http://localhost:8080
+#   - Legacy API:  http://localhost:8082
+
+services:
+  # ===========================================
+  # Infrastructure Services
+  # ===========================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: mtogo-postgres
+    environment:
+      POSTGRES_USER: mtogo
+      POSTGRES_PASSWORD: mtogo_password
+      POSTGRES_DB: mtogo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mtogo -d mtogo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mtogo-network
+
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: mtogo-kafka
+    environment:
+      # KRaft (no Zookeeper) configuration
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Listener configuration
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Performance tuning for single-node
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - mtogo-network
+
+  # ===========================================
+  # Application Services
+  # ===========================================
+
+  gateway:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.Gateway/Dockerfile
+    container_name: mtogo-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Kafka__BootstrapServers: kafka:9092
+      # Reverse proxy cluster destinations
+      ReverseProxy__Clusters__orders-cluster__Destinations__orders-destination__Address: http://order-service:8080
+      ReverseProxy__Clusters__customers-cluster__Destinations__customers-destination__Address: http://customer-service:8080
+      ReverseProxy__Clusters__agents-cluster__Destinations__agents-destination__Address: http://agent-service:8080
+      ReverseProxy__Clusters__agentbonuses-cluster__Destinations__agentbonus-destination__Address: http://agent-bonus-service:8080
+      ReverseProxy__Clusters__feedback-cluster__Destinations__feedbackhub-destination__Address: http://feedback-hub-service:8080
+      ReverseProxy__Clusters__notifications-cluster__Destinations__notifications-destination__Address: http://notification-service:8080
+      ReverseProxy__Clusters__partners-cluster__Destinations__partners-destination__Address: http://partner-service:8080
+      ReverseProxy__Clusters__wsagents-cluster__Destinations__wsagents-destination__Address: http://websocket-agent-service:8080
+      ReverseProxy__Clusters__wscustomers-cluster__Destinations__wscustomers-destination__Address: http://websocket-customer-service:8080
+      ReverseProxy__Clusters__wspartners-cluster__Destinations__wspartners-destination__Address: http://websocket-partner-service:8080
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  website:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.Website/Dockerfile
+    container_name: mtogo-website
+    ports:
+      - "8081:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      GatewayUrl: http://gateway:8080
+    depends_on:
+      - gateway
+    networks:
+      - mtogo-network
+
+  order-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.OrderService/Dockerfile
+    container_name: mtogo-order-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_orders;Username=mtogo;Password=mtogo_password
+      Kafka__BootstrapServers: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  customer-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.CustomerService/Dockerfile
+    container_name: mtogo-customer-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    networks:
+      - mtogo-network
+
+  agent-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.AgentService/Dockerfile
+    container_name: mtogo-agent-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_agents;Username=mtogo;Password=mtogo_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  agent-bonus-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.AgentBonusService/Dockerfile
+    container_name: mtogo-agent-bonus-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    networks:
+      - mtogo-network
+
+  feedback-hub-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.FeedbackHubService/Dockerfile
+    container_name: mtogo-feedback-hub-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_feedback;Username=mtogo;Password=mtogo_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  notification-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.NotificationService/Dockerfile
+    container_name: mtogo-notification-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Kafka__BootstrapServers: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  partner-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.PartnerService/Dockerfile
+    container_name: mtogo-partner-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_partners;Username=mtogo;Password=mtogo_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  websocket-agent-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.WebSocketAgentService/Dockerfile
+    container_name: mtogo-websocket-agent-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Kafka__BootstrapServers: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  websocket-customer-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.WebSocketCustomerService/Dockerfile
+    container_name: mtogo-websocket-customer-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Kafka__BootstrapServers: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  websocket-partner-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.WebSocketPartnerService/Dockerfile
+    container_name: mtogo-websocket-partner-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Kafka__BootstrapServers: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  legacy-mtogo:
+    build:
+      context: ./LegacyMToGo
+      dockerfile: Dockerfile
+    container_name: mtogo-legacy
+    ports:
+      - "8082:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_legacy;Username=mtogo;Password=mtogo_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+# ===========================================
+# Networks and Volumes
+# ===========================================
+
+networks:
+  mtogo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
