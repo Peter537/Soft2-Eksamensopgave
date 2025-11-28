@@ -7,6 +7,12 @@ public enum NotificationMethod
     Push
 }
 
+public enum LanguagePreference
+{
+    En,  // English
+    Da   // Danish
+}
+
 public class Customer
 {
     public int Id { get; set; }
@@ -16,4 +22,5 @@ public class Customer
     public required NotificationMethod NotificationMethod { get; set; }
     public required string Password { get; set; }
     public string? PhoneNumber { get; set; }
+    public LanguagePreference LanguagePreference { get; set; } = LanguagePreference.En;
 }

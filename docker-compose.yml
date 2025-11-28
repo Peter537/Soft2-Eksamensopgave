@@ -88,6 +88,7 @@ services:
       Kafka__BootstrapServers: kafka:9092
       # Reverse proxy cluster destinations
       ReverseProxy__Clusters__orders-cluster__Destinations__orders-destination__Address: http://order-service:8080
+      ReverseProxy__Clusters__customers-cluster__Destinations__customers-destination__Address: http://customer-service:8080
       ReverseProxy__Clusters__agents-cluster__Destinations__agents-destination__Address: http://agent-service:8080
       ReverseProxy__Clusters__agentbonuses-cluster__Destinations__agentbonus-destination__Address: http://agent-bonus-service:8080
       ReverseProxy__Clusters__feedback-cluster__Destinations__feedbackhub-destination__Address: http://feedback-hub-service:8080
@@ -144,6 +145,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Gateway__BaseUrl: http://gateway:8080
+    depends_on:
+      - gateway
     networks:
       - mtogo-network
 
