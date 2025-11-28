@@ -19,6 +19,7 @@ builder.Services.AddSingleton<KafkaProducer>();
 // Register Kafka consumers as background services
 builder.Services.AddHostedService<OrderCreatedConsumer>();
 builder.Services.AddHostedService<AgentAssignedConsumer>();
+builder.Services.AddHostedService<OrderPickedUpConsumer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

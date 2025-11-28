@@ -85,13 +85,25 @@
                                         @(order.AgentId.HasValue ? $"Agent #{order.AgentId}" : "Awaiting agent")
                                     </span>
                                 </div>
-                                <ul class="list-unstyled mb-0">
+                                <ul class="list-unstyled mb-2">
                                     @foreach (var item in order.Items)
                                     {
                                         <li>@item.Quantity x @item.Name</li>
                                     }
                                 </ul>
-                                <small class="text-muted">Accepted at @order.AcceptedAt?.ToString("HH:mm:ss")</small>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Accepted at @order.AcceptedAt?.ToString("HH:mm:ss")</small>
+                                    @if (!order.IsReady)
+                                    {
+                                        <button class="btn btn-primary btn-sm" @onclick="() => MarkFoodReady(order)">
+                                            Food Ready
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Ready for pickup</span>
+                                    }
+                                </div>
                             </div>
                         </div>
                     }
@@ -182,6 +194,18 @@
         }
     }
 
+    [JSInvokable]
+    public void OnOrderPickedUp(int orderId)
+    {
+        var order = AcceptedOrders.FirstOrDefault(o => o.OrderId == orderId);
+        if (order != null)
+        {
+            AcceptedOrders.Remove(order);
+            StatusMessage = $"Order #{orderId} picked up by agent!";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task AcceptOrder(IncomingOrder order)
     {
         NewOrders.Remove(order);
@@ -215,6 +239,18 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task MarkFoodReady(AcceptedOrder order)
+    {
+        order.IsReady = true;
+        StatusMessage = $"Order #{order.OrderId} marked as ready!";
+
+        // TODO: call OrderService when implemented - this will emit OrderReadyEvent
+        // var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
+        // await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/set-ready", null);
+
+        await InvokeAsync(StateHasChanged);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_dotNetRef != null)
@@ -238,6 +274,7 @@
         public List<OrderItemDto> Items { get; set; } = new();
         public DateTime? AcceptedAt { get; set; }
         public int? AgentId { get; set; }
+        public bool IsReady { get; set; }
     }
 
     public class OrderItemDto

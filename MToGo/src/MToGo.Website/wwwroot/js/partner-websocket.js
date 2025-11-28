@@ -88,6 +88,14 @@ window.partnerWebSocket = {
                 );
                 break;
 
+            case 'OrderPickedUp':
+                const pickupPayload = message.payload;
+                this.dotNetRef.invokeMethodAsync(
+                    'OnOrderPickedUp',
+                    pickupPayload.orderId
+                );
+                break;
+
             case 'connection_closed':
                 console.log('Server closed connection:', message.reason);
                 break;
