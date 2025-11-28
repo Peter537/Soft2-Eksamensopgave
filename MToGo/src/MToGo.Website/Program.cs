@@ -6,6 +6,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:8080";
+builder.Services.AddHttpClient("Gateway", client =>
+{
+    client.BaseAddress = new Uri(gatewayUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("Gateway"));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
