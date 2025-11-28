@@ -24,8 +24,7 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] Customer request)
     {
-        var sanitizedEmail = request.Email?.Replace("\r", "").Replace("\n", "");
-        _logger.LogInformation("Registration request received for email: {Email}", sanitizedEmail);
+        _logger.LogInformation("Registration request received.");
 
         try
         {
@@ -34,7 +33,7 @@ public class CustomersController : ControllerBase
         }
         catch (DuplicateEmailException ex)
         {
-            _logger.LogWarning("Registration failed - duplicate email: {Email}", sanitizedEmail);
+            _logger.LogWarning("Registration failed due to duplicate email.");
             return BadRequest(new { error = ex.Message });
         }
     }
