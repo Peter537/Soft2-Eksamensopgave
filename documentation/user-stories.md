@@ -355,3 +355,13 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 **AC-1:** Given access to monitoring tool, When viewing metrics, Then CPU usage, memory consumption, request latency displayed.
 
 ---
+
+**Size:** S  
+**Priority:** Medium  
+**US-31:** Partner Notified When Order Picked Up  
+**As a** partner,  
+**I want** to be notified when an agent picks up an order,  
+**So that** the order is removed from my active orders view.  
+**AC-1:** Given connected to WebSocket, When OrderPickedUp event occurs, Then order is removed from accepted orders list.
+
+---
