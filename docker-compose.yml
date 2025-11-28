@@ -88,15 +88,14 @@ services:
       Kafka__BootstrapServers: kafka:9092
       # Reverse proxy cluster destinations
       ReverseProxy__Clusters__orders-cluster__Destinations__orders-destination__Address: http://order-service:8080
-      ReverseProxy__Clusters__customers-cluster__Destinations__customers-destination__Address: http://customer-service:8080
       ReverseProxy__Clusters__agents-cluster__Destinations__agents-destination__Address: http://agent-service:8080
       ReverseProxy__Clusters__agentbonuses-cluster__Destinations__agentbonus-destination__Address: http://agent-bonus-service:8080
       ReverseProxy__Clusters__feedback-cluster__Destinations__feedbackhub-destination__Address: http://feedback-hub-service:8080
-      ReverseProxy__Clusters__notifications-cluster__Destinations__notifications-destination__Address: http://notification-service:8080
       ReverseProxy__Clusters__partners-cluster__Destinations__partners-destination__Address: http://partner-service:8080
       ReverseProxy__Clusters__wsagents-cluster__Destinations__wsagents-destination__Address: http://websocket-agent-service:8080
       ReverseProxy__Clusters__wscustomers-cluster__Destinations__wscustomers-destination__Address: http://websocket-customer-service:8080
       ReverseProxy__Clusters__wspartners-cluster__Destinations__wspartners-destination__Address: http://websocket-partner-service:8080
+      ReverseProxy__Clusters__legacy-cluster__Destinations__legacy-destination__Address: http://legacy-mtogo:8080
     depends_on:
       kafka:
         condition: service_healthy
