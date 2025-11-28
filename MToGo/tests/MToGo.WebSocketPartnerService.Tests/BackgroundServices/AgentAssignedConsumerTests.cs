@@ -1,0 +1,105 @@
+using System.Net.WebSockets;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using MToGo.Shared.Kafka;
+using MToGo.Shared.Kafka.Events;
+using MToGo.Testing;
+using MToGo.WebSocketPartnerService.BackgroundServices;
+using MToGo.WebSocketPartnerService.Services;
+
+namespace MToGo.WebSocketPartnerService.Tests.BackgroundServices;
+
+public class AgentAssignedConsumerTests
+{
+    [Fact]
+    public async Task Consumer_ShouldSendAgentAssignedEvent_ToCorrectPartner()
+    {
+        // Arrange
+        await using var kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
+        await kafkaContainer.StartAsync();
+        var bootstrapServers = kafkaContainer.GetBootstrapAddress();
+
+        var connectionManager = new PartnerConnectionManager(
+            new Mock<ILogger<PartnerConnectionManager>>().Object);
+
+        var receivedMessages = new List<string>();
+        var messageReceived = new TaskCompletionSource<bool>();
+        var webSocketMock = CreateCapturingWebSocketMock(receivedMessages, messageReceived);
+
+        var partnerId = 10;
+        await connectionManager.RegisterConnectionAsync(partnerId, webSocketMock.Object);
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Kafka:BootstrapServers"] = bootstrapServers
+            })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+
+        var consumer = new AgentAssignedConsumer(
+            services.BuildServiceProvider(),
+            connectionManager,
+            new Mock<ILogger<AgentAssignedConsumer>>().Object,
+            config);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        await consumer.StartAsync(cts.Token);
+        await Task.Delay(TimeSpan.FromSeconds(6));
+
+        // Publish event
+        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = bootstrapServers });
+        await using var producer = new KafkaProducer(producerConfig, new LoggerFactory().CreateLogger<KafkaProducer>());
+
+        var agentEvent = new AgentAssignedEvent
+        {
+            OrderId = 500,
+            PartnerId = partnerId,
+            AgentId = 42,
+            Timestamp = DateTime.UtcNow.ToString("O")
+        };
+
+        await producer.PublishAsync(KafkaTopics.AgentAssigned, agentEvent.OrderId.ToString(), agentEvent);
+        await Task.WhenAny(messageReceived.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+
+        cts.Cancel();
+        try { await consumer.StopAsync(CancellationToken.None); } catch { }
+
+        // Assert - message contains event type, order ID, and agent ID
+        Assert.Single(receivedMessages);
+        var msg = receivedMessages[0];
+        Assert.Contains("AgentAssigned", msg);
+        Assert.Contains("500", msg);
+        Assert.Contains("42", msg);
+        Assert.Contains("agentid", msg.ToLower());
+    }
+
+    private static Mock<WebSocket> CreateCapturingWebSocketMock(List<string> capturedMessages, TaskCompletionSource<bool>? signal = null)
+    {
+        var mock = new Mock<WebSocket>();
+        mock.Setup(ws => ws.State).Returns(WebSocketState.Open);
+        mock.Setup(ws => ws.SendAsync(
+            It.IsAny<ArraySegment<byte>>(),
+            WebSocketMessageType.Text,
+            true,
+            It.IsAny<CancellationToken>()))
+            .Callback<ArraySegment<byte>, WebSocketMessageType, bool, CancellationToken>((data, type, endOfMessage, ct) =>
+            {
+                capturedMessages.Add(Encoding.UTF8.GetString(data.Array!, data.Offset, data.Count));
+                signal?.TrySetResult(true);
+            })
+            .Returns(Task.CompletedTask);
+        mock.Setup(ws => ws.CloseAsync(
+            It.IsAny<WebSocketCloseStatus>(),
+            It.IsAny<string>(),
+            It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        return mock;
+    }
+}

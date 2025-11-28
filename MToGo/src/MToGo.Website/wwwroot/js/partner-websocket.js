@@ -13,13 +13,10 @@ window.partnerWebSocket = {
     },
 
     _connect: function (url) {
-        console.log('Connecting to WebSocket:', url);
-
         try {
             this.socket = new WebSocket(url);
 
             this.socket.onopen = () => {
-                console.log('WebSocket connected');
                 this.reconnectAttempts = 0;
                 if (this.dotNetRef) {
                     this.dotNetRef.invokeMethodAsync('OnConnected');
@@ -27,17 +24,15 @@ window.partnerWebSocket = {
             };
 
             this.socket.onmessage = (event) => {
-                console.log('WebSocket message received:', event.data);
                 try {
                     const message = JSON.parse(event.data);
                     this._handleMessage(message);
                 } catch (e) {
-                    console.error('Failed to parse WebSocket message:', e);
+                    // Invalid message format
                 }
             };
 
             this.socket.onclose = (event) => {
-                console.log('WebSocket closed:', event.code, event.reason);
                 if (this.dotNetRef) {
                     this.dotNetRef.invokeMethodAsync('OnDisconnected', event.reason || 'Connection closed');
                 }
@@ -45,16 +40,14 @@ window.partnerWebSocket = {
                 // Attempt reconnection
                 if (this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
-                    console.log(`Reconnecting in ${this.reconnectDelay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
                     setTimeout(() => this._connect(url), this.reconnectDelay);
                 }
             };
 
             this.socket.onerror = (error) => {
-                console.error('WebSocket error:', error);
+                // Error handled by onclose
             };
         } catch (e) {
-            console.error('Failed to create WebSocket:', e);
             if (this.dotNetRef) {
                 this.dotNetRef.invokeMethodAsync('OnDisconnected', 'Failed to connect');
             }
@@ -97,11 +90,10 @@ window.partnerWebSocket = {
                 break;
 
             case 'connection_closed':
-                console.log('Server closed connection:', message.reason);
                 break;
 
             default:
-                console.log('Unknown event type:', message.eventType);
+                break;
         }
     },
 
