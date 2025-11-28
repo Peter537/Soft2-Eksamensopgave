@@ -129,11 +129,14 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_orders;Username=mtogo;Password=mtogo_password
       Kafka__BootstrapServers: kafka:9092
+      Gateway__BaseUrl: http://gateway:8080
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      gateway:
+        condition: service_started
     networks:
       - mtogo-network
 
