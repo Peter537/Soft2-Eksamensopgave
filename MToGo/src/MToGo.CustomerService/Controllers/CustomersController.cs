@@ -37,4 +37,23 @@ public class CustomersController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    [HttpPost("login")]
+    [ProducesResponseType(typeof(CustomerLoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login([FromBody] CustomerLoginRequest request)
+    {
+        _logger.LogInformation("Login request received for email: {Email}", request.Email);
+
+        try
+        {
+            var result = await _customerService.LoginAsync(request);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            _logger.LogWarning("Login failed - invalid credentials.");
+            return Unauthorized(new { error = "Invalid email or password." });
+        }
+    }
 }

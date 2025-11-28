@@ -55,4 +55,26 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
         
         return result ?? throw new InvalidOperationException("Failed to deserialize registration response.");
     }
+
+    public async Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request)
+    {
+        _logger.LogInformation("Attempting login for email: {Email}", request.Email);
+
+        // Legacy API uses /post/login endpoint
+        var response = await _httpClient.PostAsJsonAsync("/api/v1/legacy/customers/post/login", request);
+
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            _logger.LogWarning("Login failed - invalid credentials for email: {Email}", request.Email);
+            throw new UnauthorizedAccessException("Invalid email or password.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CustomerLoginResponse>();
+        
+        _logger.LogInformation("Login successful for email: {Email}", request.Email);
+        
+        return result ?? throw new InvalidOperationException("Failed to deserialize login response.");
+    }
 }
