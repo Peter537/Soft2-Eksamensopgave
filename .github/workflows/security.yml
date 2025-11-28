@@ -256,6 +256,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.CustomerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (CustomerService, HIGH/CRITICAL fail)
@@ -340,6 +341,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.OrderService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Order & Delivery, HIGH/CRITICAL fail)
@@ -424,6 +426,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.AgentBonusService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (AgentBonus, HIGH/CRITICAL fail)
@@ -508,6 +511,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.AgentService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (AgentService, HIGH/CRITICAL fail)
@@ -592,6 +596,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.FeedbackHubService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (FeedbackHub, HIGH/CRITICAL fail)
@@ -676,6 +681,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.Gateway \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Gateway, HIGH/CRITICAL fail)
@@ -760,6 +766,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.NotificationService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Notification, HIGH/CRITICAL fail)
@@ -844,6 +851,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.PartnerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Partner, HIGH/CRITICAL fail)
@@ -928,6 +936,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.Website \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Website, HIGH/CRITICAL fail)
@@ -1012,6 +1021,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.WebSocketAgentService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (WebSocketAgent, HIGH/CRITICAL fail)
@@ -1096,6 +1106,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.WebSocketCustomerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (WebSocketCustomer, HIGH/CRITICAL fail)
@@ -1180,6 +1191,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.WebSocketPartnerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (WebSocketPartner, HIGH/CRITICAL fail)
@@ -1264,6 +1276,7 @@ jobs:
           gitleaks detect \
             --source LegacyMToGo \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (LegacyMToGo, HIGH/CRITICAL fail)
