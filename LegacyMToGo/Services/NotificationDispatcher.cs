@@ -6,7 +6,12 @@ public class NotificationDispatcher(ILogger<NotificationDispatcher> logger) : IN
 {
     public Task DispatchAsync(NotificationMethod method, string destination, string message, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Legacy notification via {Method} to {Destination}: {Message}", method, destination, message);
+        var sanitizedMessage = message?
+            .Replace("\r\n", " ")
+            .Replace("\n", " ")
+            .Replace("\r", " ");
+            
+        logger.LogInformation("Legacy notification via {Method} to {Destination}: {Message}", method, destination, sanitizedMessage);
         return Task.CompletedTask;
     }
 }
