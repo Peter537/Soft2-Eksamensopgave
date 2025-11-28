@@ -162,4 +162,238 @@ public class CustomerServiceTests
     }
 
     #endregion
+
+    #region GetCustomerAsync Tests
+
+    [Fact]
+    public async Task GetCustomerAsync_WithValidId_ReturnsCustomerProfile()
+    {
+        // Arrange
+        var customerId = 1;
+        var expectedResponse = new CustomerProfileResponse(
+            Name: "John Doe",
+            DeliveryAddress: "123 Main St",
+            NotificationMethod: "Email",
+            PhoneNumber: "+4512345678",
+            LanguagePreference: "en"
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.GetCustomerAsync(customerId))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.GetCustomerAsync(customerId);
+
+        // Assert
+        Assert.Equal(expectedResponse.Name, result.Name);
+        Assert.Equal(expectedResponse.DeliveryAddress, result.DeliveryAddress);
+        Assert.Equal(expectedResponse.NotificationMethod, result.NotificationMethod);
+        _mockLegacyClient.Verify(x => x.GetCustomerAsync(customerId), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCustomerAsync_WithNonExistentId_ThrowsKeyNotFoundException()
+    {
+        // Arrange
+        var customerId = 999;
+
+        _mockLegacyClient
+            .Setup(x => x.GetCustomerAsync(customerId))
+            .ThrowsAsync(new KeyNotFoundException("Customer not found."));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _sut.GetCustomerAsync(customerId)
+        );
+    }
+
+    [Fact]
+    public async Task GetCustomerAsync_ReturnsAllProfileFields()
+    {
+        // Arrange
+        var customerId = 1;
+        var expectedResponse = new CustomerProfileResponse(
+            Name: "Jane Doe",
+            DeliveryAddress: "456 Oak St, Copenhagen",
+            NotificationMethod: "Sms",
+            PhoneNumber: "+4587654321",
+            LanguagePreference: "da"
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.GetCustomerAsync(customerId))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.GetCustomerAsync(customerId);
+
+        // Assert
+        Assert.Equal("Jane Doe", result.Name);
+        Assert.Equal("456 Oak St, Copenhagen", result.DeliveryAddress);
+        Assert.Equal("Sms", result.NotificationMethod);
+        Assert.Equal("+4587654321", result.PhoneNumber);
+        Assert.Equal("da", result.LanguagePreference);
+    }
+
+    #endregion
+
+    #region UpdateCustomerAsync Tests
+
+    [Fact]
+    public async Task UpdateCustomerAsync_WithValidRequest_ReturnsUpdatedProfile()
+    {
+        // Arrange
+        var customerId = 1;
+        var request = new CustomerUpdateRequest(
+            Name: "John Updated",
+            DeliveryAddress: "789 New St",
+            NotificationMethod: "Push",
+            PhoneNumber: "+4511223344",
+            LanguagePreference: "da"
+        );
+        var expectedResponse = new CustomerProfileResponse(
+            Name: "John Updated",
+            DeliveryAddress: "789 New St",
+            NotificationMethod: "Push",
+            PhoneNumber: "+4511223344",
+            LanguagePreference: "da"
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.UpdateCustomerAsync(customerId, request);
+
+        // Assert
+        Assert.Equal(expectedResponse.Name, result.Name);
+        Assert.Equal(expectedResponse.DeliveryAddress, result.DeliveryAddress);
+        _mockLegacyClient.Verify(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateCustomerAsync_WithNonExistentId_ThrowsKeyNotFoundException()
+    {
+        // Arrange
+        var customerId = 999;
+        var request = new CustomerUpdateRequest(
+            Name: "Test",
+            DeliveryAddress: null,
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+            .ThrowsAsync(new KeyNotFoundException("Customer not found."));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<KeyNotFoundException>(
+            () => _sut.UpdateCustomerAsync(customerId, request)
+        );
+    }
+
+    [Fact]
+    public async Task UpdateCustomerAsync_WithPartialUpdate_ReturnsUpdatedProfile()
+    {
+        // Arrange
+        var customerId = 1;
+        var request = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: "Updated Address Only",
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+        var expectedResponse = new CustomerProfileResponse(
+            Name: "Original Name",
+            DeliveryAddress: "Updated Address Only",
+            NotificationMethod: "Email",
+            PhoneNumber: "+4512345678",
+            LanguagePreference: "en"
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.UpdateCustomerAsync(customerId, request);
+
+        // Assert
+        Assert.Equal("Original Name", result.Name);
+        Assert.Equal("Updated Address Only", result.DeliveryAddress);
+    }
+
+    [Theory]
+    [InlineData("Email")]
+    [InlineData("Sms")]
+    [InlineData("Push")]
+    public async Task UpdateCustomerAsync_WithDifferentNotificationMethods_Succeeds(string notificationMethod)
+    {
+        // Arrange
+        var customerId = 1;
+        var request = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: null,
+            NotificationMethod: notificationMethod,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+        var expectedResponse = new CustomerProfileResponse(
+            Name: "John Doe",
+            DeliveryAddress: "123 Main St",
+            NotificationMethod: notificationMethod,
+            PhoneNumber: "+4512345678",
+            LanguagePreference: "en"
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.UpdateCustomerAsync(customerId, request);
+
+        // Assert
+        Assert.Equal(notificationMethod, result.NotificationMethod);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("da")]
+    public async Task UpdateCustomerAsync_WithDifferentLanguages_Succeeds(string language)
+    {
+        // Arrange
+        var customerId = 1;
+        var request = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: null,
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: language
+        );
+        var expectedResponse = new CustomerProfileResponse(
+            Name: "John Doe",
+            DeliveryAddress: "123 Main St",
+            NotificationMethod: "Email",
+            PhoneNumber: "+4512345678",
+            LanguagePreference: language
+        );
+
+        _mockLegacyClient
+            .Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.UpdateCustomerAsync(customerId, request);
+
+        // Assert
+        Assert.Equal(language, result.LanguagePreference);
+    }
+
+    #endregion
 }

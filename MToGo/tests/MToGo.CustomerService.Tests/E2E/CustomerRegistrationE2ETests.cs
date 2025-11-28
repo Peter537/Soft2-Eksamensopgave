@@ -293,6 +293,288 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     }
 
     #endregion
+
+    #region US-3: Get Customer Profile E2E Tests
+
+    [Fact]
+    public async Task GetProfile_AfterRegistration_ReturnsCustomerData()
+    {
+        // Arrange
+        var uniqueEmail = $"getprofile.{Guid.NewGuid():N}@example.com";
+        var registerRequest = new Customer
+        {
+            Name = "Profile Test User",
+            Email = uniqueEmail,
+            DeliveryAddress = "456 Test St, Copenhagen",
+            NotificationMethod = "Sms",
+            Password = "TestPass123!",
+            PhoneNumber = "+4599887766",
+            LanguagePreference = "da"
+        };
+
+        var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+        var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Act
+        var getResponse = await _customerServiceClient.GetAsync($"/api/v1/customers/{registeredCustomer!.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        var profile = await getResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(profile);
+        Assert.Equal("Profile Test User", profile.Name);
+        Assert.Equal("456 Test St, Copenhagen", profile.DeliveryAddress);
+        Assert.Equal("Sms", profile.NotificationMethod);
+        Assert.Equal("+4599887766", profile.PhoneNumber);
+        Assert.Equal("da", profile.LanguagePreference);
+    }
+
+    [Fact]
+    public async Task GetProfile_WithNonExistentId_Returns404()
+    {
+        // Act
+        var response = await _customerServiceClient.GetAsync("/api/v1/customers/99999");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetProfile_ReturnsLanguagePreferenceFromDatabase()
+    {
+        // Arrange - Create customer with Danish preference
+        var uniqueEmail = $"langpref.{Guid.NewGuid():N}@example.com";
+        var registerRequest = new Customer
+        {
+            Name = "Danish User",
+            Email = uniqueEmail,
+            DeliveryAddress = "Strøget 123, København",
+            NotificationMethod = "Email",
+            Password = "DanskPass123!",
+            PhoneNumber = "+4512345678",
+            LanguagePreference = "da"
+        };
+
+        var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+        var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Act
+        var getResponse = await _customerServiceClient.GetAsync($"/api/v1/customers/{registeredCustomer!.Id}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        var profile = await getResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(profile);
+        Assert.Equal("da", profile.LanguagePreference);
+    }
+
+    #endregion
+
+    #region US-3: Update Customer Profile E2E Tests
+
+    [Fact]
+    public async Task UpdateProfile_ChangesDeliveryAddress_PersistsInDatabase()
+    {
+        // Arrange - Create customer
+        var uniqueEmail = $"updateaddr.{Guid.NewGuid():N}@example.com";
+        var registerRequest = new Customer
+        {
+            Name = "Update Test User",
+            Email = uniqueEmail,
+            DeliveryAddress = "Old Address 123",
+            NotificationMethod = "Email",
+            Password = "TestPass123!",
+            PhoneNumber = "+4512345678",
+            LanguagePreference = "en"
+        };
+
+        var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+        var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Act - Update delivery address
+        var updateRequest = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: "New Address 456, Copenhagen",
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+        var updateResponse = await _customerServiceClient.PatchAsJsonAsync(
+            $"/api/v1/customers/{registeredCustomer!.Id}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updatedProfile = await updateResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(updatedProfile);
+        Assert.Equal("New Address 456, Copenhagen", updatedProfile.DeliveryAddress);
+
+        // Verify in database
+        using var scope = _legacyApiFactory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var customer = await dbContext.Customers.FindAsync(registeredCustomer.Id);
+        Assert.NotNull(customer);
+        Assert.Equal("New Address 456, Copenhagen", customer.DeliveryAddress);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_ChangesLanguagePreference_PersistsInDatabase()
+    {
+        // Arrange - Create customer with English
+        var uniqueEmail = $"updatelang.{Guid.NewGuid():N}@example.com";
+        var registerRequest = new Customer
+        {
+            Name = "Language Test User",
+            Email = uniqueEmail,
+            DeliveryAddress = "123 Test St",
+            NotificationMethod = "Email",
+            Password = "TestPass123!",
+            PhoneNumber = "+4512345678",
+            LanguagePreference = "en"
+        };
+
+        var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+        var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Act - Update to Danish
+        var updateRequest = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: null,
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: "da"
+        );
+        var updateResponse = await _customerServiceClient.PatchAsJsonAsync(
+            $"/api/v1/customers/{registeredCustomer!.Id}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updatedProfile = await updateResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(updatedProfile);
+        Assert.Equal("da", updatedProfile.LanguagePreference);
+
+        // Verify in database
+        using var scope = _legacyApiFactory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var customer = await dbContext.Customers.FindAsync(registeredCustomer.Id);
+        Assert.NotNull(customer);
+        Assert.Equal(LegacyMToGo.Models.LanguagePreference.Da, customer.LanguagePreference);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_ChangesNotificationMethod_PersistsInDatabase()
+    {
+        // Arrange
+        var uniqueEmail = $"updatenotif.{Guid.NewGuid():N}@example.com";
+        var registerRequest = new Customer
+        {
+            Name = "Notification Test User",
+            Email = uniqueEmail,
+            DeliveryAddress = "123 Test St",
+            NotificationMethod = "Email",
+            Password = "TestPass123!",
+            PhoneNumber = "+4512345678",
+            LanguagePreference = "en"
+        };
+
+        var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+        var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Act - Update to SMS
+        var updateRequest = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: null,
+            NotificationMethod: "Sms",
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+        var updateResponse = await _customerServiceClient.PatchAsJsonAsync(
+            $"/api/v1/customers/{registeredCustomer!.Id}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updatedProfile = await updateResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(updatedProfile);
+        Assert.Equal("Sms", updatedProfile.NotificationMethod);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_WithNonExistentId_Returns404()
+    {
+        // Arrange
+        var updateRequest = new CustomerUpdateRequest(
+            Name: "Test",
+            DeliveryAddress: null,
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+
+        // Act
+        var response = await _customerServiceClient.PatchAsJsonAsync("/api/v1/customers/99999", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_WithFullUpdate_ChangesAllFields()
+    {
+        // Arrange
+        var uniqueEmail = $"fullupdate.{Guid.NewGuid():N}@example.com";
+        var registerRequest = new Customer
+        {
+            Name = "Original Name",
+            Email = uniqueEmail,
+            DeliveryAddress = "Original Address",
+            NotificationMethod = "Email",
+            Password = "TestPass123!",
+            PhoneNumber = "+4512345678",
+            LanguagePreference = "en"
+        };
+
+        var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
+        Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
+        var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Act - Update all fields
+        var updateRequest = new CustomerUpdateRequest(
+            Name: "Updated Name",
+            DeliveryAddress: "Updated Address 789",
+            NotificationMethod: "Push",
+            PhoneNumber: "+4598765432",
+            LanguagePreference: "da"
+        );
+        var updateResponse = await _customerServiceClient.PatchAsJsonAsync(
+            $"/api/v1/customers/{registeredCustomer!.Id}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updatedProfile = await updateResponse.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(updatedProfile);
+        Assert.Equal("Updated Name", updatedProfile.Name);
+        Assert.Equal("Updated Address 789", updatedProfile.DeliveryAddress);
+        Assert.Equal("Push", updatedProfile.NotificationMethod);
+        Assert.Equal("+4598765432", updatedProfile.PhoneNumber);
+        Assert.Equal("da", updatedProfile.LanguagePreference);
+
+        // Verify in database
+        using var scope = _legacyApiFactory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var customer = await dbContext.Customers.FindAsync(registeredCustomer.Id);
+        Assert.NotNull(customer);
+        Assert.Equal("Updated Name", customer.Name);
+        Assert.Equal("Updated Address 789", customer.DeliveryAddress);
+        Assert.Equal(LegacyMToGo.Models.NotificationMethod.Push, customer.NotificationMethod);
+        Assert.Equal("+4598765432", customer.PhoneNumber);
+        Assert.Equal(LegacyMToGo.Models.LanguagePreference.Da, customer.LanguagePreference);
+    }
+
+    #endregion
 }
 
 internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
@@ -349,6 +631,54 @@ internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
 
         var result = await response.Content.ReadFromJsonAsync<CustomerLoginResponse>();
         _logger.LogInformation("E2E: Login successful for: {Email}", request.Email);
+        
+        return result ?? throw new InvalidOperationException("Failed to deserialize response.");
+    }
+
+    public async Task<CustomerProfileResponse> GetCustomerAsync(int id)
+    {
+        _logger.LogInformation("E2E: Getting customer with ID: {Id}", id);
+
+        var response = await _httpClient.GetAsync($"/api/v1/customers/get/{id}");
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("E2E: Customer not found: {Id}", id);
+            throw new KeyNotFoundException("Customer not found.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        _logger.LogInformation("E2E: Customer retrieved: {Id}", id);
+        
+        return result ?? throw new InvalidOperationException("Failed to deserialize response.");
+    }
+
+    public async Task<CustomerProfileResponse> UpdateCustomerAsync(int id, CustomerUpdateRequest request)
+    {
+        _logger.LogInformation("E2E: Updating customer with ID: {Id}", id);
+
+        var response = await _httpClient.PatchAsJsonAsync($"/api/v1/customers/patch/{id}", request);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("E2E: Customer not found: {Id}", id);
+            throw new KeyNotFoundException("Customer not found.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("E2E: Update failed - Status: {Status}, Error: {Error}", 
+                response.StatusCode, errorContent);
+            throw new ArgumentException(errorContent);
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        _logger.LogInformation("E2E: Customer updated: {Id}", id);
         
         return result ?? throw new InvalidOperationException("Failed to deserialize response.");
     }

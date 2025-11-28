@@ -1,6 +1,9 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject CultureService CultureService
+@inject NavigationManager Navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">MToGo.Website</a>
+        <a class="navbar-brand" href="">MToGo</a>
     </div>
 </div>
 
@@ -13,16 +16,40 @@
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="register">
-                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Register
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="login">
-                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
-            </NavLink>
-        </div>
+        @if (CultureService.IsLoggedIn)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="profile">
+                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Profile
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <button class="nav-link" @onclick="HandleSignOut">
+                    <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sign Out
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="register">
+                    <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Register
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
+
+@code {
+    private void HandleSignOut()
+    {
+        CultureService.Logout();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+}
 

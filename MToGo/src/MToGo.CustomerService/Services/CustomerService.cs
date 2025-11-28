@@ -26,4 +26,16 @@ public class CustomerService : ICustomerService
         _logger.LogInformation("Processing login request");
         return await _legacyApiClient.LoginAsync(request);
     }
+
+    public async Task<CustomerProfileResponse> GetCustomerAsync(int id)
+    {
+        _logger.LogInformation("Getting customer profile for ID: {Id}", id);
+        return await _legacyApiClient.GetCustomerAsync(id);
+    }
+
+    public async Task<CustomerProfileResponse> UpdateCustomerAsync(int id, CustomerUpdateRequest request)
+    {
+        _logger.LogInformation("Updating customer profile for ID: {Id}", id);
+        return await _legacyApiClient.UpdateCustomerAsync(id, request);
+    }
 }

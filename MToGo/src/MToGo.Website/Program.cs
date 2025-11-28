@@ -1,10 +1,14 @@
 using MToGo.Website.Components;
+using MToGo.Website.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register services
+builder.Services.AddScoped<CultureService>();
 
 var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:8080";
 builder.Services.AddHttpClient("Gateway", client =>
@@ -25,7 +29,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 

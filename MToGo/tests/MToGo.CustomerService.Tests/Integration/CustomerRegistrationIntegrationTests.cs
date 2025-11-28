@@ -203,4 +203,268 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
     }
 
     #endregion
+
+    #region US-3: Get Customer Profile Integration Tests
+
+    [Fact]
+    public async Task GetProfile_WithValidId_ReturnsCustomerProfile()
+    {
+        // Arrange
+        var customerId = 1;
+        var expectedProfile = new CustomerProfileResponse(
+            Name: "John Doe",
+            DeliveryAddress: "123 Main St, Copenhagen",
+            NotificationMethod: "Email",
+            PhoneNumber: "+4512345678",
+            LanguagePreference: "en"
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.GetCustomerAsync(customerId))
+                .ReturnsAsync(expectedProfile);
+        });
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/customers/{customerId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(result);
+        Assert.Equal("John Doe", result.Name);
+        Assert.Equal("123 Main St, Copenhagen", result.DeliveryAddress);
+        Assert.Equal("Email", result.NotificationMethod);
+    }
+
+    [Fact]
+    public async Task GetProfile_WithNonExistentId_Returns404NotFound()
+    {
+        // Arrange
+        var customerId = 999;
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.GetCustomerAsync(customerId))
+                .ThrowsAsync(new KeyNotFoundException("Customer not found."));
+        });
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/customers/{customerId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetProfile_ReturnsLanguagePreference()
+    {
+        // Arrange
+        var customerId = 1;
+        var expectedProfile = new CustomerProfileResponse(
+            Name: "Danish User",
+            DeliveryAddress: "456 Strøget, Copenhagen",
+            NotificationMethod: "Sms",
+            PhoneNumber: "+4587654321",
+            LanguagePreference: "da"
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.GetCustomerAsync(customerId))
+                .ReturnsAsync(expectedProfile);
+        });
+
+        // Act
+        var response = await client.GetAsync($"/api/v1/customers/{customerId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(result);
+        Assert.Equal("da", result.LanguagePreference);
+    }
+
+    #endregion
+
+    #region US-3: Update Customer Profile Integration Tests
+
+    [Fact]
+    public async Task UpdateProfile_WithValidRequest_ReturnsUpdatedProfile()
+    {
+        // Arrange
+        var customerId = 1;
+        var updateRequest = new CustomerUpdateRequest(
+            Name: "John Updated",
+            DeliveryAddress: "789 New St, Copenhagen",
+            NotificationMethod: "Push",
+            PhoneNumber: "+4511223344",
+            LanguagePreference: "da"
+        );
+        var expectedProfile = new CustomerProfileResponse(
+            Name: "John Updated",
+            DeliveryAddress: "789 New St, Copenhagen",
+            NotificationMethod: "Push",
+            PhoneNumber: "+4511223344",
+            LanguagePreference: "da"
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+                .ReturnsAsync(expectedProfile);
+        });
+
+        // Act
+        var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(result);
+        Assert.Equal("John Updated", result.Name);
+        Assert.Equal("789 New St, Copenhagen", result.DeliveryAddress);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_WithNonExistentId_Returns404NotFound()
+    {
+        // Arrange
+        var customerId = 999;
+        var updateRequest = new CustomerUpdateRequest(
+            Name: "Test",
+            DeliveryAddress: null,
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+                .ThrowsAsync(new KeyNotFoundException("Customer not found."));
+        });
+
+        // Act
+        var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateProfile_WithPartialUpdate_ReturnsUpdatedProfile()
+    {
+        // Arrange
+        var customerId = 1;
+        var updateRequest = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: "Updated Address Only",
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+        var expectedProfile = new CustomerProfileResponse(
+            Name: "Original Name",
+            DeliveryAddress: "Updated Address Only",
+            NotificationMethod: "Email",
+            PhoneNumber: "+4512345678",
+            LanguagePreference: "en"
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+                .ReturnsAsync(expectedProfile);
+        });
+
+        // Act
+        var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(result);
+        Assert.Equal("Original Name", result.Name);
+        Assert.Equal("Updated Address Only", result.DeliveryAddress);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("da")]
+    public async Task UpdateProfile_WithDifferentLanguages_Returns200Ok(string language)
+    {
+        // Arrange
+        var customerId = 1;
+        var updateRequest = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: null,
+            NotificationMethod: null,
+            PhoneNumber: null,
+            LanguagePreference: language
+        );
+        var expectedProfile = new CustomerProfileResponse(
+            Name: "John Doe",
+            DeliveryAddress: "123 Main St",
+            NotificationMethod: "Email",
+            PhoneNumber: "+4512345678",
+            LanguagePreference: language
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+                .ReturnsAsync(expectedProfile);
+        });
+
+        // Act
+        var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(result);
+        Assert.Equal(language, result.LanguagePreference);
+    }
+
+    [Theory]
+    [InlineData("Email")]
+    [InlineData("Sms")]
+    [InlineData("Push")]
+    public async Task UpdateProfile_WithDifferentNotificationMethods_Returns200Ok(string notificationMethod)
+    {
+        // Arrange
+        var customerId = 1;
+        var updateRequest = new CustomerUpdateRequest(
+            Name: null,
+            DeliveryAddress: null,
+            NotificationMethod: notificationMethod,
+            PhoneNumber: null,
+            LanguagePreference: null
+        );
+        var expectedProfile = new CustomerProfileResponse(
+            Name: "John Doe",
+            DeliveryAddress: "123 Main St",
+            NotificationMethod: notificationMethod,
+            PhoneNumber: "+4512345678",
+            LanguagePreference: "en"
+        );
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
+                .ReturnsAsync(expectedProfile);
+        });
+
+        // Act
+        var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        Assert.NotNull(result);
+        Assert.Equal(notificationMethod, result.NotificationMethod);
+    }
+
+    #endregion
 }

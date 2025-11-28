@@ -77,4 +77,51 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
         
         return result ?? throw new InvalidOperationException("Failed to deserialize login response.");
     }
+
+    public async Task<CustomerProfileResponse> GetCustomerAsync(int id)
+    {
+        _logger.LogInformation("Getting customer with ID: {Id}", id);
+
+        var response = await _httpClient.GetAsync($"/api/v1/legacy/customers/get/{id}");
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Customer not found: {Id}", id);
+            throw new KeyNotFoundException($"Customer with ID {id} not found.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        
+        return result ?? throw new InvalidOperationException("Failed to deserialize customer response.");
+    }
+
+    public async Task<CustomerProfileResponse> UpdateCustomerAsync(int id, CustomerUpdateRequest request)
+    {
+        _logger.LogInformation("Updating customer with ID: {Id}", id);
+
+        var response = await _httpClient.PatchAsJsonAsync($"/api/v1/legacy/customers/patch/{id}", request);
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Customer not found: {Id}", id);
+            throw new KeyNotFoundException($"Customer with ID {id} not found.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            _logger.LogWarning("Update failed for customer {Id}: {Error}", id, error);
+            throw new ArgumentException(error);
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<CustomerProfileResponse>();
+        
+        _logger.LogInformation("Customer {Id} updated successfully", id);
+        
+        return result ?? throw new InvalidOperationException("Failed to deserialize update response.");
+    }
 }
