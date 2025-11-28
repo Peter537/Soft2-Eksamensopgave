@@ -12,8 +12,8 @@
 #     image_registry          = "ghcr.io/owner"
 #     image_tag               = "latest"
 #     postgres_host           = "postgres-host"
-#     postgres_admin_username = "admin"
-#     postgres_admin_password = "password"
+#     postgres_admin_username = <string>
+#     postgres_admin_password = <string>
 #     registry_secret_name    = "ghcr-secret"
 #   }
 
