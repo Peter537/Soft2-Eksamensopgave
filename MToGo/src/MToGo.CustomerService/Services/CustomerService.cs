@@ -20,4 +20,10 @@ public class CustomerService : ICustomerService
         _logger.LogInformation("Registering new customer");
         return await _legacyApiClient.CreateCustomerAsync(request);
     }
+
+    public async Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request)
+    {
+        _logger.LogInformation("Processing login request");
+        return await _legacyApiClient.LoginAsync(request);
+    }
 }

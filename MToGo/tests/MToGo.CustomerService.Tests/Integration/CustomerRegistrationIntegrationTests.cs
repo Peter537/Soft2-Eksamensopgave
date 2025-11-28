@@ -105,6 +105,70 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
 
     #endregion
 
+    #region US-2: Customer Login Acceptance Criteria Tests
+
+    [Fact]
+    public async Task Login_WithValidCredentials_ReturnsJwtToken()
+    {
+        // Arrange
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+                .ReturnsAsync(new CustomerLoginResponse("valid-jwt-token"));
+        });
+
+        var request = new CustomerLoginRequest("john@example.com", "SecurePass123!");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/customers/login", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<CustomerLoginResponse>();
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Jwt);
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidCredentials_Returns401Unauthorized()
+    {
+        // Arrange
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+                .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+        });
+
+        var request = new CustomerLoginRequest("john@example.com", "WrongPassword!");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/customers/login", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_WithNonExistentEmail_Returns401Unauthorized()
+    {
+        // Arrange
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+                .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+        });
+
+        var request = new CustomerLoginRequest("nonexistent@example.com", "AnyPassword!");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/customers/login", request);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    #endregion
+
     #region Additional Registration Tests
 
     [Theory]

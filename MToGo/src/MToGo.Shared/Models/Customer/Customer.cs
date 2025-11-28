@@ -10,3 +10,6 @@ public class Customer
     public string? PhoneNumber { get; set; }
     public string LanguagePreference { get; set; } = "en"; // "en" for English, "da" for Danish
 }
+
+public record CustomerLoginRequest(string Email, string Password);
+public record CustomerLoginResponse(string Jwt);
