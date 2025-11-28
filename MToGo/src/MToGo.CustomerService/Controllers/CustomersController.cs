@@ -43,7 +43,7 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] CustomerLoginRequest request)
     {
-        _logger.LogInformation("Login request received for email: {Email}", request.Email);
+        _logger.LogInformation("Login request received");
 
         try
         {

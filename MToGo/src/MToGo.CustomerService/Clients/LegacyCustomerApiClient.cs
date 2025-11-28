@@ -58,14 +58,14 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
 
     public async Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request)
     {
-        _logger.LogInformation("Attempting login for email: {Email}", request.Email);
+        _logger.LogInformation("Attempting to log in");
 
         // Legacy API uses /post/login endpoint
         var response = await _httpClient.PostAsJsonAsync("/api/v1/legacy/customers/post/login", request);
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogWarning("Login failed - invalid credentials for email: {Email}", request.Email);
+            _logger.LogWarning("Login failed - invalid credentials for email");
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
@@ -73,7 +73,7 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
 
         var result = await response.Content.ReadFromJsonAsync<CustomerLoginResponse>();
         
-        _logger.LogInformation("Login successful for email: {Email}", request.Email);
+        _logger.LogInformation("Login successful");
         
         return result ?? throw new InvalidOperationException("Failed to deserialize login response.");
     }
