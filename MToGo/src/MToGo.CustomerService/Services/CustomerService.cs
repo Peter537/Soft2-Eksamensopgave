@@ -17,7 +17,8 @@ public class CustomerService : ICustomerService
 
     public async Task<CreateCustomerResponse> RegisterCustomerAsync(Customer request)
     {
-        _logger.LogInformation("Registering new customer with email: {Email}", request.Email);
+        var safeEmail = request.Email?.Replace("\r", "").Replace("\n", "");
+        _logger.LogInformation("Registering new customer with email: {Email}", safeEmail);
         return await _legacyApiClient.CreateCustomerAsync(request);
     }
 }

@@ -19,7 +19,8 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
 
     public async Task<CreateCustomerResponse> CreateCustomerAsync(Customer request)
     {
-        _logger.LogInformation("Creating customer with email: {Email}", request.Email);
+        var safeEmail = request.Email?.Replace("\n", "").Replace("\r", "");
+        _logger.LogInformation("Creating customer with email: {Email}", safeEmail);
 
         // Gateway routes /api/v1/legacy/customers/* to Legacy API
         // Legacy API uses /api/customers/post for creation
@@ -34,13 +35,13 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
             if (response.StatusCode == HttpStatusCode.InternalServerError && 
                 errorContent.Contains("duplicate key", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Duplicate email attempt (DB constraint): {Email}", request.Email);
+                _logger.LogWarning("Duplicate email attempt (DB constraint): {Email}", safeEmail);
                 throw new DuplicateEmailException("A customer with this email already exists.");
             }
             
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
-                _logger.LogWarning("Duplicate email attempt: {Email}", request.Email);
+                _logger.LogWarning("Duplicate email attempt: {Email}", safeEmail);
                 throw new DuplicateEmailException("A customer with this email already exists.");
             }
             
