@@ -113,4 +113,65 @@ public class CustomersControllerTests
     }
 
     #endregion
+
+    #region Login Tests
+
+    [Fact]
+    public async Task Login_WithValidCredentials_Returns200Ok()
+    {
+        // Arrange
+        var request = new CustomerLoginRequest("john@example.com", "SecurePass123!");
+        var expectedResponse = new CustomerLoginResponse("valid-jwt-token");
+
+        _mockCustomerService
+            .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+        var response = Assert.IsType<CustomerLoginResponse>(okResult.Value);
+        Assert.Equal("valid-jwt-token", response.Jwt);
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidCredentials_Returns401Unauthorized()
+    {
+        // Arrange
+        var request = new CustomerLoginRequest("john@example.com", "WrongPassword!");
+
+        _mockCustomerService
+            .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+            .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_WithNonExistentEmail_Returns401Unauthorized()
+    {
+        // Arrange
+        var request = new CustomerLoginRequest("nonexistent@example.com", "AnyPassword!");
+
+        _mockCustomerService
+            .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+            .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+
+    #endregion
 }

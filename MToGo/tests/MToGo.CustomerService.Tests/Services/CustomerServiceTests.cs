@@ -107,4 +107,59 @@ public class CustomerServiceTests
     }
 
     #endregion
+
+    #region LoginAsync Tests
+
+    [Fact]
+    public async Task LoginAsync_WithValidCredentials_ReturnsJwt()
+    {
+        // Arrange
+        var request = new CustomerLoginRequest("john@example.com", "SecurePass123!");
+        var expectedResponse = new CustomerLoginResponse("legacy-token-1");
+
+        _mockLegacyClient
+            .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(expectedResponse.Jwt, result.Jwt);
+        _mockLegacyClient.Verify(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WithInvalidCredentials_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange
+        var request = new CustomerLoginRequest("john@example.com", "WrongPassword!");
+
+        _mockLegacyClient
+            .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+            .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _sut.LoginAsync(request)
+        );
+    }
+
+    [Fact]
+    public async Task LoginAsync_WithNonExistentEmail_ThrowsUnauthorizedAccessException()
+    {
+        // Arrange
+        var request = new CustomerLoginRequest("nonexistent@example.com", "AnyPassword!");
+
+        _mockLegacyClient
+            .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+            .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _sut.LoginAsync(request)
+        );
+    }
+
+    #endregion
 }

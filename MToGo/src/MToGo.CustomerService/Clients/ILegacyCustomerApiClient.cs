@@ -6,4 +6,5 @@ namespace MToGo.CustomerService.Clients;
 public interface ILegacyCustomerApiClient
 {
     Task<CreateCustomerResponse> CreateCustomerAsync(Customer request);
+    Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request);
 }

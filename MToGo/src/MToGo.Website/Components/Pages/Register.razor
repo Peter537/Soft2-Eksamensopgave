@@ -91,6 +91,11 @@
                                     <span>Register</span>
                                 }
                             </button>
+
+                            <div class="mt-3 text-center">
+                                <p class="mb-0">Already have an account? <a href="/login">Login here</a></p>
+                                <p class="mb-0">If you are a restaurant, <a href="/restaurant-signin">sign in here</a></p>
+                            </div>
                         </div>
                     </EditForm>
                 </div>
@@ -122,6 +127,7 @@
                 var result = await response.Content.ReadFromJsonAsync<RegisterResponse>();
                 successMessage = $"Account created successfully! Your customer ID is {result?.Id}. You can now sign in.";
                 model = new(); // Reset form
+                Navigation.NavigateTo("/login");
             }
             else
             {
