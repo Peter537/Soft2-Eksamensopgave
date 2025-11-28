@@ -122,6 +122,7 @@
                 var result = await response.Content.ReadFromJsonAsync<RegisterResponse>();
                 successMessage = $"Account created successfully! Your customer ID is {result?.Id}. You can now sign in.";
                 model = new(); // Reset form
+                Navigation.NavigateTo("/login");
             }
             else
             {
