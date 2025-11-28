@@ -17,7 +17,7 @@ namespace MToGo.Shared.Kafka
         public int? HeartbeatIntervalMs { get; set; }
     }
 
-    public class KafkaConsumer : IDisposable, IAsyncDisposable
+    public class KafkaConsumer : IKafkaConsumer, IDisposable, IAsyncDisposable
     {
         private readonly IConsumer<string, string> _consumer;
         private readonly ILogger<KafkaConsumer> _logger;
