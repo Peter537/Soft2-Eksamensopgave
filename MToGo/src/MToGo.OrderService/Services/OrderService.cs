@@ -10,18 +10,25 @@ namespace MToGo.OrderService.Services
     public interface IOrderService
     {
         Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request);
+        Task<bool> AcceptOrderAsync(int orderId);
     }
 
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IKafkaProducer _kafkaProducer;
+        private readonly IPartnerServiceClient _partnerServiceClient;
         private readonly ILogger<OrderService> _logger;
 
-        public OrderService(IOrderRepository orderRepository, IKafkaProducer kafkaProducer, ILogger<OrderService> logger)
+        public OrderService(
+            IOrderRepository orderRepository,
+            IKafkaProducer kafkaProducer,
+            IPartnerServiceClient partnerServiceClient,
+            ILogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
             _kafkaProducer = kafkaProducer;
+            _partnerServiceClient = partnerServiceClient;
             _logger = logger;
         }
 
@@ -76,6 +83,58 @@ namespace MToGo.OrderService.Services
             _logger.PublishedOrderCreatedEvent(createdOrder.Id);
 
             return new OrderCreateResponse { Id = createdOrder.Id };
+        }
+
+        public async Task<bool> AcceptOrderAsync(int orderId)
+        {
+            _logger.AcceptingOrder(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotAcceptOrder(orderId, "Order not found");
+                return false;
+            }
+
+            if (order.Status != OrderStatus.Placed)
+            {
+                _logger.CannotAcceptOrder(orderId, $"Invalid status: {order.Status}");
+                return false;
+            }
+
+            order.Status = OrderStatus.Accepted;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.OrderAccepted(order.Id, order.CustomerId);
+
+            // Fetch partner information
+            var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
+            var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerAddress = partner?.Location ?? string.Empty; // TODO: Null checks pga manglende Service
+
+            // Publish OrderAcceptedEvent
+            var orderEvent = new OrderAcceptedEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                PartnerName = partnerName,
+                PartnerAddress = partnerAddress,
+                DeliveryAddress = order.DeliveryAddress,
+                DeliveryFee = order.DeliveryFee,
+                Timestamp = DateTime.UtcNow.ToString("O"),
+                Items = order.Items.Select(i => new OrderAcceptedEvent.OrderAcceptedItem
+                {
+                    Name = i.Name,
+                    Quantity = i.Quantity
+                }).ToList()
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderAccepted, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderAcceptedEvent(order.Id);
+
+            return true;
         }
 
         private decimal CalculateServiceFee(decimal orderTotal)

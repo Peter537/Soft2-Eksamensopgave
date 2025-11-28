@@ -7,6 +7,7 @@ namespace MToGo.OrderService.Repositories
     {
         Task<Order> CreateOrderAsync(Order order);
         Task<Order?> GetOrderByIdAsync(int id);
+        Task UpdateOrderAsync(Order order);
     }
 
     public class OrderRepository : IOrderRepository
@@ -28,6 +29,12 @@ namespace MToGo.OrderService.Repositories
         public async Task<Order?> GetOrderByIdAsync(int id)
         {
             return await _context.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+        }
+
+        public async Task UpdateOrderAsync(Order order)
+        {
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
         }
     }
 }

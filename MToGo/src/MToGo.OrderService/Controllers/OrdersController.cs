@@ -31,5 +31,27 @@ namespace MToGo.OrderService.Controllers
 
             return StatusCode(201, response);
         }
+
+        [HttpPost("order/{id}/accept")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> AcceptOrder(int id)
+        {
+            _logger.ReceivedAcceptOrderRequest(id);
+
+            var success = await _orderService.AcceptOrderAsync(id);
+
+            if (!success)
+            {
+                // Audit log
+                _logger.AcceptOrderFailed(id);
+                return BadRequest();
+            }
+
+            // Audit log
+            _logger.AcceptOrderCompleted(id);
+
+            return NoContent();
+        }
     }
 }
