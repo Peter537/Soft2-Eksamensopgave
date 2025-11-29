@@ -75,5 +75,31 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderRejectedEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedOrderRejectedEvent(this ILogger logger, int orderId);
+
+        // Set Ready - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received SetReady request for OrderId: {OrderId}")]
+        public static partial void ReceivedSetReadyRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "SetReady completed: OrderId={OrderId}")]
+        public static partial void SetReadyCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "SetReady failed: OrderId={OrderId}")]
+        public static partial void SetReadyFailed(this ILogger logger, int orderId);
+
+        // Set Ready - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Setting order ready: OrderId={OrderId}")]
+        public static partial void SettingOrderReady(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot set order ready: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotSetOrderReady(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order set ready: OrderId={OrderId}, CustomerId={CustomerId}")]
+        public static partial void OrderSetReady(this ILogger logger, int orderId, int customerId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderReadyEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderReadyEvent(this ILogger logger, int orderId);
     }
 }

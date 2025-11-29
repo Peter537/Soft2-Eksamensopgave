@@ -33,6 +33,14 @@ namespace MToGo.OrderService.Tests.StepDefinitions
             _scenarioContext["OrderId"] = orderId;
         }
 
+        [Given(@"an order exists with Accepted status and no agent assigned")]
+        public async Task GivenAnOrderExistsWithAcceptedStatusAndNoAgentAssigned()
+        {
+            var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
+            var orderId = await OrderTestHelper.CreateOrderWithStatus(factory, OrderStatus.Accepted, agentId: null);
+            _scenarioContext["OrderId"] = orderId;
+        }
+
         [Given(@"an order exists with Rejected status")]
         public async Task GivenAnOrderExistsWithRejectedStatus()
         {
@@ -58,6 +66,12 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         public void ThenTheOrderStatusShouldBeRejected()
         {
             VerifyOrderStatus(OrderStatus.Rejected);
+        }
+
+        [Then(@"the order status should be Ready")]
+        public void ThenTheOrderStatusShouldBeReady()
+        {
+            VerifyOrderStatus(OrderStatus.Ready);
         }
 
         private void VerifyOrderStatus(OrderStatus expectedStatus)

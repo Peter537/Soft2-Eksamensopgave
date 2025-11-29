@@ -9,6 +9,7 @@ namespace MToGo.OrderService.Entities
         public int Id { get; set; }
         public int CustomerId { get; set; }
         public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
         public string DeliveryAddress { get; set; } = string.Empty;
         public decimal DeliveryFee { get; set; }
         public decimal ServiceFee { get; set; }
