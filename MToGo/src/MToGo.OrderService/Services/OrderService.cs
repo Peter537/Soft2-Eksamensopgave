@@ -159,15 +159,20 @@ namespace MToGo.OrderService.Services
             order.Status = OrderStatus.Rejected;
             await _orderRepository.UpdateOrderAsync(order);
 
+            // Sanitize user input to prevent log injection attacks
+            var sanitizedReason = (reason ?? "No reason provided")
+                .Replace("\r", "")
+                .Replace("\n", " ");
+
             // Audit log
-            _logger.OrderRejected(order.Id, order.CustomerId, reason ?? "No reason provided");
+            _logger.OrderRejected(order.Id, order.CustomerId, sanitizedReason);
 
             // Publish OrderRejectedEvent
             var orderEvent = new OrderRejectedEvent
             {
                 OrderId = order.Id,
                 CustomerId = order.CustomerId,
-                Reason = reason ?? string.Empty,
+                Reason = sanitizedReason,
                 Timestamp = DateTime.UtcNow.ToString("O")
             };
 
