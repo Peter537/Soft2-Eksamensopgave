@@ -1,9 +1,15 @@
 ﻿@inject CultureService CultureService
 @inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">MToGo</a>
+
+        <select class="form-select form-select-sm ms-2" style="width: auto;" @onchange="HandleLanguageChange">
+            <option value="en" selected="@(CultureService.CurrentCulture == "en")">English</option>
+            <option value="da" selected="@(CultureService.CurrentCulture == "da")">Dansk</option>
+        </select>        
     </div>
 </div>
 
@@ -19,29 +25,41 @@
         @if (CultureService.IsLoggedIn)
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="profile">
-                    <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Profile
-                </NavLink>
+            <NavLink class="nav-link" href="profile">
+                <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Profile
+            </NavLink>
             </div>
             <div class="nav-item px-3">
-                <button class="nav-link" @onclick="HandleSignOut">
-                    <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sign Out
-                </button>
+            <button class="nav-link" @onclick="HandleSignOut">
+                <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Sign Out
+            </button>
             </div>
         }
         else
         {
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="register">
-                    <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Register
-                </NavLink>
+            <NavLink class="nav-link" href="register">
+                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Register
+            </NavLink>
             </div>
             <div class="nav-item px-3">
-                <NavLink class="nav-link" href="login">
-                    <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
-                </NavLink>
+            <NavLink class="nav-link" href="login">
+                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+            </NavLink>
             </div>
         }
+
+    @code {
+        protected override void OnInitialized()
+        {
+            CultureService.OnChange += StateHasChanged;
+        }
+
+        public void Dispose()
+        {
+            CultureService.OnChange -= StateHasChanged;
+        }
+    }
     </nav>
 </div>
 
@@ -50,6 +68,12 @@
     {
         CultureService.Logout();
         Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private void HandleLanguageChange(ChangeEventArgs e)
+    {
+        var culture = e.Value?.ToString() ?? "en";
+        CultureService.SetCulture(culture);
     }
 }
 
