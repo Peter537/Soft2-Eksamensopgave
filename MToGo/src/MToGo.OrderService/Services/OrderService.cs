@@ -12,6 +12,7 @@ namespace MToGo.OrderService.Services
         Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request);
         Task<bool> AcceptOrderAsync(int orderId);
         Task<bool> RejectOrderAsync(int orderId, string? reason);
+        Task<bool> SetReadyAsync(int orderId);
     }
 
     public class OrderService : IOrderService
@@ -193,6 +194,52 @@ namespace MToGo.OrderService.Services
 
             decimal rate = 0.06m - (orderTotal - 100) / 900m * 0.03m;
             return orderTotal * rate;
+        }
+
+        public async Task<bool> SetReadyAsync(int orderId)
+        {
+            _logger.SettingOrderReady(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotSetOrderReady(orderId, "Order not found");
+                return false;
+            }
+
+            if (order.Status != OrderStatus.Accepted)
+            {
+                _logger.CannotSetOrderReady(orderId, $"Invalid status: {order.Status}");
+                return false;
+            }
+
+            order.Status = OrderStatus.Ready;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.OrderSetReady(order.Id, order.CustomerId);
+
+            // Fetch partner information
+            var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
+            var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerAddress = partner?.Location ?? string.Empty; // TODO: Null checks pga manglende Service
+
+            // Publish OrderReadyEvent
+            var orderEvent = new OrderReadyEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                PartnerName = partnerName,
+                PartnerAddress = partnerAddress,
+                AgentId = order.AgentId,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderReady, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderReadyEvent(order.Id);
+
+            return true;
         }
     }
 }
