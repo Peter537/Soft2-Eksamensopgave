@@ -75,5 +75,27 @@ namespace MToGo.OrderService.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("order/{id}/set-ready")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> SetReady(int id)
+        {
+            _logger.ReceivedSetReadyRequest(id);
+
+            var success = await _orderService.SetReadyAsync(id);
+
+            if (!success)
+            {
+                // Audit log
+                _logger.SetReadyFailed(id);
+                return BadRequest();
+            }
+
+            // Audit log
+            _logger.SetReadyCompleted(id);
+
+            return NoContent();
+        }
     }
 }
