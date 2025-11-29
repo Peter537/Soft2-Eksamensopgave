@@ -96,6 +96,9 @@
                     if (customerId > 0)
                     {
                         CultureService.SetCustomerId(customerId);
+                        
+                        // Fetch user's language preference
+                        await LoadUserLanguagePreference(customerId);
                     }
                     
                     successMessage = "Login successful!";
@@ -151,6 +154,31 @@
             }
         }
         return 0;
+    }
+
+    private async Task LoadUserLanguagePreference(int customerId)
+    {
+        try
+        {
+            var profileResponse = await Http.GetAsync($"/api/v1/customers/{customerId}");
+            if (profileResponse.IsSuccessStatusCode)
+            {
+                var profile = await profileResponse.Content.ReadFromJsonAsync<CustomerProfile>();
+                if (!string.IsNullOrEmpty(profile?.LanguagePreference))
+                {
+                    CultureService.SetCulture(profile.LanguagePreference);
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail - use default language
+        }
+    }
+
+    public class CustomerProfile
+    {
+        public string? LanguagePreference { get; set; }
     }
 
     public class ErrorResponse

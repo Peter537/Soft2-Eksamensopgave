@@ -1,5 +1,6 @@
 ﻿@inject CultureService CultureService
 @inject NavigationManager Navigation
+@inject HttpClient Http
 @rendermode InteractiveServer
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -70,10 +71,24 @@
         Navigation.NavigateTo("/login", forceLoad: true);
     }
 
-    private void HandleLanguageChange(ChangeEventArgs e)
+    private async Task HandleLanguageChange(ChangeEventArgs e)
     {
         var culture = e.Value?.ToString() ?? "en";
         CultureService.SetCulture(culture);
+
+        // If user is logged in, persist the language preference to the backend
+        if (CultureService.IsLoggedIn)
+        {
+            try
+            {
+                var updateRequest = new { LanguagePreference = culture };
+                await Http.PatchAsJsonAsync($"/api/v1/customers/{CultureService.CustomerId}", updateRequest);
+            }
+            catch
+            {
+                // Silently fail - the UI is already updated
+            }
+        }
     }
 }
 
