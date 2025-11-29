@@ -2,22 +2,24 @@
 @inject HttpClient Http
 @inject CultureService CultureService
 @inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
 @rendermode InteractiveServer
 
-<PageTitle>Profile - MToGo</PageTitle>
+<PageTitle>@L["Pages.Profile.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">My Profile</h3>
+                    <h3 class="mb-0">@L["Pages.Profile.Title"]</h3>
                 </div>
                 <div class="card-body">
                     @if (!CultureService.IsLoggedIn)
                     {
                         <div class="alert alert-warning">
-                            <p class="mb-0">You must be logged in to view this page. <a href="/login">Login</a></p>
+                            <p class="mb-0">@L["Pages.Profile.LoginRequired"] <a href="/login">@L["Pages.Profile.LoginLink"]</a></p>
                         </div>
                     }
                     else
@@ -26,7 +28,7 @@
                         {
                             <div class="text-center">
                                 <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                                    <span class="visually-hidden">@L["Pages.Profile.Loading"]</span>
                                 </div>
                             </div>
                         }
@@ -50,44 +52,44 @@
                                 <DataAnnotationsValidator />
 
                                 <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
+                                    <label for="email" class="form-label">@L["Pages.Profile.Email"]</label>
                                     <input id="email" class="form-control" value="@model.Email" disabled />
-                                    <small class="text-muted">Email cannot be changed</small>
+                                    <small class="text-muted">@L["Pages.Profile.EmailCannotChange"]</small>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">Name</label>
+                                    <label for="name" class="form-label">@L["Pages.Profile.Name"]</label>
                                     <InputText id="name" class="form-control" @bind-Value="model.Name" />
                                     <ValidationMessage For="@(() => model.Name)" />
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="deliveryAddress" class="form-label">Delivery Address</label>
+                                    <label for="deliveryAddress" class="form-label">@L["Pages.Profile.DeliveryAddress"]</label>
                                     <InputText id="deliveryAddress" class="form-control" @bind-Value="model.DeliveryAddress" />
                                     <ValidationMessage For="@(() => model.DeliveryAddress)" />
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="phoneNumber" class="form-label">Phone Number</label>
-                                    <InputText id="phoneNumber" class="form-control" @bind-Value="model.PhoneNumber" placeholder="+45 12345678" />
+                                    <label for="phoneNumber" class="form-label">@L["Pages.Profile.PhoneNumber"]</label>
+                                    <InputText id="phoneNumber" class="form-control" @bind-Value="model.PhoneNumber" placeholder="@L["Pages.Profile.PhoneNumberPlaceholder"]" />
                                     <ValidationMessage For="@(() => model.PhoneNumber)" />
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="notificationMethod" class="form-label">Notification Preference</label>
+                                    <label for="notificationMethod" class="form-label">@L["Pages.Profile.NotificationPreference"]</label>
                                     <InputSelect id="notificationMethod" class="form-select" @bind-Value="model.NotificationMethod">
-                                        <option value="Email">Email</option>
-                                        <option value="Sms">SMS</option>
-                                        <option value="Push">Push Notification</option>
+                                        <option value="Email">@L["Pages.Profile.NotificationEmail"]</option>
+                                        <option value="Sms">@L["Pages.Profile.NotificationSms"]</option>
+                                        <option value="Push">@L["Pages.Profile.NotificationPush"]</option>
                                     </InputSelect>
                                     <ValidationMessage For="@(() => model.NotificationMethod)" />
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="languagePreference" class="form-label">Language Preference</label>
+                                    <label for="languagePreference" class="form-label">@L["Pages.Profile.LanguagePreference"]</label>
                                     <InputSelect id="languagePreference" class="form-select" @bind-Value="model.LanguagePreference">
-                                        <option value="en">English</option>
-                                        <option value="da">Dansk</option>
+                                        <option value="en">@L["Pages.Profile.LanguageEnglish"]</option>
+                                        <option value="da">@L["Pages.Profile.LanguageDanish"]</option>
                                     </InputSelect>
                                     <ValidationMessage For="@(() => model.LanguagePreference)" />
                                 </div>
@@ -97,11 +99,11 @@
                                         @if (isSaving)
                                         {
                                             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            <span>Saving...</span>
+                                            <span>@L["Pages.Profile.Saving"]</span>
                                         }
                                         else
                                         {
-                                            <span>Save Changes</span>
+                                            <span>@L["Pages.Profile.SaveButton"]</span>
                                         }
                                     </button>
                                 </div>
@@ -122,6 +124,27 @@
     private string? successMessage;
     private bool isLoading = true;
     private bool isSaving;
+    private bool isUpdatingFromProfile;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        // Only sync from CultureService if the change didn't originate from this Profile page
+        if (!isUpdatingFromProfile)
+        {
+            model.LanguagePreference = CultureService.CurrentCulture;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -163,12 +186,12 @@
             }
             else
             {
-                errorMessage = "Failed to load profile.";
+                errorMessage = L["Pages.Profile.LoadFailed"];
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred: {ex.Message}";
+            errorMessage = L.GetString("Pages.Profile.ErrorOccurred", ex.Message);
         }
         finally
         {
@@ -179,6 +202,7 @@
     private async Task HandleUpdate()
     {
         isSaving = true;
+        isUpdatingFromProfile = true;
         errorMessage = null;
         successMessage = null;
 
@@ -197,26 +221,27 @@
 
             if (response.IsSuccessStatusCode)
             {
-                successMessage = "Profile updated successfully!";
+                successMessage = L["Pages.Profile.ProfileUpdated"];
                 CultureService.SetCulture(model.LanguagePreference);
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
             {
                 var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-                errorMessage = error?.Error ?? "Update failed. Please try again.";
+                errorMessage = error?.Error ?? L["Pages.Profile.UpdateFailed"];
             }
             else
             {
-                errorMessage = "Update failed. Please try again.";
+                errorMessage = L["Pages.Profile.UpdateFailed"];
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred: {ex.Message}";
+            errorMessage = L.GetString("Pages.Profile.ErrorOccurred", ex.Message);
         }
         finally
         {
             isSaving = false;
+            isUpdatingFromProfile = false;
         }
     }
 

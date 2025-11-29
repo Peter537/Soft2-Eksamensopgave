@@ -7,8 +7,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Add localization
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
 // Register services
 builder.Services.AddScoped<CultureService>();
+builder.Services.AddScoped<ILocalizerService, LocalizerService>();
 
 var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:8080";
 builder.Services.AddHttpClient("Gateway", client =>
