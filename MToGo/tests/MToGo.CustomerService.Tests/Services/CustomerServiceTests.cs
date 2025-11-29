@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Moq;
 using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
@@ -11,14 +10,12 @@ namespace MToGo.CustomerService.Tests.Services;
 public class CustomerServiceTests
 {
     private readonly Mock<ILegacyCustomerApiClient> _mockLegacyClient;
-    private readonly Mock<ILogger<CustomerService.Services.CustomerService>> _mockLogger;
     private readonly CustomerService.Services.CustomerService _sut;
 
     public CustomerServiceTests()
     {
         _mockLegacyClient = new Mock<ILegacyCustomerApiClient>();
-        _mockLogger = new Mock<ILogger<CustomerService.Services.CustomerService>>();
-        _sut = new CustomerService.Services.CustomerService(_mockLegacyClient.Object, _mockLogger.Object);
+        _sut = new CustomerService.Services.CustomerService(_mockLegacyClient.Object);
     }
 
     #region RegisterCustomerAsync Tests

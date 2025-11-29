@@ -7,7 +7,7 @@ namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/customers")]
-public class CustomersController(LegacyContext dbContext, ILogger<CustomersController> logger) : ControllerBase
+public class CustomersController(LegacyContext dbContext) : ControllerBase
 {
     [HttpPost("post")]
     public async Task<ActionResult<object>> Create(CustomerCreateRequest request, CancellationToken cancellationToken)
@@ -37,7 +37,6 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
         dbContext.Customers.Add(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("Legacy customer {CustomerId} created", customer.Id);
         return CreatedAtAction(nameof(Get), new { id = customer.Id }, new { id = customer.Id });
     }
 
@@ -130,7 +129,6 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
 
         dbContext.Customers.Remove(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Legacy customer {CustomerId} deleted", id);
         return Ok();
     }
 

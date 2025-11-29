@@ -11,12 +11,10 @@ namespace MToGo.CustomerService.Controllers;
 public class CustomersController : ControllerBase
 {
     private readonly ICustomerService _customerService;
-    private readonly ILogger<CustomersController> _logger;
 
-    public CustomersController(ICustomerService customerService, ILogger<CustomersController> logger)
+    public CustomersController(ICustomerService customerService)
     {
         _customerService = customerService;
-        _logger = logger;
     }
 
     /// <summary>
@@ -27,8 +25,6 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] Customer request)
     {
-        _logger.LogInformation("Registration request received.");
-
         try
         {
             var result = await _customerService.RegisterCustomerAsync(request);
@@ -36,7 +32,6 @@ public class CustomersController : ControllerBase
         }
         catch (DuplicateEmailException ex)
         {
-            _logger.LogWarning("Registration failed due to duplicate email.");
             return BadRequest(new { error = ex.Message });
         }
     }
@@ -49,8 +44,6 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] CustomerLoginRequest request)
     {
-        _logger.LogInformation("Login request received");
-
         try
         {
             var result = await _customerService.LoginAsync(request);
@@ -58,7 +51,6 @@ public class CustomersController : ControllerBase
         }
         catch (UnauthorizedAccessException)
         {
-            _logger.LogWarning("Login failed - invalid credentials.");
             return Unauthorized(new { error = "Invalid email or password." });
         }
     }
@@ -71,8 +63,6 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProfile(int id)
     {
-        _logger.LogInformation("Get profile request received for ID: {Id}", id);
-
         try
         {
             var result = await _customerService.GetCustomerAsync(id);
@@ -80,7 +70,6 @@ public class CustomersController : ControllerBase
         }
         catch (KeyNotFoundException)
         {
-            _logger.LogWarning("Customer not found: {Id}", id);
             return NotFound(new { error = "Customer not found." });
         }
     }
@@ -94,8 +83,6 @@ public class CustomersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateProfile(int id, [FromBody] CustomerUpdateRequest request)
     {
-        _logger.LogInformation("Update profile request received for ID: {Id}", id);
-
         try
         {
             var result = await _customerService.UpdateCustomerAsync(id, request);
@@ -103,12 +90,10 @@ public class CustomersController : ControllerBase
         }
         catch (KeyNotFoundException)
         {
-            _logger.LogWarning("Customer not found: {Id}", id);
             return NotFound(new { error = "Customer not found." });
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning("Update failed for customer {Id}: {Error}", id, ex.Message);
             return BadRequest(new { error = ex.Message });
         }
     }

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 using MToGo.CustomerService.Controllers;
 using MToGo.CustomerService.Exceptions;
@@ -12,14 +11,12 @@ namespace MToGo.CustomerService.Tests.Controllers;
 public class CustomersControllerTests
 {
     private readonly Mock<ICustomerService> _mockCustomerService;
-    private readonly Mock<ILogger<CustomersController>> _mockLogger;
     private readonly CustomersController _sut;
 
     public CustomersControllerTests()
     {
         _mockCustomerService = new Mock<ICustomerService>();
-        _mockLogger = new Mock<ILogger<CustomersController>>();
-        _sut = new CustomersController(_mockCustomerService.Object, _mockLogger.Object);
+        _sut = new CustomersController(_mockCustomerService.Object);
     }
 
     #region Register Tests
