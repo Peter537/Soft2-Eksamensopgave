@@ -7,7 +7,7 @@ namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/customers")]
-public class CustomersController(LegacyContext dbContext, ILogger<CustomersController> logger) : ControllerBase
+public class CustomersController(LegacyContext dbContext) : ControllerBase
 {
     [HttpPost("post")]
     public async Task<ActionResult<object>> Create(CustomerCreateRequest request, CancellationToken cancellationToken)
@@ -17,6 +17,12 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
             return BadRequest("Unsupported notification method");
         }
 
+        var languagePref = LanguagePreference.En;
+        if (!string.IsNullOrWhiteSpace(request.LanguagePreference))
+        {
+            _ = Enum.TryParse<LanguagePreference>(request.LanguagePreference, true, out languagePref);
+        }
+
         var customer = new Customer
         {
             Name = request.Name,
@@ -24,13 +30,13 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
             DeliveryAddress = request.DeliveryAddress,
             NotificationMethod = method,
             Password = HashPassword(request.Password),
-            PhoneNumber = request.PhoneNumber
+            PhoneNumber = request.PhoneNumber,
+            LanguagePreference = languagePref
         };
 
         dbContext.Customers.Add(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        logger.LogInformation("Legacy customer {CustomerId} created", customer.Id);
         return CreatedAtAction(nameof(Get), new { id = customer.Id }, new { id = customer.Id });
     }
 
@@ -53,7 +59,12 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
         var customer = await dbContext.Customers.FindAsync([id], cancellationToken);
         return customer is null
             ? NotFound()
-            : new CustomerResponse(customer.Name, customer.DeliveryAddress, customer.NotificationMethod.ToString(), customer.PhoneNumber);
+            : new CustomerResponse(
+                customer.Name, 
+                customer.DeliveryAddress, 
+                customer.NotificationMethod.ToString(), 
+                customer.PhoneNumber,
+                customer.LanguagePreference.ToString().ToLowerInvariant());
     }
 
     [HttpPatch("patch/{id:int}")]
@@ -90,8 +101,21 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
             customer.PhoneNumber = request.PhoneNumber;
         }
 
+        if (!string.IsNullOrWhiteSpace(request.LanguagePreference))
+        {
+            if (Enum.TryParse<LanguagePreference>(request.LanguagePreference, true, out var langPref))
+            {
+                customer.LanguagePreference = langPref;
+            }
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
-        return new CustomerResponse(customer.Name, customer.DeliveryAddress, customer.NotificationMethod.ToString(), customer.PhoneNumber);
+        return new CustomerResponse(
+            customer.Name, 
+            customer.DeliveryAddress, 
+            customer.NotificationMethod.ToString(), 
+            customer.PhoneNumber,
+            customer.LanguagePreference.ToString().ToLowerInvariant());
     }
 
     [HttpDelete("delete/{id:int}")]
@@ -105,7 +129,6 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
 
         dbContext.Customers.Remove(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Legacy customer {CustomerId} deleted", id);
         return Ok();
     }
 
@@ -126,7 +149,7 @@ public class CustomersController(LegacyContext dbContext, ILogger<CustomersContr
     }
 }
 
-public record CustomerCreateRequest(string Name, string Email, string DeliveryAddress, string NotificationMethod, string Password, string PhoneNumber);
+public record CustomerCreateRequest(string Name, string Email, string DeliveryAddress, string NotificationMethod, string Password, string PhoneNumber, string? LanguagePreference = "en");
 public record CustomerLoginRequest(string Email, string Password);
-public record CustomerUpdateRequest(string? Name, string? DeliveryAddress, string? NotificationMethod, string? PhoneNumber);
-public record CustomerResponse(string Name, string DeliveryAddress, string NotificationMethod, string? PhoneNumber);
+public record CustomerUpdateRequest(string? Name, string? DeliveryAddress, string? NotificationMethod, string? PhoneNumber, string? LanguagePreference);
+public record CustomerResponse(string Name, string DeliveryAddress, string NotificationMethod, string? PhoneNumber, string? LanguagePreference);

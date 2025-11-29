@@ -1,6 +1,18 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject CultureService CultureService
+@inject NavigationManager Navigation
+@inject HttpClient Http
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">MToGo.Website</a>
+        <a class="navbar-brand" href="">MToGo</a>
+
+        <select class="form-select form-select-sm ms-2" style="width: auto;" value="@CultureService.CurrentCulture" @onchange="HandleLanguageChange">
+            <option value="en">@L["Layout.NavMenu.English"]</option>
+            <option value="da">@L["Layout.NavMenu.Danish"]</option>
+        </select>        
     </div>
 </div>
 
@@ -10,19 +22,80 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Home"]
             </NavLink>
         </div>
-        <div class="nav-item px-3">
+        @if (CultureService.IsLoggedIn)
+        {
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="profile">
+                <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Profile"]
+            </NavLink>
+            </div>
+            <div class="nav-item px-3">
+            <button class="nav-link" @onclick="HandleSignOut">
+                <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            </button>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
             <NavLink class="nav-link" href="register">
-                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> Register
+                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Register"]
             </NavLink>
-        </div>
-        <div class="nav-item px-3">
+            </div>
+            <div class="nav-item px-3">
             <NavLink class="nav-link" href="login">
-                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Login
+                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Login"]
             </NavLink>
-        </div>
+            </div>
+        }
+
+    @code {
+        protected override void OnInitialized()
+        {
+            CultureService.OnChange += OnCultureChanged;
+        }
+
+        private void OnCultureChanged()
+        {
+            InvokeAsync(StateHasChanged);
+        }
+
+        public void Dispose()
+        {
+            CultureService.OnChange -= OnCultureChanged;
+        }
+    }
     </nav>
 </div>
+
+@code {
+    private void HandleSignOut()
+    {
+        CultureService.Logout();
+        Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private async Task HandleLanguageChange(ChangeEventArgs e)
+    {
+        var culture = e.Value?.ToString() ?? "en";
+        CultureService.SetCulture(culture);
+
+        // If user is logged in, persist the language preference to the backend
+        if (CultureService.IsLoggedIn)
+        {
+            try
+            {
+                var updateRequest = new { LanguagePreference = culture };
+                await Http.PatchAsJsonAsync($"/api/v1/customers/{CultureService.CustomerId}", updateRequest);
+            }
+            catch
+            {
+                // Silently fail - the UI is already updated
+            }
+        }
+    }
+}
 

@@ -1,16 +1,19 @@
 @page "/register"
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
 @rendermode InteractiveServer
 
-<PageTitle>Register - MToGo</PageTitle>
+<PageTitle>@L["Pages.Register.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">Create Account</h3>
+                    <h3 class="mb-0">@L["Pages.Register.Title"]</h3>
                 </div>
                 <div class="card-body">
                     @if (!string.IsNullOrEmpty(errorMessage))
@@ -31,50 +34,50 @@
                         <DataAnnotationsValidator />
                         
                         <div class="mb-3">
-                            <label for="name" class="form-label">Full Name</label>
-                            <InputText id="name" class="form-control" @bind-Value="model.Name" placeholder="Enter your full name" />
+                            <label for="name" class="form-label">@L["Pages.Register.Name"]</label>
+                            <InputText id="name" class="form-control" @bind-Value="model.Name" placeholder="@L["Pages.Register.NamePlaceholder"]" />
                             <ValidationMessage For="@(() => model.Name)" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email Address</label>
-                            <InputText id="email" class="form-control" @bind-Value="model.Email" placeholder="Enter your email" />
+                            <label for="email" class="form-label">@L["Pages.Register.Email"]</label>
+                            <InputText id="email" class="form-control" @bind-Value="model.Email" placeholder="@L["Pages.Register.EmailPlaceholder"]" />
                             <ValidationMessage For="@(() => model.Email)" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" placeholder="Enter your password" />
+                            <label for="password" class="form-label">@L["Pages.Register.Password"]</label>
+                            <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" placeholder="@L["Pages.Register.PasswordPlaceholder"]" />
                             <ValidationMessage For="@(() => model.Password)" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="deliveryAddress" class="form-label">Delivery Address</label>
-                            <InputText id="deliveryAddress" class="form-control" @bind-Value="model.DeliveryAddress" placeholder="Enter your delivery address" />
+                            <label for="deliveryAddress" class="form-label">@L["Pages.Register.DeliveryAddress"]</label>
+                            <InputText id="deliveryAddress" class="form-control" @bind-Value="model.DeliveryAddress" placeholder="@L["Pages.Register.DeliveryAddressPlaceholder"]" />
                             <ValidationMessage For="@(() => model.DeliveryAddress)" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="phoneNumber" class="form-label">Phone Number</label>
-                            <InputText id="phoneNumber" class="form-control" @bind-Value="model.PhoneNumber" placeholder="+45 12 34 56 78" />
+                            <label for="phoneNumber" class="form-label">@L["Pages.Register.PhoneNumber"]</label>
+                            <InputText id="phoneNumber" class="form-control" @bind-Value="model.PhoneNumber" placeholder="@L["Pages.Register.PhoneNumberPlaceholder"]" />
                             <ValidationMessage For="@(() => model.PhoneNumber)" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="notificationMethod" class="form-label">Notification Preference</label>
+                            <label for="notificationMethod" class="form-label">@L["Pages.Register.NotificationPreference"]</label>
                             <InputSelect id="notificationMethod" class="form-select" @bind-Value="model.NotificationMethod">
-                                <option value="Email">Email</option>
-                                <option value="Sms">SMS</option>
-                                <option value="Push">Push Notification</option>
+                                <option value="Email">@L["Pages.Register.NotificationEmail"]</option>
+                                <option value="Sms">@L["Pages.Register.NotificationSms"]</option>
+                                <option value="Push">@L["Pages.Register.NotificationPush"]</option>
                             </InputSelect>
                             <ValidationMessage For="@(() => model.NotificationMethod)" />
                         </div>
 
                         <div class="mb-3">
-                            <label for="languagePreference" class="form-label">Language Preference</label>
+                            <label for="languagePreference" class="form-label">@L["Pages.Register.LanguagePreference"]</label>
                             <InputSelect id="languagePreference" class="form-select" @bind-Value="model.LanguagePreference">
                                 <option value="en">English</option>
-                                <option value="da">Danish (Dansk)</option>
+                                <option value="da">Dansk</option>
                             </InputSelect>
                             <ValidationMessage For="@(() => model.LanguagePreference)" />
                         </div>
@@ -84,17 +87,17 @@
                                 @if (isLoading)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    <span>Creating account...</span>
+                                    <span>@L["Pages.Register.CreatingAccount"]</span>
                                 }
                                 else
                                 {
-                                    <span>Register</span>
+                                    <span>@L["Pages.Register.RegisterButton"]</span>
                                 }
                             </button>
 
                             <div class="mt-3 text-center">
-                                <p class="mb-0">Already have an account? <a href="/login">Login here</a></p>
-                                <p class="mb-0">If you are a restaurant, <a href="/restaurant-signin">sign in here</a></p>
+                                <p class="mb-0">@L["Pages.Register.HasAccount"] <a href="/login">@L["Pages.Register.LoginHere"]</a></p>
+                                <p class="mb-0">@L["Pages.Register.RestaurantQuestion"] <a href="/restaurant-register">@L["Pages.Register.RestaurantRegister"]</a></p>
                             </div>
                         </div>
                     </EditForm>
@@ -112,6 +115,21 @@
     private string? successMessage;
     private bool isLoading;
 
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
     private async Task HandleRegistration()
     {
         isLoading = true;
@@ -125,19 +143,20 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<RegisterResponse>();
-                successMessage = $"Account created successfully! Your customer ID is {result?.Id}. You can now sign in.";
+                successMessage = L.GetString("Pages.Register.RegistrationSuccessful", result?.Id ?? 0);
+                CultureService.SetCulture(model.LanguagePreference);
                 model = new(); // Reset form
                 Navigation.NavigateTo("/login");
             }
             else
             {
                 var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
-                errorMessage = error?.Error ?? "Registration failed. Please try again.";
+                errorMessage = error?.Error ?? L["Pages.Register.RegistrationFailed"];
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred: {ex.Message}";
+            errorMessage = L.GetString("Pages.Register.ErrorOccurred", ex.Message);
         }
         finally
         {

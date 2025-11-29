@@ -1,7 +1,28 @@
 ﻿@page "/"
+@inject ILocalizerService L
+@inject CultureService CultureService
+@implements IDisposable
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@L["Pages.Home.PageTitle"]</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>@L["Pages.Home.Greeting"]</h1>
 
-Welcome to your new app.
+@L["Pages.Home.Welcome"]
+
+@code {
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+}
