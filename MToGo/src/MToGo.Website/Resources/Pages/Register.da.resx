@@ -84,6 +84,9 @@
   <data name="RegistrationFailed" xml:space="preserve">
     <value>Registrering mislykkedes. Prøv igen.</value>
   </data>
+  <data name="LanguagePreference" xml:space="preserve">
+    <value>Sprogpræference</value>
+  </data>
   <data name="ErrorOccurred" xml:space="preserve">
     <value>Der opstod en fejl: {0}</value>
   </data>

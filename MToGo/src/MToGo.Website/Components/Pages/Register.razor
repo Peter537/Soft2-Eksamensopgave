@@ -73,6 +73,15 @@
                             <ValidationMessage For="@(() => model.NotificationMethod)" />
                         </div>
 
+                        <div class="mb-3">
+                            <label for="languagePreference" class="form-label">@L["Pages.Register.LanguagePreference"]</label>
+                            <InputSelect id="languagePreference" class="form-select" @bind-Value="model.LanguagePreference">
+                                <option value="en">English</option>
+                                <option value="da">Dansk</option>
+                            </InputSelect>
+                            <ValidationMessage For="@(() => model.LanguagePreference)" />
+                        </div>
+
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary" disabled="@isLoading">
                                 @if (isLoading)
@@ -135,6 +144,7 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<RegisterResponse>();
                 successMessage = L.GetString("Pages.Register.RegistrationSuccessful", result?.Id ?? 0);
+                CultureService.SetCulture(model.LanguagePreference);
                 model = new(); // Reset form
                 Navigation.NavigateTo("/login");
             }
@@ -174,6 +184,9 @@
 
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Notification method is required")]
         public string NotificationMethod { get; set; } = "Email";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Language preference is required")]
+        public string LanguagePreference { get; set; } = "en";
     }
 
     public class RegisterResponse

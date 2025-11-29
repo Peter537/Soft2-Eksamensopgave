@@ -84,6 +84,9 @@
   <data name="RegistrationFailed" xml:space="preserve">
     <value>Registration failed. Please try again.</value>
   </data>
+  <data name="LanguagePreference" xml:space="preserve">
+    <value>Language Preference</value>
+  </data>
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred: {0}</value>
   </data>
