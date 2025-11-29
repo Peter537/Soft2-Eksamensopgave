@@ -13,6 +13,15 @@ namespace MToGo.OrderService.Services
         Task<bool> AcceptOrderAsync(int orderId);
         Task<bool> RejectOrderAsync(int orderId, string? reason);
         Task<bool> SetReadyAsync(int orderId);
+        Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId);
+    }
+
+    public enum AssignAgentResult
+    {
+        Success,
+        OrderNotFound,
+        InvalidStatus,
+        AgentAlreadyAssigned
     }
 
     public class OrderService : IOrderService
@@ -240,6 +249,51 @@ namespace MToGo.OrderService.Services
             _logger.PublishedOrderReadyEvent(order.Id);
 
             return true;
+        }
+
+        public async Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId)
+        {
+            _logger.AssigningAgent(orderId, agentId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotAssignAgent(orderId, "Order not found");
+                return AssignAgentResult.OrderNotFound;
+            }
+
+            if (order.Status != OrderStatus.Ready)
+            {
+                _logger.CannotAssignAgent(orderId, $"Invalid status: {order.Status}");
+                return AssignAgentResult.InvalidStatus;
+            }
+
+            if (order.AgentId != null)
+            {
+                _logger.CannotAssignAgent(orderId, $"Agent already assigned: {order.AgentId}");
+                return AssignAgentResult.AgentAlreadyAssigned;
+            }
+
+            order.AgentId = agentId;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.AgentAssigned(order.Id, order.PartnerId, agentId);
+
+            // Publish AgentAssignedEvent
+            var orderEvent = new AgentAssignedEvent
+            {
+                OrderId = order.Id,
+                PartnerId = order.PartnerId,
+                AgentId = agentId,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.AgentAssigned, order.Id.ToString(), orderEvent);
+            _logger.PublishedAgentAssignedEvent(order.Id);
+
+            return AssignAgentResult.Success;
         }
     }
 }

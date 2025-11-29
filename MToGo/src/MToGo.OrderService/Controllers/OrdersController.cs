@@ -97,5 +97,23 @@ namespace MToGo.OrderService.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("order/{id}/assign-agent")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+        public async Task<IActionResult> AssignAgent(int id, [FromBody] AssignAgentRequest request)
+        {
+            _logger.ReceivedAssignAgentRequest(id, request.AgentId);
+
+            var result = await _orderService.AssignAgentAsync(id, request.AgentId);
+
+            return result switch
+            {
+                AssignAgentResult.Success => NoContent(),
+                AssignAgentResult.AgentAlreadyAssigned => Conflict(),
+                _ => BadRequest()
+            };
+        }
     }
 }
