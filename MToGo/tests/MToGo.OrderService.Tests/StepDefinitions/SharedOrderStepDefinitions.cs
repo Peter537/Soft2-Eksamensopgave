@@ -49,6 +49,22 @@ namespace MToGo.OrderService.Tests.StepDefinitions
             _scenarioContext["OrderId"] = orderId;
         }
 
+        [Given(@"an order exists with Ready status and no agent assigned")]
+        public async Task GivenAnOrderExistsWithReadyStatusAndNoAgentAssigned()
+        {
+            var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
+            var orderId = await OrderTestHelper.CreateOrderWithStatus(factory, OrderStatus.Ready, agentId: null);
+            _scenarioContext["OrderId"] = orderId;
+        }
+
+        [Given(@"an order exists with Ready status and agent (\d+) assigned")]
+        public async Task GivenAnOrderExistsWithReadyStatusAndAgentAssigned(int agentId)
+        {
+            var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
+            var orderId = await OrderTestHelper.CreateOrderWithStatus(factory, OrderStatus.Ready, agentId: agentId);
+            _scenarioContext["OrderId"] = orderId;
+        }
+
         [Then(@"the response status code should be (\d+)")]
         public void ThenTheResponseStatusCodeShouldBe(int statusCode)
         {
