@@ -24,6 +24,11 @@ builder.Services.AddHttpClient<IPartnerServiceClient, PartnerServiceClient>(clie
     client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? "http://localhost:8080");
 });
 
+builder.Services.AddHttpClient<IAgentServiceClient, AgentServiceClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? "http://localhost:8080");
+});
+
 builder.Services.Configure<KafkaProducerConfig>(builder.Configuration.GetSection("Kafka"));
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
