@@ -139,5 +139,29 @@ namespace MToGo.OrderService.Controllers
                     return BadRequest();
             }
         }
+
+        [HttpPost("order/{id}/complete-delivery")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public async Task<IActionResult> CompleteDelivery(int id)
+        {
+            _logger.ReceivedCompleteDeliveryRequest(id);
+
+            var result = await _orderService.CompleteDeliveryAsync(id);
+
+            switch (result)
+            {
+                case DeliveryResult.Success:
+                    _logger.CompleteDeliveryCompleted(id);
+                    return NoContent();
+                case DeliveryResult.NoAgentAssigned:
+                    _logger.CompleteDeliveryFailed(id);
+                    return StatusCode(403);
+                default:
+                    _logger.CompleteDeliveryFailed(id);
+                    return BadRequest();
+            }
+        }
     }
 }
