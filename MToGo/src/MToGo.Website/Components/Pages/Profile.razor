@@ -1,0 +1,281 @@
+@page "/profile"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Profile.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">@L["Pages.Profile.Title"]</h3>
+                </div>
+                <div class="card-body">
+                    @if (!CultureService.IsLoggedIn)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.Profile.LoginRequired"] <a href="/login">@L["Pages.Profile.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">@L["Pages.Profile.Loading"]</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="alert alert-danger" role="alert">
+                                    @errorMessage
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(successMessage))
+                            {
+                                <div class="alert alert-success" role="alert">
+                                    @successMessage
+                                </div>
+                            }
+
+                            <EditForm Model="@model" OnValidSubmit="HandleUpdate" FormName="ProfileForm">
+                                <DataAnnotationsValidator />
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">@L["Pages.Profile.Email"]</label>
+                                    <input id="email" class="form-control" value="@model.Email" disabled />
+                                    <small class="text-muted">@L["Pages.Profile.EmailCannotChange"]</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">@L["Pages.Profile.Name"]</label>
+                                    <InputText id="name" class="form-control" @bind-Value="model.Name" />
+                                    <ValidationMessage For="@(() => model.Name)" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="deliveryAddress" class="form-label">@L["Pages.Profile.DeliveryAddress"]</label>
+                                    <InputText id="deliveryAddress" class="form-control" @bind-Value="model.DeliveryAddress" />
+                                    <ValidationMessage For="@(() => model.DeliveryAddress)" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phoneNumber" class="form-label">@L["Pages.Profile.PhoneNumber"]</label>
+                                    <InputText id="phoneNumber" class="form-control" @bind-Value="model.PhoneNumber" placeholder="@L["Pages.Profile.PhoneNumberPlaceholder"]" />
+                                    <ValidationMessage For="@(() => model.PhoneNumber)" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="notificationMethod" class="form-label">@L["Pages.Profile.NotificationPreference"]</label>
+                                    <InputSelect id="notificationMethod" class="form-select" @bind-Value="model.NotificationMethod">
+                                        <option value="Email">@L["Pages.Profile.NotificationEmail"]</option>
+                                        <option value="Sms">@L["Pages.Profile.NotificationSms"]</option>
+                                        <option value="Push">@L["Pages.Profile.NotificationPush"]</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => model.NotificationMethod)" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="languagePreference" class="form-label">@L["Pages.Profile.LanguagePreference"]</label>
+                                    <InputSelect id="languagePreference" class="form-select" @bind-Value="model.LanguagePreference">
+                                        <option value="en">@L["Pages.Profile.LanguageEnglish"]</option>
+                                        <option value="da">@L["Pages.Profile.LanguageDanish"]</option>
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => model.LanguagePreference)" />
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary" disabled="@isSaving">
+                                        @if (isSaving)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            <span>@L["Pages.Profile.Saving"]</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@L["Pages.Profile.SaveButton"]</span>
+                                        }
+                                    </button>
+                                </div>
+                            </EditForm>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private ProfileModel model { get; set; } = new();
+
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = true;
+    private bool isSaving;
+    private bool isUpdatingFromProfile;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        // Only sync from CultureService if the change didn't originate from this Profile page
+        if (!isUpdatingFromProfile)
+        {
+            model.LanguagePreference = CultureService.CurrentCulture;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CultureService.IsLoggedIn)
+        {
+            await LoadProfile();
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadProfile()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await Http.GetAsync($"/api/v1/customers/{CultureService.CustomerId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var profile = await response.Content.ReadFromJsonAsync<CustomerProfile>();
+                if (profile != null)
+                {
+                    model = new ProfileModel
+                    {
+                        Email = profile.Email,
+                        Name = profile.Name,
+                        DeliveryAddress = profile.DeliveryAddress,
+                        NotificationMethod = profile.NotificationMethod,
+                        PhoneNumber = profile.PhoneNumber,
+                        LanguagePreference = profile.LanguagePreference ?? "en"
+                    };
+                    CultureService.SetCulture(model.LanguagePreference);
+                }
+            }
+            else
+            {
+                errorMessage = L["Pages.Profile.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Profile.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        isSaving = true;
+        isUpdatingFromProfile = true;
+        errorMessage = null;
+        successMessage = null;
+
+        try
+        {
+            var updateRequest = new
+            {
+                Name = model.Name,
+                DeliveryAddress = model.DeliveryAddress,
+                NotificationMethod = model.NotificationMethod,
+                PhoneNumber = model.PhoneNumber,
+                LanguagePreference = model.LanguagePreference
+            };
+
+            var response = await Http.PatchAsJsonAsync($"/api/v1/customers/{CultureService.CustomerId}", updateRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = L["Pages.Profile.ProfileUpdated"];
+                CultureService.SetCulture(model.LanguagePreference);
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                errorMessage = error?.Error ?? L["Pages.Profile.UpdateFailed"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Profile.UpdateFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Profile.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isSaving = false;
+            isUpdatingFromProfile = false;
+        }
+    }
+
+    public class ProfileModel
+    {
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Delivery address is required")]
+        public string DeliveryAddress { get; set; } = string.Empty;
+
+        public string? PhoneNumber { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Notification method is required")]
+        public string NotificationMethod { get; set; } = "Email";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Language preference is required")]
+        public string LanguagePreference { get; set; } = "en";
+    }
+
+    public class CustomerProfile
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public string NotificationMethod { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public string? LanguagePreference { get; set; }
+    }
+
+    public class ErrorResponse
+    {
+        public string? Error { get; set; }
+    }
+}

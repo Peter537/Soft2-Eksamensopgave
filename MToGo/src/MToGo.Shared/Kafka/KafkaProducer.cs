@@ -14,7 +14,7 @@ namespace MToGo.Shared.Kafka
         public int? RequestTimeoutMs { get; set; }
     }
 
-    public class KafkaProducer : IDisposable, IAsyncDisposable
+    public class KafkaProducer : IDisposable, IAsyncDisposable, IKafkaProducer
     {
         private readonly IProducer<string, string> _producer;
         private readonly ILogger<KafkaProducer> _logger;

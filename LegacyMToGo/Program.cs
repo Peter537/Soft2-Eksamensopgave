@@ -30,3 +30,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make Program accessible for integration tests
+namespace LegacyMToGo
+{
+    public partial class Program { }
+}
