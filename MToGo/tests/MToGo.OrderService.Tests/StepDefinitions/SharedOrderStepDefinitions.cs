@@ -90,6 +90,12 @@ namespace MToGo.OrderService.Tests.StepDefinitions
             VerifyOrderStatus(OrderStatus.Ready);
         }
 
+        [Then(@"the order status should be PickedUp")]
+        public void ThenTheOrderStatusShouldBePickedUp()
+        {
+            VerifyOrderStatus(OrderStatus.PickedUp);
+        }
+
         private void VerifyOrderStatus(OrderStatus expectedStatus)
         {
             var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
