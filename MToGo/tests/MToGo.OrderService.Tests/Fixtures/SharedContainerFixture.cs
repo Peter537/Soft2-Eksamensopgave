@@ -55,9 +55,11 @@ namespace MToGo.OrderService.Tests.Fixtures
         private readonly SharedContainerFixture _fixture;
         private readonly Mock<IKafkaProducer> _kafkaMock;
         private readonly Mock<IPartnerServiceClient> _partnerServiceClientMock;
+        private readonly Mock<IAgentServiceClient> _agentServiceClientMock;
 
         public Mock<IKafkaProducer> KafkaMock => _kafkaMock;
         public Mock<IPartnerServiceClient> PartnerServiceClientMock => _partnerServiceClientMock;
+        public Mock<IAgentServiceClient> AgentServiceClientMock => _agentServiceClientMock;
 
         public SharedTestWebApplicationFactory(SharedContainerFixture fixture)
         {
@@ -67,6 +69,10 @@ namespace MToGo.OrderService.Tests.Fixtures
             _partnerServiceClientMock
                 .Setup(x => x.GetPartnerByIdAsync(It.IsAny<int>()))
                 .ReturnsAsync(new PartnerResponse { Id = 1, Name = "Test Partner", Location = "Test Location" });
+            _agentServiceClientMock = new Mock<IAgentServiceClient>();
+            _agentServiceClientMock
+                .Setup(x => x.GetAgentByIdAsync(It.IsAny<int>()))
+                .ReturnsAsync((int id) => new AgentResponse { Id = id, Name = $"Test Agent {id}" });
         }
 
         public async Task InitializeDatabaseAsync()
@@ -117,6 +123,14 @@ namespace MToGo.OrderService.Tests.Fixtures
                     services.Remove(descriptor);
                 }
                 services.AddSingleton<IPartnerServiceClient>(_partnerServiceClientMock.Object);
+
+                // Remove existing IAgentServiceClient registration and add mock
+                var agentDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IAgentServiceClient));
+                if (agentDescriptor != null)
+                {
+                    services.Remove(agentDescriptor);
+                }
+                services.AddSingleton<IAgentServiceClient>(_agentServiceClientMock.Object);
             });
         }
     }
