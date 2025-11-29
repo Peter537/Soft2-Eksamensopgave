@@ -101,5 +101,31 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderReadyEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedOrderReadyEvent(this ILogger logger, int orderId);
+
+        // Assign Agent - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received AssignAgent request for OrderId: {OrderId}, AgentId: {AgentId}")]
+        public static partial void ReceivedAssignAgentRequest(this ILogger logger, int orderId, int agentId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "AssignAgent completed: OrderId={OrderId}, AgentId={AgentId}")]
+        public static partial void AssignAgentCompleted(this ILogger logger, int orderId, int agentId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "AssignAgent failed: OrderId={OrderId}, AgentId={AgentId}")]
+        public static partial void AssignAgentFailed(this ILogger logger, int orderId, int agentId);
+
+        // Assign Agent - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Assigning agent to order: OrderId={OrderId}, AgentId={AgentId}")]
+        public static partial void AssigningAgent(this ILogger logger, int orderId, int agentId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot assign agent to order: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotAssignAgent(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Agent assigned: OrderId={OrderId}, PartnerId={PartnerId}, AgentId={AgentId}")]
+        public static partial void AgentAssigned(this ILogger logger, int orderId, int partnerId, int agentId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published AgentAssignedEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedAgentAssignedEvent(this ILogger logger, int orderId);
     }
 }
