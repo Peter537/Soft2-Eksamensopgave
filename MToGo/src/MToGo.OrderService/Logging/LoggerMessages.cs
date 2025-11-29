@@ -49,5 +49,31 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderAcceptedEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedOrderAcceptedEvent(this ILogger logger, int orderId);
+
+        // Reject Order - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received RejectOrder request for OrderId: {OrderId}")]
+        public static partial void ReceivedRejectOrderRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "RejectOrder completed: OrderId={OrderId}")]
+        public static partial void RejectOrderCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "RejectOrder failed: OrderId={OrderId}")]
+        public static partial void RejectOrderFailed(this ILogger logger, int orderId);
+
+        // Reject Order - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Rejecting order: OrderId={OrderId}")]
+        public static partial void RejectingOrder(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot reject order: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotRejectOrder(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order rejected: OrderId={OrderId}, CustomerId={CustomerId}, Reason={Reason}")]
+        public static partial void OrderRejected(this ILogger logger, int orderId, int customerId, string reason);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderRejectedEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderRejectedEvent(this ILogger logger, int orderId);
     }
 }
