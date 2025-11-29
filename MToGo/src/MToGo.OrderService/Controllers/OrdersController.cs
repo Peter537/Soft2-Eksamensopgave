@@ -115,5 +115,29 @@ namespace MToGo.OrderService.Controllers
                 _ => BadRequest()
             };
         }
+
+        [HttpPost("order/{id}/pickup")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(403)]
+        public async Task<IActionResult> PickupOrder(int id)
+        {
+            _logger.ReceivedPickupOrderRequest(id);
+
+            var result = await _orderService.PickupOrderAsync(id);
+
+            switch (result)
+            {
+                case PickupResult.Success:
+                    _logger.PickupOrderCompleted(id);
+                    return NoContent();
+                case PickupResult.NoAgentAssigned:
+                    _logger.PickupOrderFailed(id);
+                    return StatusCode(403);
+                default:
+                    _logger.PickupOrderFailed(id);
+                    return BadRequest();
+            }
+        }
     }
 }
