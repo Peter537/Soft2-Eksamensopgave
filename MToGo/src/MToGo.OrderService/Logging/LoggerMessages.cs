@@ -153,5 +153,31 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderPickedUpEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedOrderPickedUpEvent(this ILogger logger, int orderId);
+
+        // Complete Delivery - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received CompleteDelivery request for OrderId: {OrderId}")]
+        public static partial void ReceivedCompleteDeliveryRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "CompleteDelivery completed: OrderId={OrderId}")]
+        public static partial void CompleteDeliveryCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "CompleteDelivery failed: OrderId={OrderId}")]
+        public static partial void CompleteDeliveryFailed(this ILogger logger, int orderId);
+
+        // Complete Delivery - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Completing delivery: OrderId={OrderId}")]
+        public static partial void CompletingDelivery(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot complete delivery: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotCompleteDelivery(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order delivered: OrderId={OrderId}, CustomerId={CustomerId}")]
+        public static partial void OrderDelivered(this ILogger logger, int orderId, int customerId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderDeliveredEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderDeliveredEvent(this ILogger logger, int orderId);
     }
 }

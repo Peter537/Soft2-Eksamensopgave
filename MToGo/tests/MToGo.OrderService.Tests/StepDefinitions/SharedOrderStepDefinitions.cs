@@ -65,6 +65,22 @@ namespace MToGo.OrderService.Tests.StepDefinitions
             _scenarioContext["OrderId"] = orderId;
         }
 
+        [Given(@"an order exists with PickedUp status and no agent assigned")]
+        public async Task GivenAnOrderExistsWithPickedUpStatusAndNoAgentAssigned()
+        {
+            var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
+            var orderId = await OrderTestHelper.CreateOrderWithStatus(factory, OrderStatus.PickedUp, agentId: null);
+            _scenarioContext["OrderId"] = orderId;
+        }
+
+        [Given(@"an order exists with PickedUp status and agent (\d+) assigned")]
+        public async Task GivenAnOrderExistsWithPickedUpStatusAndAgentAssigned(int agentId)
+        {
+            var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
+            var orderId = await OrderTestHelper.CreateOrderWithStatus(factory, OrderStatus.PickedUp, agentId: agentId);
+            _scenarioContext["OrderId"] = orderId;
+        }
+
         [Then(@"the response status code should be (\d+)")]
         public void ThenTheResponseStatusCodeShouldBe(int statusCode)
         {
@@ -94,6 +110,12 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         public void ThenTheOrderStatusShouldBePickedUp()
         {
             VerifyOrderStatus(OrderStatus.PickedUp);
+        }
+
+        [Then(@"the order status should be Delivered")]
+        public void ThenTheOrderStatusShouldBeDelivered()
+        {
+            VerifyOrderStatus(OrderStatus.Delivered);
         }
 
         private void VerifyOrderStatus(OrderStatus expectedStatus)

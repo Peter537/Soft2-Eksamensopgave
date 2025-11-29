@@ -15,6 +15,7 @@ namespace MToGo.OrderService.Services
         Task<bool> SetReadyAsync(int orderId);
         Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId);
         Task<PickupResult> PickupOrderAsync(int orderId);
+        Task<DeliveryResult> CompleteDeliveryAsync(int orderId);
     }
 
     public enum AssignAgentResult
@@ -26,6 +27,14 @@ namespace MToGo.OrderService.Services
     }
 
     public enum PickupResult
+    {
+        Success,
+        OrderNotFound,
+        InvalidStatus,
+        NoAgentAssigned
+    }
+
+    public enum DeliveryResult
     {
         Success,
         OrderNotFound,
@@ -355,6 +364,50 @@ namespace MToGo.OrderService.Services
             _logger.PublishedOrderPickedUpEvent(order.Id);
 
             return PickupResult.Success;
+        }
+
+        public async Task<DeliveryResult> CompleteDeliveryAsync(int orderId)
+        {
+            _logger.CompletingDelivery(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotCompleteDelivery(orderId, "Order not found");
+                return DeliveryResult.OrderNotFound;
+            }
+
+            if (order.Status != OrderStatus.PickedUp)
+            {
+                _logger.CannotCompleteDelivery(orderId, $"Invalid status: {order.Status}");
+                return DeliveryResult.InvalidStatus;
+            }
+
+            if (order.AgentId == null)
+            {
+                _logger.CannotCompleteDelivery(orderId, "No agent assigned");
+                return DeliveryResult.NoAgentAssigned;
+            }
+
+            order.Status = OrderStatus.Delivered;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.OrderDelivered(order.Id, order.CustomerId);
+
+            // Publish OrderDeliveredEvent
+            var orderEvent = new OrderDeliveredEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderDelivered, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderDeliveredEvent(order.Id);
+
+            return DeliveryResult.Success;
         }
     }
 }
