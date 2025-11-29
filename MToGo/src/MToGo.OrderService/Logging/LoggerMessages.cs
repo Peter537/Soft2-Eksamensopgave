@@ -49,5 +49,135 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderAcceptedEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedOrderAcceptedEvent(this ILogger logger, int orderId);
+
+        // Reject Order - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received RejectOrder request for OrderId: {OrderId}")]
+        public static partial void ReceivedRejectOrderRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "RejectOrder completed: OrderId={OrderId}")]
+        public static partial void RejectOrderCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "RejectOrder failed: OrderId={OrderId}")]
+        public static partial void RejectOrderFailed(this ILogger logger, int orderId);
+
+        // Reject Order - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Rejecting order: OrderId={OrderId}")]
+        public static partial void RejectingOrder(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot reject order: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotRejectOrder(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order rejected: OrderId={OrderId}, CustomerId={CustomerId}, Reason={Reason}")]
+        public static partial void OrderRejected(this ILogger logger, int orderId, int customerId, string reason);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderRejectedEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderRejectedEvent(this ILogger logger, int orderId);
+
+        // Set Ready - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received SetReady request for OrderId: {OrderId}")]
+        public static partial void ReceivedSetReadyRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "SetReady completed: OrderId={OrderId}")]
+        public static partial void SetReadyCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "SetReady failed: OrderId={OrderId}")]
+        public static partial void SetReadyFailed(this ILogger logger, int orderId);
+
+        // Set Ready - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Setting order ready: OrderId={OrderId}")]
+        public static partial void SettingOrderReady(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot set order ready: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotSetOrderReady(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order set ready: OrderId={OrderId}, CustomerId={CustomerId}")]
+        public static partial void OrderSetReady(this ILogger logger, int orderId, int customerId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderReadyEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderReadyEvent(this ILogger logger, int orderId);
+
+        // Assign Agent - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received AssignAgent request for OrderId: {OrderId}, AgentId: {AgentId}")]
+        public static partial void ReceivedAssignAgentRequest(this ILogger logger, int orderId, int agentId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "AssignAgent completed: OrderId={OrderId}, AgentId={AgentId}")]
+        public static partial void AssignAgentCompleted(this ILogger logger, int orderId, int agentId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "AssignAgent failed: OrderId={OrderId}, AgentId={AgentId}")]
+        public static partial void AssignAgentFailed(this ILogger logger, int orderId, int agentId);
+
+        // Assign Agent - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Assigning agent to order: OrderId={OrderId}, AgentId={AgentId}")]
+        public static partial void AssigningAgent(this ILogger logger, int orderId, int agentId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot assign agent to order: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotAssignAgent(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Agent assigned: OrderId={OrderId}, PartnerId={PartnerId}, AgentId={AgentId}")]
+        public static partial void AgentAssigned(this ILogger logger, int orderId, int partnerId, int agentId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published AgentAssignedEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedAgentAssignedEvent(this ILogger logger, int orderId);
+
+        // Pickup Order - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received PickupOrder request for OrderId: {OrderId}")]
+        public static partial void ReceivedPickupOrderRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "PickupOrder completed: OrderId={OrderId}")]
+        public static partial void PickupOrderCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "PickupOrder failed: OrderId={OrderId}")]
+        public static partial void PickupOrderFailed(this ILogger logger, int orderId);
+
+        // Pickup Order - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Picking up order: OrderId={OrderId}")]
+        public static partial void PickingUpOrder(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot pickup order: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotPickupOrder(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order picked up: OrderId={OrderId}, CustomerId={CustomerId}, AgentName={AgentName}")]
+        public static partial void OrderPickedUp(this ILogger logger, int orderId, int customerId, string agentName);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderPickedUpEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderPickedUpEvent(this ILogger logger, int orderId);
+
+        // Complete Delivery - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received CompleteDelivery request for OrderId: {OrderId}")]
+        public static partial void ReceivedCompleteDeliveryRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "CompleteDelivery completed: OrderId={OrderId}")]
+        public static partial void CompleteDeliveryCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "CompleteDelivery failed: OrderId={OrderId}")]
+        public static partial void CompleteDeliveryFailed(this ILogger logger, int orderId);
+
+        // Complete Delivery - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Completing delivery: OrderId={OrderId}")]
+        public static partial void CompletingDelivery(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot complete delivery: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotCompleteDelivery(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order delivered: OrderId={OrderId}, CustomerId={CustomerId}")]
+        public static partial void OrderDelivered(this ILogger logger, int orderId, int customerId);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderDeliveredEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderDeliveredEvent(this ILogger logger, int orderId);
     }
 }

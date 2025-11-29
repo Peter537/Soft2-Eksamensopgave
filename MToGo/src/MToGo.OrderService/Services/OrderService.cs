@@ -11,6 +11,35 @@ namespace MToGo.OrderService.Services
     {
         Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request);
         Task<bool> AcceptOrderAsync(int orderId);
+        Task<bool> RejectOrderAsync(int orderId, string? reason);
+        Task<bool> SetReadyAsync(int orderId);
+        Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId);
+        Task<PickupResult> PickupOrderAsync(int orderId);
+        Task<DeliveryResult> CompleteDeliveryAsync(int orderId);
+    }
+
+    public enum AssignAgentResult
+    {
+        Success,
+        OrderNotFound,
+        InvalidStatus,
+        AgentAlreadyAssigned
+    }
+
+    public enum PickupResult
+    {
+        Success,
+        OrderNotFound,
+        InvalidStatus,
+        NoAgentAssigned
+    }
+
+    public enum DeliveryResult
+    {
+        Success,
+        OrderNotFound,
+        InvalidStatus,
+        NoAgentAssigned
     }
 
     public class OrderService : IOrderService
@@ -18,17 +47,20 @@ namespace MToGo.OrderService.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IKafkaProducer _kafkaProducer;
         private readonly IPartnerServiceClient _partnerServiceClient;
+        private readonly IAgentServiceClient _agentServiceClient;
         private readonly ILogger<OrderService> _logger;
 
         public OrderService(
             IOrderRepository orderRepository,
             IKafkaProducer kafkaProducer,
             IPartnerServiceClient partnerServiceClient,
+            IAgentServiceClient agentServiceClient,
             ILogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
             _kafkaProducer = kafkaProducer;
             _partnerServiceClient = partnerServiceClient;
+            _agentServiceClient = agentServiceClient;
             _logger = logger;
         }
 
@@ -137,6 +169,52 @@ namespace MToGo.OrderService.Services
             return true;
         }
 
+        public async Task<bool> RejectOrderAsync(int orderId, string? reason)
+        {
+            _logger.RejectingOrder(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotRejectOrder(orderId, "Order not found");
+                return false;
+            }
+
+            if (order.Status != OrderStatus.Placed)
+            {
+                _logger.CannotRejectOrder(orderId, $"Invalid status: {order.Status}");
+                return false;
+            }
+
+            order.Status = OrderStatus.Rejected;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Sanitize user input to prevent log injection attacks
+            var sanitizedReason = (reason ?? "No reason provided")
+                .Replace("\r", "")
+                .Replace("\n", " ");
+
+            // Audit log
+            _logger.OrderRejected(order.Id, order.CustomerId, sanitizedReason);
+
+            // Publish OrderRejectedEvent
+            var orderEvent = new OrderRejectedEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                Reason = sanitizedReason,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderRejected, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderRejectedEvent(order.Id);
+
+            // TODO: Måske Refund Process logic her?
+
+            return true;
+        }
+
         private decimal CalculateServiceFee(decimal orderTotal)
         {
             if (orderTotal <= 100)
@@ -146,6 +224,190 @@ namespace MToGo.OrderService.Services
 
             decimal rate = 0.06m - (orderTotal - 100) / 900m * 0.03m;
             return orderTotal * rate;
+        }
+
+        public async Task<bool> SetReadyAsync(int orderId)
+        {
+            _logger.SettingOrderReady(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotSetOrderReady(orderId, "Order not found");
+                return false;
+            }
+
+            if (order.Status != OrderStatus.Accepted)
+            {
+                _logger.CannotSetOrderReady(orderId, $"Invalid status: {order.Status}");
+                return false;
+            }
+
+            order.Status = OrderStatus.Ready;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.OrderSetReady(order.Id, order.CustomerId);
+
+            // Fetch partner information
+            var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
+            var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerAddress = partner?.Location ?? string.Empty; // TODO: Null checks pga manglende Service
+
+            // Publish OrderReadyEvent
+            var orderEvent = new OrderReadyEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                PartnerName = partnerName,
+                PartnerAddress = partnerAddress,
+                AgentId = order.AgentId,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderReady, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderReadyEvent(order.Id);
+
+            return true;
+        }
+
+        public async Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId)
+        {
+            _logger.AssigningAgent(orderId, agentId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotAssignAgent(orderId, "Order not found");
+                return AssignAgentResult.OrderNotFound;
+            }
+
+            if (order.Status != OrderStatus.Ready)
+            {
+                _logger.CannotAssignAgent(orderId, $"Invalid status: {order.Status}");
+                return AssignAgentResult.InvalidStatus;
+            }
+
+            if (order.AgentId != null)
+            {
+                _logger.CannotAssignAgent(orderId, $"Agent already assigned: {order.AgentId}");
+                return AssignAgentResult.AgentAlreadyAssigned;
+            }
+
+            order.AgentId = agentId;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.AgentAssigned(order.Id, order.PartnerId, agentId);
+
+            // Publish AgentAssignedEvent
+            var orderEvent = new AgentAssignedEvent
+            {
+                OrderId = order.Id,
+                PartnerId = order.PartnerId,
+                AgentId = agentId,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.AgentAssigned, order.Id.ToString(), orderEvent);
+            _logger.PublishedAgentAssignedEvent(order.Id);
+
+            return AssignAgentResult.Success;
+        }
+
+        public async Task<PickupResult> PickupOrderAsync(int orderId)
+        {
+            _logger.PickingUpOrder(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotPickupOrder(orderId, "Order not found");
+                return PickupResult.OrderNotFound;
+            }
+
+            if (order.Status != OrderStatus.Ready)
+            {
+                _logger.CannotPickupOrder(orderId, $"Invalid status: {order.Status}");
+                return PickupResult.InvalidStatus;
+            }
+
+            if (order.AgentId == null)
+            {
+                _logger.CannotPickupOrder(orderId, "No agent assigned");
+                return PickupResult.NoAgentAssigned;
+            }
+
+            order.Status = OrderStatus.PickedUp;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Fetch agent information
+            var agent = await _agentServiceClient.GetAgentByIdAsync(order.AgentId.Value);
+            var agentName = agent?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
+
+            // Audit log
+            _logger.OrderPickedUp(order.Id, order.CustomerId, agentName);
+
+            // Publish OrderPickedUpEvent
+            var orderEvent = new OrderPickedUpEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                AgentName = agentName,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderPickedUp, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderPickedUpEvent(order.Id);
+
+            return PickupResult.Success;
+        }
+
+        public async Task<DeliveryResult> CompleteDeliveryAsync(int orderId)
+        {
+            _logger.CompletingDelivery(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotCompleteDelivery(orderId, "Order not found");
+                return DeliveryResult.OrderNotFound;
+            }
+
+            if (order.Status != OrderStatus.PickedUp)
+            {
+                _logger.CannotCompleteDelivery(orderId, $"Invalid status: {order.Status}");
+                return DeliveryResult.InvalidStatus;
+            }
+
+            if (order.AgentId == null)
+            {
+                _logger.CannotCompleteDelivery(orderId, "No agent assigned");
+                return DeliveryResult.NoAgentAssigned;
+            }
+
+            order.Status = OrderStatus.Delivered;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Audit log
+            _logger.OrderDelivered(order.Id, order.CustomerId);
+
+            // Publish OrderDeliveredEvent
+            var orderEvent = new OrderDeliveredEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderDelivered, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderDeliveredEvent(order.Id);
+
+            return DeliveryResult.Success;
         }
     }
 }
