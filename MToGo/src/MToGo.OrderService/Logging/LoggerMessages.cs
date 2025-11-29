@@ -127,5 +127,31 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published AgentAssignedEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedAgentAssignedEvent(this ILogger logger, int orderId);
+
+        // Pickup Order - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received PickupOrder request for OrderId: {OrderId}")]
+        public static partial void ReceivedPickupOrderRequest(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "PickupOrder completed: OrderId={OrderId}")]
+        public static partial void PickupOrderCompleted(this ILogger logger, int orderId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Warning, Message = "PickupOrder failed: OrderId={OrderId}")]
+        public static partial void PickupOrderFailed(this ILogger logger, int orderId);
+
+        // Pickup Order - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Picking up order: OrderId={OrderId}")]
+        public static partial void PickingUpOrder(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Cannot pickup order: OrderId={OrderId}, Reason={Reason}")]
+        public static partial void CannotPickupOrder(this ILogger logger, int orderId, string reason);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order picked up: OrderId={OrderId}, CustomerId={CustomerId}, AgentName={AgentName}")]
+        public static partial void OrderPickedUp(this ILogger logger, int orderId, int customerId, string agentName);
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderPickedUpEvent to Kafka for OrderId: {OrderId}")]
+        public static partial void PublishedOrderPickedUpEvent(this ILogger logger, int orderId);
     }
 }
