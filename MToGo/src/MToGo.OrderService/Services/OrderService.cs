@@ -174,7 +174,7 @@ namespace MToGo.OrderService.Services
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderRejected, order.Id.ToString(), orderEvent);
             _logger.PublishedOrderRejectedEvent(order.Id);
 
-            // TODO: Refund Process logic her?
+            // TODO: Måske Refund Process logic her?
 
             return true;
         }
