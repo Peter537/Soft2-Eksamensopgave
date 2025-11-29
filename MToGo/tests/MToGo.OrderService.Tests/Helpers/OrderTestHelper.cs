@@ -6,7 +6,7 @@ namespace MToGo.OrderService.Tests.Helpers
 {
     public static class OrderTestHelper
     {
-        public static async Task<int> CreateOrderWithStatus(SharedTestWebApplicationFactory factory, OrderStatus status)
+        public static async Task<int> CreateOrderWithStatus(SharedTestWebApplicationFactory factory, OrderStatus status, int? agentId = null)
         {
             using var scope = factory.Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
@@ -15,6 +15,7 @@ namespace MToGo.OrderService.Tests.Helpers
             {
                 CustomerId = 1,
                 PartnerId = 1,
+                AgentId = agentId,
                 DeliveryAddress = "Test Address 123",
                 DeliveryFee = 29,
                 ServiceFee = 6,
