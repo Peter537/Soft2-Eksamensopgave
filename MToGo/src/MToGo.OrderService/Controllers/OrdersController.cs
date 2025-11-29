@@ -53,5 +53,27 @@ namespace MToGo.OrderService.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("order/{id}/reject")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        public async Task<IActionResult> RejectOrder(int id, [FromBody] OrderRejectRequest? request = null)
+        {
+            _logger.ReceivedRejectOrderRequest(id);
+
+            var success = await _orderService.RejectOrderAsync(id, request?.Reason);
+
+            if (!success)
+            {
+                // Audit log
+                _logger.RejectOrderFailed(id);
+                return BadRequest();
+            }
+
+            // Audit log
+            _logger.RejectOrderCompleted(id);
+
+            return NoContent();
+        }
     }
 }

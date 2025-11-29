@@ -11,6 +11,7 @@ namespace MToGo.OrderService.Services
     {
         Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request);
         Task<bool> AcceptOrderAsync(int orderId);
+        Task<bool> RejectOrderAsync(int orderId, string? reason);
     }
 
     public class OrderService : IOrderService
@@ -133,6 +134,52 @@ namespace MToGo.OrderService.Services
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderAccepted, order.Id.ToString(), orderEvent);
             _logger.PublishedOrderAcceptedEvent(order.Id);
+
+            return true;
+        }
+
+        public async Task<bool> RejectOrderAsync(int orderId, string? reason)
+        {
+            _logger.RejectingOrder(orderId);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.CannotRejectOrder(orderId, "Order not found");
+                return false;
+            }
+
+            if (order.Status != OrderStatus.Placed)
+            {
+                _logger.CannotRejectOrder(orderId, $"Invalid status: {order.Status}");
+                return false;
+            }
+
+            order.Status = OrderStatus.Rejected;
+            await _orderRepository.UpdateOrderAsync(order);
+
+            // Sanitize user input to prevent log injection attacks
+            var sanitizedReason = (reason ?? "No reason provided")
+                .Replace("\r", "")
+                .Replace("\n", " ");
+
+            // Audit log
+            _logger.OrderRejected(order.Id, order.CustomerId, sanitizedReason);
+
+            // Publish OrderRejectedEvent
+            var orderEvent = new OrderRejectedEvent
+            {
+                OrderId = order.Id,
+                CustomerId = order.CustomerId,
+                Reason = sanitizedReason,
+                Timestamp = DateTime.UtcNow.ToString("O")
+            };
+
+            await _kafkaProducer.PublishAsync(KafkaTopics.OrderRejected, order.Id.ToString(), orderEvent);
+            _logger.PublishedOrderRejectedEvent(order.Id);
+
+            // TODO: Måske Refund Process logic her?
 
             return true;
         }
