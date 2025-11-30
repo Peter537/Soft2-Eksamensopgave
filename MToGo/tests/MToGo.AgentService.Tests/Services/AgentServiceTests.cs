@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Moq;
 using MToGo.AgentService.Entities;
 using MToGo.AgentService.Exceptions;
@@ -14,7 +13,6 @@ public class AgentServiceTests
     private readonly Mock<IAgentRepository> _mockAgentRepository;
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly Mock<IPasswordHasher> _mockPasswordHasher;
-    private readonly Mock<ILogger<AgentService.Services.AgentService>> _mockLogger;
     private readonly AgentService.Services.AgentService _sut;
 
     public AgentServiceTests()
@@ -22,13 +20,11 @@ public class AgentServiceTests
         _mockAgentRepository = new Mock<IAgentRepository>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         _mockPasswordHasher = new Mock<IPasswordHasher>();
-        _mockLogger = new Mock<ILogger<AgentService.Services.AgentService>>();
 
         _sut = new AgentService.Services.AgentService(
             _mockAgentRepository.Object,
             _mockJwtTokenService.Object,
-            _mockPasswordHasher.Object,
-            _mockLogger.Object
+            _mockPasswordHasher.Object
         );
     }
 
