@@ -1,0 +1,263 @@
+@page "/customer/orders"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.CustomerOrders.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">@L["Pages.CustomerOrders.Title"]</h3>
+                </div>
+                <div class="card-body">
+                    @if (!CultureService.IsLoggedIn)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.CustomerOrders.LoginRequired"] <a href="/login">@L["Pages.CustomerOrders.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Date Filter Section -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="startDate" class="form-label">@L["Pages.CustomerOrders.StartDate"]</label>
+                                <input type="date" id="startDate" class="form-control" @bind="startDate" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="endDate" class="form-label">@L["Pages.CustomerOrders.EndDate"]</label>
+                                <input type="date" id="endDate" class="form-control" @bind="endDate" />
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary me-2" @onclick="LoadOrders">
+                                    @L["Pages.CustomerOrders.FilterButton"]
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilter">
+                                    @L["Pages.CustomerOrders.ClearButton"]
+                                </button>
+                            </div>
+                        </div>
+
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">@L["Pages.CustomerOrders.Loading"]</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="alert alert-danger" role="alert">
+                                    @errorMessage
+                                </div>
+                            }
+
+                            @if (orders == null || !orders.Any())
+                            {
+                                <div class="alert alert-info">
+                                    @L["Pages.CustomerOrders.NoOrders"]
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>@L["Pages.CustomerOrders.OrderId"]</th>
+                                                <th>@L["Pages.CustomerOrders.Date"]</th>
+                                                <th>@L["Pages.CustomerOrders.Partner"]</th>
+                                                <th>@L["Pages.CustomerOrders.Items"]</th>
+                                                <th>@L["Pages.CustomerOrders.Status"]</th>
+                                                <th class="text-end">@L["Pages.CustomerOrders.Total"]</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var order in orders)
+                                            {
+                                                <tr>
+                                                    <td>#@order.Id</td>
+                                                    <td>@FormatDate(order.OrderCreatedTime)</td>
+                                                    <td>@L.GetString("Pages.CustomerOrders.PartnerLabel", order.PartnerId)</td>
+                                                    <td>
+                                                        <ul class="list-unstyled mb-0">
+                                                            @foreach (var item in order.Items)
+                                                            {
+                                                                <li>@item.Quantity x @item.Name (@item.UnitPrice.ToString("C"))</li>
+                                                            }
+                                                        </ul>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <div>@L["Pages.CustomerOrders.ServiceFee"]: @order.ServiceFee.ToString("C")</div>
+                                                        <div>@L["Pages.CustomerOrders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
+                                                        <hr class="my-1" />
+                                                        <strong>@CalculateTotal(order).ToString("C")</strong>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<CustomerOrderResponse>? orders;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private string? errorMessage;
+    private bool isLoading = true;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CultureService.IsLoggedIn)
+        {
+            await LoadOrders();
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadOrders()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var url = $"/api/v1/orders/customer/{CultureService.CustomerId}";
+            
+            var queryParams = new List<string>();
+            if (startDate.HasValue)
+            {
+                queryParams.Add($"startDate={startDate.Value:yyyy-MM-dd}");
+            }
+            if (endDate.HasValue)
+            {
+                queryParams.Add($"endDate={endDate.Value:yyyy-MM-dd}");
+            }
+            
+            if (queryParams.Any())
+            {
+                url += "?" + string.Join("&", queryParams);
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                orders = await response.Content.ReadFromJsonAsync<List<CustomerOrderResponse>>();
+            }
+            else
+            {
+                errorMessage = L["Pages.CustomerOrders.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.CustomerOrders.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ClearFilter()
+    {
+        startDate = null;
+        endDate = null;
+        await LoadOrders();
+    }
+
+    private string FormatDate(string isoDate)
+    {
+        if (DateTime.TryParse(isoDate, out var date))
+        {
+            return date.ToLocalTime().ToString("g");
+        }
+        return isoDate;
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Placed" => "bg-secondary",
+            "Accepted" => "bg-info",
+            "Ready" => "bg-primary",
+            "PickedUp" => "bg-warning text-dark",
+            "Delivered" => "bg-success",
+            "Rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private decimal CalculateTotal(CustomerOrderResponse order)
+    {
+        var itemsTotal = order.Items.Sum(i => i.Quantity * i.UnitPrice);
+        return itemsTotal + order.ServiceFee + order.DeliveryFee;
+    }
+
+    public class CustomerOrderResponse
+    {
+        public int Id { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public decimal ServiceFee { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string OrderCreatedTime { get; set; } = string.Empty;
+        public List<CustomerOrderItemResponse> Items { get; set; } = new();
+    }
+
+    public class CustomerOrderItemResponse
+    {
+        public int FoodItemId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+}
