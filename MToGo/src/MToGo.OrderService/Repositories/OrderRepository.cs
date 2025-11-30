@@ -9,6 +9,7 @@ namespace MToGo.OrderService.Repositories
         Task<Order?> GetOrderByIdAsync(int id);
         Task UpdateOrderAsync(Order order);
         Task<List<Order>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<Order>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
     }
 
     public class OrderRepository : IOrderRepository
@@ -43,6 +44,29 @@ namespace MToGo.OrderService.Repositories
             var query = _context.Orders
                 .Include(o => o.Items)
                 .Where(o => o.CustomerId == customerId);
+
+            if (startDate.HasValue)
+            {
+                // Convert to UTC for PostgreSQL timestamp with time zone
+                var utcStartDate = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc);
+                query = query.Where(o => o.CreatedAt >= utcStartDate);
+            }
+
+            if (endDate.HasValue)
+            {
+                // Include the entire end day, convert to UTC
+                var utcEndDate = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1), DateTimeKind.Utc);
+                query = query.Where(o => o.CreatedAt < utcEndDate);
+            }
+
+            return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+        }
+
+        public async Task<List<Order>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            var query = _context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.AgentId == agentId);
 
             if (startDate.HasValue)
             {

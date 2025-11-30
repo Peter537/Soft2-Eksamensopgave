@@ -203,5 +203,22 @@ namespace MToGo.OrderService.Controllers
 
             return Ok(orders);
         }
+
+        [HttpGet("agent/{id}")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
+        public async Task<IActionResult> GetAgentDeliveries(
+            int id, 
+            [FromQuery] DateTime? startDate = null, 
+            [FromQuery] DateTime? endDate = null)
+        {
+            _logger.ReceivedGetAgentDeliveriesRequest(id, startDate, endDate);
+
+            var deliveries = await _orderService.GetOrdersByAgentIdAsync(id, startDate, endDate);
+
+            _logger.GetAgentDeliveriesCompleted(id, deliveries.Count);
+
+            return Ok(deliveries);
+        }
     }
 }

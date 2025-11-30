@@ -195,5 +195,21 @@ namespace MToGo.OrderService.Logging
         // Audit log
         [LoggerMessage(Level = LogLevel.Information, Message = "Order history retrieved: CustomerId={CustomerId}, OrderCount={OrderCount}")]
         public static partial void OrderHistoryRetrieved(this ILogger logger, int customerId, int orderCount);
+
+        // Get Agent Deliveries - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetAgentDeliveries request for AgentId: {AgentId}, StartDate: {StartDate}, EndDate: {EndDate}")]
+        public static partial void ReceivedGetAgentDeliveriesRequest(this ILogger logger, int agentId, DateTime? startDate, DateTime? endDate);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetAgentDeliveries completed: AgentId={AgentId}, DeliveryCount={DeliveryCount}")]
+        public static partial void GetAgentDeliveriesCompleted(this ILogger logger, int agentId, int deliveryCount);
+
+        // Get Agent Deliveries - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting delivery history for AgentId: {AgentId}, StartDate: {StartDate}, EndDate: {EndDate}")]
+        public static partial void GettingAgentDeliveryHistory(this ILogger logger, int agentId, DateTime? startDate, DateTime? endDate);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Agent delivery history retrieved: AgentId={AgentId}, DeliveryCount={DeliveryCount}")]
+        public static partial void AgentDeliveryHistoryRetrieved(this ILogger logger, int agentId, int deliveryCount);
     }
 }

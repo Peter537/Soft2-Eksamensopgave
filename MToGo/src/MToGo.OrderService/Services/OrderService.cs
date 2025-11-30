@@ -17,6 +17,7 @@ namespace MToGo.OrderService.Services
         Task<PickupResult> PickupOrderAsync(int orderId);
         Task<DeliveryResult> CompleteDeliveryAsync(int orderId);
         Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
     }
 
     public enum AssignAgentResult
@@ -451,6 +452,34 @@ namespace MToGo.OrderService.Services
                 Status = o.Status.ToString(),
                 OrderCreatedTime = o.CreatedAt.ToString("O"),
                 Items = o.Items.Select(i => new CustomerOrderItemResponse
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            _logger.GettingAgentDeliveryHistory(agentId, startDate, endDate);
+
+            var orders = await _orderRepository.GetOrdersByAgentIdAsync(agentId, startDate, endDate);
+
+            _logger.AgentDeliveryHistoryRetrieved(agentId, orders.Count);
+
+            return orders.Select(o => new AgentDeliveryResponse
+            {
+                Id = o.Id,
+                CustomerId = o.CustomerId,
+                PartnerId = o.PartnerId,
+                DeliveryAddress = o.DeliveryAddress,
+                ServiceFee = o.ServiceFee,
+                DeliveryFee = o.DeliveryFee,
+                Status = o.Status.ToString(),
+                OrderCreatedTime = o.CreatedAt.ToString("O"),
+                Items = o.Items.Select(i => new AgentDeliveryItemResponse
                 {
                     FoodItemId = i.FoodItemId,
                     Name = i.Name,
