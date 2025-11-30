@@ -75,4 +75,7 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred: {0}</value>
   </data>
+  <data name="ViewDetails" xml:space="preserve">
+    <value>View</value>
+  </data>
 </root>
