@@ -211,5 +211,21 @@ namespace MToGo.OrderService.Logging
         // Audit log
         [LoggerMessage(Level = LogLevel.Information, Message = "Agent delivery history retrieved: AgentId={AgentId}, DeliveryCount={DeliveryCount}")]
         public static partial void AgentDeliveryHistoryRetrieved(this ILogger logger, int agentId, int deliveryCount);
+
+        // Get Partner Orders - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetPartnerOrders request for PartnerId: {PartnerId}, StartDate: {StartDate}, EndDate: {EndDate}")]
+        public static partial void ReceivedGetPartnerOrdersRequest(this ILogger logger, int partnerId, DateTime? startDate, DateTime? endDate);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetPartnerOrders completed: PartnerId={PartnerId}, OrderCount={OrderCount}")]
+        public static partial void GetPartnerOrdersCompleted(this ILogger logger, int partnerId, int orderCount);
+
+        // Get Partner Orders - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting order history for PartnerId: {PartnerId}, StartDate: {StartDate}, EndDate: {EndDate}")]
+        public static partial void GettingPartnerOrderHistory(this ILogger logger, int partnerId, DateTime? startDate, DateTime? endDate);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Partner order history retrieved: PartnerId={PartnerId}, OrderCount={OrderCount}")]
+        public static partial void PartnerOrderHistoryRetrieved(this ILogger logger, int partnerId, int orderCount);
     }
 }
