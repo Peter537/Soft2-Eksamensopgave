@@ -79,6 +79,7 @@
                                                 <th>@L["Pages.Customer.Orders.Items"]</th>
                                                 <th>@L["Pages.Customer.Orders.Status"]</th>
                                                 <th class="text-end">@L["Pages.Customer.Orders.Total"]</th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -104,6 +105,11 @@
                                                         <div>@L["Pages.Customer.Orders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
                                                         <hr class="my-1" />
                                                         <strong>@CalculateTotal(order).ToString("C")</strong>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <a href="/order/@order.Id" class="btn btn-sm btn-outline-primary">
+                                                            @L["Pages.Customer.Orders.ViewDetails"]
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             }
