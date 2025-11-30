@@ -727,4 +727,21 @@ internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
         
         return result ?? throw new InvalidOperationException("Failed to deserialize response.");
     }
+
+    public async Task DeleteCustomerAsync(int id)
+    {
+        _logger.LogInformation("E2E: Deleting customer with ID: {Id}", id);
+
+        var response = await _httpClient.DeleteAsync($"/api/v1/customers/delete/{id}");
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("E2E: Customer not found: {Id}", id);
+            throw new KeyNotFoundException("Customer not found.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        _logger.LogInformation("E2E: Customer deleted: {Id}", id);
+    }
 }

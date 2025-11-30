@@ -123,4 +123,33 @@ public class CustomersController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Delete customer account (soft delete)
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    [Authorize(Policy = AuthorizationPolicies.CustomerOrManagement)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAccount(int id)
+    {
+        var userContext = _userContextAccessor.UserContext;
+        
+        // Customers can only delete their own account, Management can delete any
+        if (userContext.Role == UserRoles.Customer && userContext.UserId != id)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await _customerService.DeleteCustomerAsync(id);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { error = "Customer not found." });
+        }
+    }
 }
