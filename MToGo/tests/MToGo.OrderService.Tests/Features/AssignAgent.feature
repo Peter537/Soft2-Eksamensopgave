@@ -20,8 +20,8 @@ Feature: Assign Agent to Order
         Then the response status code should be 409
         And the order should still have agent 10 assigned
 
-    Scenario: Cannot assign agent to order that is not in Ready status
-        Given an order exists with Accepted status and no agent assigned
+    Scenario: Cannot assign agent to order that is not in Ready or Accepted status
+        Given an order exists with Placed status and no agent assigned
         When the agent accepts the delivery offer with agentId 42
         Then the response status code should be 400
 

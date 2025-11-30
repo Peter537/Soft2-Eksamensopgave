@@ -25,6 +25,14 @@ namespace MToGo.OrderService.Tests.StepDefinitions
             _scenarioContext["OrderId"] = orderId;
         }
 
+        [Given(@"an order exists with Placed status and no agent assigned")]
+        public async Task GivenAnOrderExistsWithPlacedStatusAndNoAgentAssigned()
+        {
+            var factory = _scenarioContext.Get<SharedTestWebApplicationFactory>("Factory");
+            var orderId = await OrderTestHelper.CreateOrderWithStatus(factory, OrderStatus.Placed, agentId: null);
+            _scenarioContext["OrderId"] = orderId;
+        }
+
         [Given(@"an order exists with Accepted status")]
         public async Task GivenAnOrderExistsWithAcceptedStatus()
         {

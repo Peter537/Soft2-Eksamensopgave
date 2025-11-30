@@ -26,8 +26,8 @@ namespace MToGo.OrderService.Tests.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Reject Order", ("    As a partner\r\n    I want to reject placed order\r\n    So that customer is noti" +
-                "fied of order rejection"), global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Reject Order", "    As a partner\r\n    I want to reject placed order\r\n    So that customer is noti" +
+                "fied of order rejection", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         

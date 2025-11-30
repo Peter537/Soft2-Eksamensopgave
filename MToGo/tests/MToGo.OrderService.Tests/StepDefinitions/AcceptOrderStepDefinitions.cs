@@ -2,6 +2,8 @@ using Reqnroll;
 using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
+using System.Text;
+using System.Text.Json;
 
 namespace MToGo.OrderService.Tests.StepDefinitions
 {
@@ -20,7 +22,11 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         {
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
-            var response = await client.PostAsync($"/orders/order/{orderId}/accept", null);
+            var content = new StringContent(
+                JsonSerializer.Serialize(new { estimatedMinutes = 15 }),
+                Encoding.UTF8,
+                "application/json");
+            var response = await client.PostAsync($"/orders/order/{orderId}/accept", content);
             _scenarioContext["Response"] = response;
         }
 
