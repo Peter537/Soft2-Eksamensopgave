@@ -101,7 +101,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Customer views order history when logged in", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 8
+#line 6
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -111,16 +111,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 9
+#line 7
         await testRunner.GivenAsync("a customer with ID 1 has placed orders", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 10
+#line 8
         await testRunner.WhenAsync("the customer requests their order history", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 11
+#line 9
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 12
+#line 10
         await testRunner.AndAsync("the response contains a list of orders with dates, partners, items, and totals", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
@@ -135,7 +135,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Customer views order history with no orders", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 14
+#line 12
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -145,16 +145,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 15
+#line 13
         await testRunner.GivenAsync("a customer with ID 1 has no orders", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 16
+#line 14
         await testRunner.WhenAsync("the customer requests their order history", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 17
+#line 15
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 18
+#line 16
         await testRunner.AndAsync("the response contains an empty list", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
@@ -169,7 +169,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Customer filters order history by date range", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 22
+#line 18
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -179,16 +179,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 23
+#line 19
         await testRunner.GivenAsync("a customer with ID 1 has orders from different dates", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 24
+#line 20
         await testRunner.WhenAsync("the customer requests order history with date range filter", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 25
+#line 21
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 26
+#line 22
         await testRunner.AndAsync("only orders within the date range are returned", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
@@ -203,7 +203,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Customer filters order history with no matching orders", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 28
+#line 24
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -213,16 +213,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 29
+#line 25
         await testRunner.GivenAsync("a customer with ID 1 has orders outside the date range", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 30
+#line 26
         await testRunner.WhenAsync("the customer requests order history with date range filter", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 31
+#line 27
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 32
+#line 28
         await testRunner.AndAsync("the response contains an empty list", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
