@@ -21,8 +21,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\MToGo.NotificationService\MToGo.NotificationService.csproj" />
+    <ProjectReference Include="..\..\src\MToGo.Shared\MToGo.Shared.csproj" />
     <ProjectReference Include="..\MToGo.Testing\MToGo.Testing.csproj" />
     <ProjectReference Include="..\..\..\LegacyMToGo\LegacyMToGo.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

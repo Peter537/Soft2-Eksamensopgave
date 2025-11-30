@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Ordredetaljer - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Ordre #{0}</value>
+  </data>
+  <data name="BackButton" xml:space="preserve">
+    <value>Tilbage</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind for at se ordredetaljer.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>Du har ikke tilladelse til at se denne ordre.</value>
+  </data>
+  <data name="NotFoundTitle" xml:space="preserve">
+    <value>Ordre ikke fundet</value>
+  </data>
+  <data name="NotFoundMessage" xml:space="preserve">
+    <value>Ordre #{0} eksisterer ikke.</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse ordredetaljer.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="OrderDate" xml:space="preserve">
+    <value>Ordredato</value>
+  </data>
+  <data name="Customer" xml:space="preserve">
+    <value>Kunde</value>
+  </data>
+  <data name="CustomerLabel" xml:space="preserve">
+    <value>Kunde #{0}</value>
+  </data>
+  <data name="Partner" xml:space="preserve">
+    <value>Partner</value>
+  </data>
+  <data name="PartnerLabel" xml:space="preserve">
+    <value>Partner #{0}</value>
+  </data>
+  <data name="Agent" xml:space="preserve">
+    <value>Leveringsbud</value>
+  </data>
+  <data name="AgentLabel" xml:space="preserve">
+    <value>Bud #{0}</value>
+  </data>
+  <data name="NoAgent" xml:space="preserve">
+    <value>Ikke tildelt</value>
+  </data>
+  <data name="DeliveryAddress" xml:space="preserve">
+    <value>Leveringsadresse</value>
+  </data>
+  <data name="Items" xml:space="preserve">
+    <value>Ordrelinjer</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Vare</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Antal</value>
+  </data>
+  <data name="UnitPrice" xml:space="preserve">
+    <value>Enhedspris</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Subtotal</value>
+  </data>
+  <data name="ItemsSubtotal" xml:space="preserve">
+    <value>Varer subtotal</value>
+  </data>
+  <data name="ServiceFee" xml:space="preserve">
+    <value>Servicegebyr</value>
+  </data>
+  <data name="DeliveryFee" xml:space="preserve">
+    <value>Leveringsgebyr</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+</root>
