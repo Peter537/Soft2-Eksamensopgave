@@ -39,7 +39,12 @@ namespace MToGo.Shared.Kafka
                 GroupId = config.Value.GroupId,
                 AutoOffsetReset = config.Value.AutoOffsetReset ?? AutoOffsetReset.Earliest,
                 EnableAutoCommit = config.Value.EnableAutoCommit,
-                EnableAutoOffsetStore = config.Value.EnableAutoOffsetStore
+                EnableAutoOffsetStore = config.Value.EnableAutoOffsetStore,
+                // Performance tuning for low-latency
+                FetchWaitMaxMs = 100,        // Max wait for fetch response (default 500ms)
+                FetchMinBytes = 1,           // Don't wait for batch, return immediately
+                SessionTimeoutMs = 10000,    // Faster failure detection (default 45000)
+                HeartbeatIntervalMs = 3000   // More frequent heartbeats (default 3000)
             };
 
             if (config.Value.SessionTimeoutMs.HasValue)
