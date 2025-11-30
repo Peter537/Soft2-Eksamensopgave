@@ -1,10 +1,11 @@
-@page "/agent/available-jobs"
+@page "/agent/{AgentId:int}/available-jobs"
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
+@inject HttpClient Http
 @implements IAsyncDisposable
 
-<h3 class="mb-4">Agent · Jobs</h3>
+<h3 class="mb-4">Agent #@AgentId · Jobs</h3>
 
 @* Active toggle - just for show *@
 <div class="form-check mb-3">
@@ -87,11 +88,14 @@
         }
     </div>
     <div class="text-muted small">
-        To view your deliveries, go to: /agent/my-deliveries/{your-id}
+        <a href="/agent/my-deliveries/@AgentId">View My Deliveries</a>
     </div>
 </div>
 
 @code {
+    [Parameter]
+    public int AgentId { get; set; }
+
     private List<AvailableJob> Jobs { get; set; } = new();
     private bool IsConnected { get; set; }
     private bool IsActive { get; set; } = true;
@@ -183,13 +187,34 @@
 
     private async Task AcceptJob(AvailableJob job)
     {
-        // For now, just remove from list locally
-        // In real implementation, this would call the Agent API
+        // Remove from list locally
         Jobs.Remove(job);
-        StatusMessage = $"You accepted job #{job.OrderId}!";
+        StatusMessage = $"Accepting job #{job.OrderId}...";
         
-        // TODO: Call Agent API to assign this agent to the order
-        // This will trigger AgentAssignedEvent which broadcasts to all other agents
+        // Call OrderService assign-agent endpoint
+        var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
+        try
+        {
+            var payload = new { agentId = AgentId };
+            var response = await Http.PostAsJsonAsync($"{gatewayUrl}/api/v1/orders/order/{job.OrderId}/assign-agent", payload);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                StatusMessage = $"Job #{job.OrderId} accepted! Go to My Deliveries to manage it.";
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                StatusMessage = $"Job #{job.OrderId} was already taken by another agent!";
+            }
+            else
+            {
+                StatusMessage = $"Failed to accept job: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error accepting job: {ex.Message}";
+        }
 
         await InvokeAsync(StateHasChanged);
     }
