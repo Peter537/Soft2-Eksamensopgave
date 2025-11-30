@@ -84,4 +84,34 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>Der opstod en fejl: {0}</value>
   </data>
+  <data name="DangerZone" xml:space="preserve">
+    <value>Farezone</value>
+  </data>
+  <data name="DeleteAccountWarning" xml:space="preserve">
+    <value>Når du sletter din konto, er der ingen vej tilbage. Vær sikker på din beslutning.</value>
+  </data>
+  <data name="DeleteAccountButton" xml:space="preserve">
+    <value>Slet konto</value>
+  </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve">
+    <value>Er du sikker på, at du vil slette din konto?</value>
+  </data>
+  <data name="DeleteConfirmMessage" xml:space="preserve">
+    <value>Denne handling kan ikke fortrydes. Alle dine data vil blive permanent fjernet.</value>
+  </data>
+  <data name="ConfirmDeleteButton" xml:space="preserve">
+    <value>Ja, slet min konto</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Annuller</value>
+  </data>
+  <data name="Deleting" xml:space="preserve">
+    <value>Sletter...</value>
+  </data>
+  <data name="DeleteFailed" xml:space="preserve">
+    <value>Kunne ikke slette konto. Prøv igen.</value>
+  </data>
+  <data name="AccountNotFound" xml:space="preserve">
+    <value>Konto ikke fundet.</value>
+  </data>
 </root>
