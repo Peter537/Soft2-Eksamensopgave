@@ -10,7 +10,7 @@ namespace MToGo.OrderService.Services
     public interface IOrderService
     {
         Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request);
-        Task<bool> AcceptOrderAsync(int orderId);
+        Task<bool> AcceptOrderAsync(int orderId, int estimatedMinutes);
         Task<bool> RejectOrderAsync(int orderId, string? reason);
         Task<bool> SetReadyAsync(int orderId);
         Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId);
@@ -84,6 +84,7 @@ namespace MToGo.OrderService.Services
                 DeliveryFee = request.DeliveryFee,
                 ServiceFee = serviceFee,
                 TotalAmount = orderTotal + serviceFee + request.DeliveryFee,
+                Distance = request.Distance,
                 Items = request.Items.Select(i => new OrderItem
                 {
                     FoodItemId = i.FoodItemId,
@@ -104,6 +105,7 @@ namespace MToGo.OrderService.Services
                 OrderId = createdOrder.Id,
                 PartnerId = request.PartnerId,
                 OrderCreatedTime = createdOrder.CreatedAt.ToString("O"),
+                Distance = createdOrder.Distance,
                 Items = request.Items.Select(i => new OrderCreatedEvent.OrderCreatedItem
                 {
                     Name = i.Name,
@@ -117,7 +119,7 @@ namespace MToGo.OrderService.Services
             return new OrderCreateResponse { Id = createdOrder.Id };
         }
 
-        public async Task<bool> AcceptOrderAsync(int orderId)
+        public async Task<bool> AcceptOrderAsync(int orderId, int estimatedMinutes)
         {
             _logger.AcceptingOrder(orderId);
 
@@ -136,6 +138,7 @@ namespace MToGo.OrderService.Services
             }
 
             order.Status = OrderStatus.Accepted;
+            order.EstimatedMinutes = estimatedMinutes;
             await _orderRepository.UpdateOrderAsync(order);
 
             // Audit log
@@ -155,6 +158,8 @@ namespace MToGo.OrderService.Services
                 PartnerAddress = partnerAddress,
                 DeliveryAddress = order.DeliveryAddress,
                 DeliveryFee = order.DeliveryFee,
+                Distance = order.Distance,
+                EstimatedMinutes = order.EstimatedMinutes,
                 Timestamp = DateTime.UtcNow.ToString("O"),
                 Items = order.Items.Select(i => new OrderAcceptedEvent.OrderAcceptedItem
                 {
@@ -284,7 +289,8 @@ namespace MToGo.OrderService.Services
                 return AssignAgentResult.OrderNotFound;
             }
 
-            if (order.Status != OrderStatus.Ready)
+            // Allow agent assignment when order is Accepted OR Ready
+            if (order.Status != OrderStatus.Accepted && order.Status != OrderStatus.Ready)
             {
                 _logger.CannotAssignAgent(orderId, $"Invalid status: {order.Status}");
                 return AssignAgentResult.InvalidStatus;
@@ -302,13 +308,27 @@ namespace MToGo.OrderService.Services
             // Audit log
             _logger.AgentAssigned(order.Id, order.PartnerId, agentId);
 
-            // Publish AgentAssignedEvent
+            // Fetch partner information for the agent's view
+            var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
+            var partnerName = partner?.Name ?? string.Empty;
+            var partnerAddress = partner?.Location ?? string.Empty;
+
+            // Publish AgentAssignedEvent with full order details
             var orderEvent = new AgentAssignedEvent
             {
                 OrderId = order.Id,
                 PartnerId = order.PartnerId,
                 AgentId = agentId,
-                Timestamp = DateTime.UtcNow.ToString("O")
+                Timestamp = DateTime.UtcNow.ToString("O"),
+                PartnerName = partnerName,
+                PartnerAddress = partnerAddress,
+                DeliveryAddress = order.DeliveryAddress,
+                DeliveryFee = order.DeliveryFee,
+                Items = order.Items.Select(i => new AgentAssignedEvent.AgentAssignedItem
+                {
+                    Name = i.Name,
+                    Quantity = i.Quantity
+                }).ToList()
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.AgentAssigned, order.Id.ToString(), orderEvent);
@@ -355,6 +375,7 @@ namespace MToGo.OrderService.Services
             var orderEvent = new OrderPickedUpEvent
             {
                 OrderId = order.Id,
+                PartnerId = order.PartnerId,
                 CustomerId = order.CustomerId,
                 AgentName = agentName,
                 Timestamp = DateTime.UtcNow.ToString("O")

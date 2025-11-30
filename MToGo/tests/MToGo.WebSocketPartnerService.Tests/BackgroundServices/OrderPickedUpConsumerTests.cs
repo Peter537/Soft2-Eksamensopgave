@@ -7,24 +7,37 @@ using Microsoft.Extensions.Options;
 using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
-using MToGo.Testing;
 using MToGo.WebSocketPartnerService.BackgroundServices;
 using MToGo.WebSocketPartnerService.Services;
+using MToGo.WebSocketPartnerService.Tests.Fixtures;
 
 namespace MToGo.WebSocketPartnerService.Tests.BackgroundServices;
 
+[Collection("Kafka")]
 public class OrderPickedUpConsumerTests
 {
+    private readonly SharedKafkaFixture _kafkaFixture;
+
+    public OrderPickedUpConsumerTests(SharedKafkaFixture kafkaFixture)
+    {
+        _kafkaFixture = kafkaFixture;
+    }
+
+    private IConfiguration CreateConfig()
+    {
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Kafka:BootstrapServers"] = _kafkaFixture.BootstrapServers
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task Consumer_ShouldNotifyPartner_WithOrderIdAndAgentName_WhenOrderPickedUp()
     {
-        // Arrange - Tests full flow: agent picks up order, partner gets notified with details
-        await using var kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
-        await kafkaContainer.StartAsync();
-        var bootstrapServers = kafkaContainer.GetBootstrapAddress();
-
-        var connectionManager = new PartnerConnectionManager(
-            new Mock<ILogger<PartnerConnectionManager>>().Object);
+        // Arrange
+        var connectionManager = new PartnerConnectionManager(new Mock<ILogger<PartnerConnectionManager>>().Object);
 
         var receivedMessages = new List<string>();
         var messageReceived = new TaskCompletionSource<bool>();
@@ -33,13 +46,6 @@ public class OrderPickedUpConsumerTests
         var partnerId = 77;
         await connectionManager.RegisterConnectionAsync(partnerId, webSocketMock.Object);
 
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Kafka:BootstrapServers"] = bootstrapServers
-            })
-            .Build();
-
         var services = new ServiceCollection();
         services.AddLogging();
 
@@ -47,14 +53,14 @@ public class OrderPickedUpConsumerTests
             services.BuildServiceProvider(),
             connectionManager,
             new Mock<ILogger<OrderPickedUpConsumer>>().Object,
-            config);
+            CreateConfig());
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await consumer.StartAsync(cts.Token);
-        await Task.Delay(TimeSpan.FromSeconds(6));
+        await Task.Delay(1500); // Wait for consumer to be ready
 
         // Act
-        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = bootstrapServers });
+        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = _kafkaFixture.BootstrapServers });
         await using var producer = new KafkaProducer(producerConfig, new LoggerFactory().CreateLogger<KafkaProducer>());
 
         var pickedUpEvent = new OrderPickedUpEvent
@@ -67,7 +73,7 @@ public class OrderPickedUpConsumerTests
         };
 
         await producer.PublishAsync(KafkaTopics.OrderPickedUp, pickedUpEvent.OrderId.ToString(), pickedUpEvent);
-        await Task.WhenAny(messageReceived.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        await Task.WhenAny(messageReceived.Task, Task.Delay(2000));
 
         cts.Cancel();
         try { await consumer.StopAsync(CancellationToken.None); } catch { }
@@ -83,13 +89,8 @@ public class OrderPickedUpConsumerTests
     [Fact]
     public async Task Consumer_ShouldOnlyNotifyTargetPartner_NotOthers()
     {
-        // Arrange - Only the partner who made the order should be notified
-        await using var kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
-        await kafkaContainer.StartAsync();
-        var bootstrapServers = kafkaContainer.GetBootstrapAddress();
-
-        var connectionManager = new PartnerConnectionManager(
-            new Mock<ILogger<PartnerConnectionManager>>().Object);
+        // Arrange
+        var connectionManager = new PartnerConnectionManager(new Mock<ILogger<PartnerConnectionManager>>().Object);
 
         // Two partners connected
         var partner1Messages = new List<string>();
@@ -102,13 +103,6 @@ public class OrderPickedUpConsumerTests
         await connectionManager.RegisterConnectionAsync(1, socket1.Object);
         await connectionManager.RegisterConnectionAsync(2, socket2.Object);
 
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Kafka:BootstrapServers"] = bootstrapServers
-            })
-            .Build();
-
         var services = new ServiceCollection();
         services.AddLogging();
 
@@ -116,13 +110,13 @@ public class OrderPickedUpConsumerTests
             services.BuildServiceProvider(),
             connectionManager,
             new Mock<ILogger<OrderPickedUpConsumer>>().Object,
-            config);
+            CreateConfig());
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await consumer.StartAsync(cts.Token);
-        await Task.Delay(TimeSpan.FromSeconds(6));
+        await Task.Delay(1500); // Wait for consumer to be ready
 
-        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = bootstrapServers });
+        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = _kafkaFixture.BootstrapServers });
         await using var producer = new KafkaProducer(producerConfig, new LoggerFactory().CreateLogger<KafkaProducer>());
 
         // Event targeting partner 1 only
@@ -136,7 +130,7 @@ public class OrderPickedUpConsumerTests
         };
 
         await producer.PublishAsync(KafkaTopics.OrderPickedUp, pickedUpEvent.OrderId.ToString(), pickedUpEvent);
-        await Task.WhenAny(signal.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        await Task.WhenAny(signal.Task, Task.Delay(2000));
 
         cts.Cancel();
         try { await consumer.StopAsync(CancellationToken.None); } catch { }

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
+@inject HttpClient Http
 @implements IAsyncDisposable
 
 <h3>Partner @PartnerId - Order Management</h3>
@@ -235,13 +236,23 @@
             AgentId = null
         });
 
-        // Call Gateway to accept order (fire-and-forget for now)
+        // Call Gateway to accept order
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
         StatusMessage = $"Order #{order.OrderId} accepted! ETA: {order.EstimatedMinutes} min";
         
-        // TODO: call OrderService when implemented - include EstimatedMinutes
-        // await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/accept", 
-        //     new { estimatedMinutes = order.EstimatedMinutes });
+        try
+        {
+            var payload = new { estimatedMinutes = order.EstimatedMinutes ?? 15 };
+            var response = await Http.PostAsJsonAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/accept", payload);
+            if (!response.IsSuccessStatusCode)
+            {
+                StatusMessage = $"Order #{order.OrderId} accepted locally, but API call failed: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Order #{order.OrderId} accepted locally, API error: {ex.Message}";
+        }
         
         await InvokeAsync(StateHasChanged);
     }
@@ -251,9 +262,15 @@
         NewOrders.Remove(order);
         StatusMessage = $"Order #{order.OrderId} rejected";
 
-        // TODO: call OrderService when implemented
-        // var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
-        // await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/reject", null);
+        var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
+        try
+        {
+            await Http.PostAsJsonAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/reject", new { reason = "Partner rejected" });
+        }
+        catch
+        {
+            // Fire-and-forget, UI already updated
+        }
 
         await InvokeAsync(StateHasChanged);
     }
@@ -263,9 +280,15 @@
         order.IsReady = true;
         StatusMessage = $"Order #{order.OrderId} marked as ready!";
 
-        // TODO: call OrderService when implemented - this will emit OrderReadyEvent
-        // var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
-        // await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/set-ready", null);
+        var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
+        try
+        {
+            await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/set-ready", null);
+        }
+        catch
+        {
+            // Fire-and-forget, UI already updated
+        }
 
         await InvokeAsync(StateHasChanged);
     }

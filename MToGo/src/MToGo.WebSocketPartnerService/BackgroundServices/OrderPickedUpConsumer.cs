@@ -28,7 +28,7 @@ public class OrderPickedUpConsumer : BackgroundService
     {
         _logger.LogInformation("OrderPickedUpConsumer starting...");
 
-        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
 
         var config = new KafkaConsumerConfig
         {

@@ -56,12 +56,12 @@ public class PartnerConnectionManagerTests
     }
 
     [Fact]
-    public void RemoveConnection_ShouldRemovePartner_WhenConnected()
+    public async Task RemoveConnection_ShouldRemovePartner_WhenConnected()
     {
         // Arrange
         var partnerId = 1;
         var webSocketMock = CreateOpenWebSocketMock();
-        _sut.RegisterConnectionAsync(partnerId, webSocketMock.Object).Wait();
+        await _sut.RegisterConnectionAsync(partnerId, webSocketMock.Object);
 
         // Act
         _sut.RemoveConnection(partnerId);

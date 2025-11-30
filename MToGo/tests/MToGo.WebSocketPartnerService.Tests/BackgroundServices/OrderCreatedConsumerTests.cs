@@ -7,76 +7,60 @@ using Microsoft.Extensions.Options;
 using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
-using MToGo.Testing;
 using MToGo.WebSocketPartnerService.BackgroundServices;
 using MToGo.WebSocketPartnerService.Services;
+using MToGo.WebSocketPartnerService.Tests.Fixtures;
 
 namespace MToGo.WebSocketPartnerService.Tests.BackgroundServices;
 
+[Collection("Kafka")]
 public class OrderCreatedConsumerTests
 {
+    private readonly SharedKafkaFixture _kafkaFixture;
+
+    public OrderCreatedConsumerTests(SharedKafkaFixture kafkaFixture)
+    {
+        _kafkaFixture = kafkaFixture;
+    }
+
+    private IConfiguration CreateConfig()
+    {
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Kafka:BootstrapServers"] = _kafkaFixture.BootstrapServers
+            })
+            .Build();
+    }
+
     [Fact]
     public async Task Consumer_ShouldSendToPartner_WhenOrderCreatedEventReceived()
     {
         // Arrange
-        await using var kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
-        await kafkaContainer.StartAsync();
-        var bootstrapServers = kafkaContainer.GetBootstrapAddress();
+        var connectionManager = new PartnerConnectionManager(new Mock<ILogger<PartnerConnectionManager>>().Object);
 
-        // Real connection manager
-        var connectionManagerLogger = new Mock<ILogger<PartnerConnectionManager>>();
-        var connectionManager = new PartnerConnectionManager(connectionManagerLogger.Object);
-
-        // Mock WebSocket to capture sent messages
         var receivedMessages = new List<string>();
         var messageReceived = new TaskCompletionSource<bool>();
-        var webSocketMock = new Mock<WebSocket>();
-        webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Open);
-        webSocketMock.Setup(ws => ws.SendAsync(
-            It.IsAny<ArraySegment<byte>>(),
-            WebSocketMessageType.Text,
-            true,
-            It.IsAny<CancellationToken>()))
-            .Callback<ArraySegment<byte>, WebSocketMessageType, bool, CancellationToken>((data, type, endOfMessage, ct) =>
-            {
-                var message = Encoding.UTF8.GetString(data.Array!, data.Offset, data.Count);
-                receivedMessages.Add(message);
-                messageReceived.TrySetResult(true);
-            })
-            .Returns(Task.CompletedTask);
+        var webSocketMock = CreateCapturingWebSocketMock(receivedMessages, messageReceived);
 
-        // Register partner 5 with the mock WebSocket
         var partnerId = 5;
         await connectionManager.RegisterConnectionAsync(partnerId, webSocketMock.Object);
 
-        // Build configuration
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Kafka:BootstrapServers"] = bootstrapServers
-            })
-            .Build();
-
-        // Build service provider
         var services = new ServiceCollection();
         services.AddLogging();
-        var serviceProvider = services.BuildServiceProvider();
 
-        // Create the actual consumer
-        var consumerLogger = new Mock<ILogger<OrderCreatedConsumer>>();
         var consumer = new OrderCreatedConsumer(
-            serviceProvider,
+            services.BuildServiceProvider(),
             connectionManager,
-            consumerLogger.Object,
-            config);
+            new Mock<ILogger<OrderCreatedConsumer>>().Object,
+            CreateConfig());
 
-        // Start consumer in background
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await consumer.StartAsync(cts.Token);
-        await Task.Delay(TimeSpan.FromSeconds(6)); // Wait for consumer startup delay
+        await Task.Delay(1500); // Wait for consumer to be ready
 
         // Publish event
-        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = bootstrapServers });
+        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = _kafkaFixture.BootstrapServers });
         await using var producer = new KafkaProducer(producerConfig, new LoggerFactory().CreateLogger<KafkaProducer>());
 
         var orderEvent = new OrderCreatedEvent
@@ -88,9 +72,8 @@ public class OrderCreatedConsumerTests
         };
 
         await producer.PublishAsync(KafkaTopics.OrderCreated, orderEvent.OrderId.ToString(), orderEvent);
-        await Task.WhenAny(messageReceived.Task, Task.Delay(TimeSpan.FromSeconds(5)));
-        
-        // Stop consumer
+        await Task.WhenAny(messageReceived.Task, Task.Delay(2000));
+
         cts.Cancel();
         try { await consumer.StopAsync(CancellationToken.None); } catch { }
 
@@ -105,51 +88,36 @@ public class OrderCreatedConsumerTests
     public async Task Consumer_ShouldNotFail_WhenPartnerNotConnected()
     {
         // Arrange
-        await using var kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
-        await kafkaContainer.StartAsync();
-        var bootstrapServers = kafkaContainer.GetBootstrapAddress();
-
-        // Real connection manager with NO connections
-        var connectionManagerLogger = new Mock<ILogger<PartnerConnectionManager>>();
-        var connectionManager = new PartnerConnectionManager(connectionManagerLogger.Object);
-
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Kafka:BootstrapServers"] = bootstrapServers
-            })
-            .Build();
+        var connectionManager = new PartnerConnectionManager(new Mock<ILogger<PartnerConnectionManager>>().Object);
 
         var services = new ServiceCollection();
         services.AddLogging();
-        var serviceProvider = services.BuildServiceProvider();
 
-        var consumerLogger = new Mock<ILogger<OrderCreatedConsumer>>();
         var consumer = new OrderCreatedConsumer(
-            serviceProvider,
+            services.BuildServiceProvider(),
             connectionManager,
-            consumerLogger.Object,
-            config);
+            new Mock<ILogger<OrderCreatedConsumer>>().Object,
+            CreateConfig());
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await consumer.StartAsync(cts.Token);
-        await Task.Delay(TimeSpan.FromSeconds(6));
+        await Task.Delay(1500);
 
         // Publish event for partner that's NOT connected
-        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = bootstrapServers });
+        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = _kafkaFixture.BootstrapServers });
         await using var producer = new KafkaProducer(producerConfig, new LoggerFactory().CreateLogger<KafkaProducer>());
 
         var orderEvent = new OrderCreatedEvent
         {
-            OrderId = 999,
-            PartnerId = 999, // Not connected
+            OrderId = 9991,
+            PartnerId = 9991, // Not connected
             OrderCreatedTime = DateTime.UtcNow.ToString("O"),
             Items = []
         };
 
         // Act - should not throw
         await producer.PublishAsync(KafkaTopics.OrderCreated, orderEvent.OrderId.ToString(), orderEvent);
-        await Task.Delay(TimeSpan.FromSeconds(1));
+        await Task.Delay(300);
 
         cts.Cancel();
         try { await consumer.StopAsync(CancellationToken.None); } catch { }
@@ -162,83 +130,56 @@ public class OrderCreatedConsumerTests
     public async Task Consumer_ShouldRouteToCorrectPartner_WhenMultipleConnected()
     {
         // Arrange
-        await using var kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
-        await kafkaContainer.StartAsync();
-        var bootstrapServers = kafkaContainer.GetBootstrapAddress();
+        var connectionManager = new PartnerConnectionManager(new Mock<ILogger<PartnerConnectionManager>>().Object);
 
-        var connectionManagerLogger = new Mock<ILogger<PartnerConnectionManager>>();
-        var connectionManager = new PartnerConnectionManager(connectionManagerLogger.Object);
-
-        // Partner 1 WebSocket
         var partner1Messages = new List<string>();
-        var partner1Mock = CreateCapturingWebSocketMock(partner1Messages);
+        var partner1Mock = CreateCapturingWebSocketMock(partner1Messages, null);
 
-        // Partner 2 WebSocket
         var partner2Messages = new List<string>();
         var partner2Received = new TaskCompletionSource<bool>();
-        var partner2Mock = new Mock<WebSocket>();
-        partner2Mock.Setup(ws => ws.State).Returns(WebSocketState.Open);
-        partner2Mock.Setup(ws => ws.SendAsync(
-            It.IsAny<ArraySegment<byte>>(),
-            WebSocketMessageType.Text,
-            true,
-            It.IsAny<CancellationToken>()))
-            .Callback<ArraySegment<byte>, WebSocketMessageType, bool, CancellationToken>((data, type, endOfMessage, ct) =>
-            {
-                partner2Messages.Add(Encoding.UTF8.GetString(data.Array!, data.Offset, data.Count));
-                partner2Received.TrySetResult(true);
-            })
-            .Returns(Task.CompletedTask);
+        var partner2Mock = CreateCapturingWebSocketMock(partner2Messages, partner2Received);
 
-        await connectionManager.RegisterConnectionAsync(1, partner1Mock.Object);
-        await connectionManager.RegisterConnectionAsync(2, partner2Mock.Object);
-
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Kafka:BootstrapServers"] = bootstrapServers
-            })
-            .Build();
+        await connectionManager.RegisterConnectionAsync(101, partner1Mock.Object);
+        await connectionManager.RegisterConnectionAsync(102, partner2Mock.Object);
 
         var services = new ServiceCollection();
         services.AddLogging();
-        var serviceProvider = services.BuildServiceProvider();
 
         var consumer = new OrderCreatedConsumer(
-            serviceProvider,
+            services.BuildServiceProvider(),
             connectionManager,
             new Mock<ILogger<OrderCreatedConsumer>>().Object,
-            config);
+            CreateConfig());
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
         await consumer.StartAsync(cts.Token);
-        await Task.Delay(TimeSpan.FromSeconds(6));
+        await Task.Delay(1500);
 
-        // Publish event for Partner 2 only
-        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = bootstrapServers });
+        // Publish event for Partner 102 only
+        var producerConfig = Options.Create(new KafkaProducerConfig { BootstrapServers = _kafkaFixture.BootstrapServers });
         await using var producer = new KafkaProducer(producerConfig, new LoggerFactory().CreateLogger<KafkaProducer>());
 
         var orderEvent = new OrderCreatedEvent
         {
-            OrderId = 123,
-            PartnerId = 2, // Only partner 2
+            OrderId = 12345,
+            PartnerId = 102,
             OrderCreatedTime = DateTime.UtcNow.ToString("O"),
             Items = [new OrderCreatedEvent.OrderCreatedItem { Name = "Pizza", Quantity = 1 }]
         };
 
         await producer.PublishAsync(KafkaTopics.OrderCreated, orderEvent.OrderId.ToString(), orderEvent);
-        await Task.WhenAny(partner2Received.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+        await Task.WhenAny(partner2Received.Task, Task.Delay(2000));
 
         cts.Cancel();
         try { await consumer.StopAsync(CancellationToken.None); } catch { }
 
         // Assert
-        Assert.Empty(partner1Messages); // Partner 1 should NOT receive it
-        Assert.Single(partner2Messages); // Partner 2 should receive it
+        Assert.Empty(partner1Messages);
+        Assert.Single(partner2Messages);
         Assert.Contains("Pizza", partner2Messages[0]);
     }
 
-    private static Mock<WebSocket> CreateCapturingWebSocketMock(List<string> capturedMessages)
+    private static Mock<WebSocket> CreateCapturingWebSocketMock(List<string> capturedMessages, TaskCompletionSource<bool>? signal)
     {
         var mock = new Mock<WebSocket>();
         mock.Setup(ws => ws.State).Returns(WebSocketState.Open);
@@ -250,6 +191,7 @@ public class OrderCreatedConsumerTests
             .Callback<ArraySegment<byte>, WebSocketMessageType, bool, CancellationToken>((data, type, endOfMessage, ct) =>
             {
                 capturedMessages.Add(Encoding.UTF8.GetString(data.Array!, data.Offset, data.Count));
+                signal?.TrySetResult(true);
             })
             .Returns(Task.CompletedTask);
         return mock;

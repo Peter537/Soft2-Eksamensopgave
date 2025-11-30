@@ -29,7 +29,7 @@ public class AgentAssignedConsumer : BackgroundService
         _logger.LogInformation("AgentAssignedConsumer starting...");
 
         // Wait a bit for Kafka to be ready on startup
-        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
 
         var config = new KafkaConsumerConfig
         {
