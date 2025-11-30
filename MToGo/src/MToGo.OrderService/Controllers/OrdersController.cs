@@ -220,5 +220,22 @@ namespace MToGo.OrderService.Controllers
 
             return Ok(deliveries);
         }
+
+        [HttpGet("partner/{id}")]
+        [Authorize(Policy = AuthorizationPolicies.PartnerOnly)]
+        [ProducesResponseType(typeof(List<PartnerOrderResponse>), 200)]
+        public async Task<IActionResult> GetPartnerOrders(
+            int id, 
+            [FromQuery] DateTime? startDate = null, 
+            [FromQuery] DateTime? endDate = null)
+        {
+            _logger.ReceivedGetPartnerOrdersRequest(id, startDate, endDate);
+
+            var orders = await _orderService.GetOrdersByPartnerIdAsync(id, startDate, endDate);
+
+            _logger.GetPartnerOrdersCompleted(id, orders.Count);
+
+            return Ok(orders);
+        }
     }
 }

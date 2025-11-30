@@ -6,20 +6,20 @@
 @implements IDisposable
 @rendermode InteractiveServer
 
-<PageTitle>@L["Pages.AgentOrders.PageTitle"]</PageTitle>
+<PageTitle>@L["Pages.Agent.Orders.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-10">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">@L["Pages.AgentOrders.Title"]</h3>
+                    <h3 class="mb-0">@L["Pages.Agent.Orders.Title"]</h3>
                 </div>
                 <div class="card-body">
                     @if (!CultureService.IsLoggedIn)
                     {
                         <div class="alert alert-warning">
-                            <p class="mb-0">@L["Pages.AgentOrders.LoginRequired"] <a href="/login">@L["Pages.AgentOrders.LoginLink"]</a></p>
+                            <p class="mb-0">@L["Pages.Agent.Orders.LoginRequired"] <a href="/login">@L["Pages.Agent.Orders.LoginLink"]</a></p>
                         </div>
                     }
                     else
@@ -27,19 +27,19 @@
                         <!-- Date Filter Section -->
                         <div class="row mb-4">
                             <div class="col-md-4">
-                                <label for="startDate" class="form-label">@L["Pages.AgentOrders.StartDate"]</label>
+                                <label for="startDate" class="form-label">@L["Pages.Agent.Orders.StartDate"]</label>
                                 <input type="date" id="startDate" class="form-control" @bind="startDate" />
                             </div>
                             <div class="col-md-4">
-                                <label for="endDate" class="form-label">@L["Pages.AgentOrders.EndDate"]</label>
+                                <label for="endDate" class="form-label">@L["Pages.Agent.Orders.EndDate"]</label>
                                 <input type="date" id="endDate" class="form-control" @bind="endDate" />
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
                                 <button type="button" class="btn btn-primary me-2" @onclick="LoadDeliveries">
-                                    @L["Pages.AgentOrders.FilterButton"]
+                                    @L["Pages.Agent.Orders.FilterButton"]
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilter">
-                                    @L["Pages.AgentOrders.ClearButton"]
+                                    @L["Pages.Agent.Orders.ClearButton"]
                                 </button>
                             </div>
                         </div>
@@ -48,7 +48,7 @@
                         {
                             <div class="text-center">
                                 <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">@L["Pages.AgentOrders.Loading"]</span>
+                                    <span class="visually-hidden">@L["Pages.Agent.Orders.Loading"]</span>
                                 </div>
                             </div>
                         }
@@ -64,7 +64,7 @@
                             @if (deliveries == null || !deliveries.Any())
                             {
                                 <div class="alert alert-info">
-                                    @L["Pages.AgentOrders.NoDeliveries"]
+                                    @L["Pages.Agent.Orders.NoDeliveries"]
                                 </div>
                             }
                             else
@@ -74,7 +74,7 @@
                                     <div class="col-md-4">
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
-                                                <h5 class="card-title">@L["Pages.AgentOrders.TotalDeliveries"]</h5>
+                                                <h5 class="card-title">@L["Pages.Agent.Orders.TotalDeliveries"]</h5>
                                                 <p class="card-text display-6">@deliveries.Count</p>
                                             </div>
                                         </div>
@@ -82,7 +82,7 @@
                                     <div class="col-md-4">
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
-                                                <h5 class="card-title">@L["Pages.AgentOrders.TotalEarnings"]</h5>
+                                                <h5 class="card-title">@L["Pages.Agent.Orders.TotalEarnings"]</h5>
                                                 <p class="card-text display-6">@CalculateTotalEarnings().ToString("C")</p>
                                             </div>
                                         </div>
@@ -90,7 +90,7 @@
                                     <div class="col-md-4">
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
-                                                <h5 class="card-title">@L["Pages.AgentOrders.AverageDeliveryFee"]</h5>
+                                                <h5 class="card-title">@L["Pages.Agent.Orders.AverageDeliveryFee"]</h5>
                                                 <p class="card-text display-6">@CalculateAverageDeliveryFee().ToString("C")</p>
                                             </div>
                                         </div>
@@ -101,13 +101,13 @@
                                     <table class="table table-striped table-hover">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th>@L["Pages.AgentOrders.OrderId"]</th>
-                                                <th>@L["Pages.AgentOrders.Date"]</th>
-                                                <th>@L["Pages.AgentOrders.Partner"]</th>
-                                                <th>@L["Pages.AgentOrders.Customer"]</th>
-                                                <th>@L["Pages.AgentOrders.Items"]</th>
-                                                <th>@L["Pages.AgentOrders.Status"]</th>
-                                                <th class="text-end">@L["Pages.AgentOrders.DeliveryFee"]</th>
+                                                <th>@L["Pages.Agent.Orders.OrderId"]</th>
+                                                <th>@L["Pages.Agent.Orders.Date"]</th>
+                                                <th>@L["Pages.Agent.Orders.Partner"]</th>
+                                                <th>@L["Pages.Agent.Orders.Customer"]</th>
+                                                <th>@L["Pages.Agent.Orders.Items"]</th>
+                                                <th>@L["Pages.Agent.Orders.Status"]</th>
+                                                <th class="text-end">@L["Pages.Agent.Orders.DeliveryFee"]</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -116,8 +116,8 @@
                                                 <tr>
                                                     <td>#@delivery.Id</td>
                                                     <td>@FormatDate(delivery.OrderCreatedTime)</td>
-                                                    <td>@L.GetString("Pages.AgentOrders.PartnerLabel", delivery.PartnerId)</td>
-                                                    <td>@L.GetString("Pages.AgentOrders.CustomerLabel", delivery.CustomerId)</td>
+                                                    <td>@L.GetString("Pages.Agent.Orders.PartnerLabel", delivery.PartnerId)</td>
+                                                    <td>@L.GetString("Pages.Agent.Orders.CustomerLabel", delivery.CustomerId)</td>
                                                     <td>
                                                         <ul class="list-unstyled mb-0">
                                                             @foreach (var item in delivery.Items)
@@ -218,12 +218,12 @@
             }
             else
             {
-                errorMessage = L["Pages.AgentOrders.LoadFailed"];
+                errorMessage = L["Pages.Agent.Orders.LoadFailed"];
             }
         }
         catch (Exception ex)
         {
-            errorMessage = L.GetString("Pages.AgentOrders.ErrorOccurred", ex.Message);
+            errorMessage = L.GetString("Pages.Agent.Orders.ErrorOccurred", ex.Message);
         }
         finally
         {

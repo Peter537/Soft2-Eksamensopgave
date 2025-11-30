@@ -18,6 +18,7 @@ namespace MToGo.OrderService.Services
         Task<DeliveryResult> CompleteDeliveryAsync(int orderId);
         Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
         Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null);
     }
 
     public enum AssignAgentResult
@@ -480,6 +481,34 @@ namespace MToGo.OrderService.Services
                 Status = o.Status.ToString(),
                 OrderCreatedTime = o.CreatedAt.ToString("O"),
                 Items = o.Items.Select(i => new AgentDeliveryItemResponse
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            _logger.GettingPartnerOrderHistory(partnerId, startDate, endDate);
+
+            var orders = await _orderRepository.GetOrdersByPartnerIdAsync(partnerId, startDate, endDate);
+
+            _logger.PartnerOrderHistoryRetrieved(partnerId, orders.Count);
+
+            return orders.Select(o => new PartnerOrderResponse
+            {
+                Id = o.Id,
+                CustomerId = o.CustomerId,
+                AgentId = o.AgentId,
+                DeliveryAddress = o.DeliveryAddress,
+                ServiceFee = o.ServiceFee,
+                DeliveryFee = o.DeliveryFee,
+                Status = o.Status.ToString(),
+                OrderCreatedTime = o.CreatedAt.ToString("O"),
+                Items = o.Items.Select(i => new PartnerOrderItemResponse
                 {
                     FoodItemId = i.FoodItemId,
                     Name = i.Name,
