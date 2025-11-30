@@ -108,6 +108,46 @@
                                     </button>
                                 </div>
                             </EditForm>
+
+                            <hr class="my-4" />
+
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">@L["Pages.Profile.DangerZone"]</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if (!showDeleteConfirmation)
+                                    {
+                                        <p class="text-muted mb-3">@L["Pages.Profile.DeleteAccountWarning"]</p>
+                                        <button type="button" class="btn btn-outline-danger" @onclick="ShowDeleteConfirmation">
+                                            @L["Pages.Profile.DeleteAccountButton"]
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-danger">
+                                            <p class="mb-3"><strong>@L["Pages.Profile.DeleteConfirmTitle"]</strong></p>
+                                            <p class="mb-3">@L["Pages.Profile.DeleteConfirmMessage"]</p>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-danger" @onclick="HandleDeleteAccount" disabled="@isDeleting">
+                                                    @if (isDeleting)
+                                                    {
+                                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                        <span>@L["Pages.Profile.Deleting"]</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@L["Pages.Profile.ConfirmDeleteButton"]</span>
+                                                    }
+                                                </button>
+                                                <button type="button" class="btn btn-secondary" @onclick="CancelDelete" disabled="@isDeleting">
+                                                    @L["Pages.Profile.CancelButton"]
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
                         }
                     }
                 </div>
@@ -125,6 +165,8 @@
     private bool isLoading = true;
     private bool isSaving;
     private bool isUpdatingFromProfile;
+    private bool showDeleteConfirmation;
+    private bool isDeleting;
 
     protected override void OnInitialized()
     {
@@ -257,6 +299,59 @@
         {
             isSaving = false;
             isUpdatingFromProfile = false;
+        }
+    }
+
+    private void ShowDeleteConfirmation()
+    {
+        showDeleteConfirmation = true;
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmation = false;
+    }
+
+    private async Task HandleDeleteAccount()
+    {
+        isDeleting = true;
+        errorMessage = null;
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/v1/customers/{CultureService.CustomerId}");
+            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Log out the user and redirect to home
+                CultureService.Logout();
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage = L["Pages.Profile.AccountNotFound"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Profile.DeleteFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Profile.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isDeleting = false;
+            showDeleteConfirmation = false;
         }
     }
 

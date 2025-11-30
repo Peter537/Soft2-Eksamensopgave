@@ -84,4 +84,34 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred: {0}</value>
   </data>
+  <data name="DangerZone" xml:space="preserve">
+    <value>Danger Zone</value>
+  </data>
+  <data name="DeleteAccountWarning" xml:space="preserve">
+    <value>Once you delete your account, there is no going back. Please be certain.</value>
+  </data>
+  <data name="DeleteAccountButton" xml:space="preserve">
+    <value>Delete Account</value>
+  </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve">
+    <value>Are you sure you want to delete your account?</value>
+  </data>
+  <data name="DeleteConfirmMessage" xml:space="preserve">
+    <value>This action cannot be undone. All your data will be permanently removed.</value>
+  </data>
+  <data name="ConfirmDeleteButton" xml:space="preserve">
+    <value>Yes, Delete My Account</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Deleting" xml:space="preserve">
+    <value>Deleting...</value>
+  </data>
+  <data name="DeleteFailed" xml:space="preserve">
+    <value>Failed to delete account. Please try again.</value>
+  </data>
+  <data name="AccountNotFound" xml:space="preserve">
+    <value>Account not found.</value>
+  </data>
 </root>

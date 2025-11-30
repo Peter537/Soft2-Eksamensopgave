@@ -487,4 +487,121 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
     }
 
     #endregion
+
+    #region US-18: Delete Customer Account Integration Tests
+
+    [Fact]
+    public async Task DeleteAccount_AuthenticatedCustomer_OwnAccount_Returns204NoContent()
+    {
+        // Arrange - Given authenticated
+        var customerId = 1;
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.DeleteCustomerAsync(customerId))
+                .Returns(Task.CompletedTask);
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
+
+        // Act - When confirming deletion
+        var response = await client.DeleteAsync($"/api/v1/customers/{customerId}");
+
+        // Assert - Then account marked deleted (204 NoContent)
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_AuthenticatedCustomer_OtherAccount_Returns403Forbidden()
+    {
+        // Arrange - Customer trying to delete another customer's account
+        var customerId = 1;
+        var otherCustomerId = 2;
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            // Should not be called
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
+
+        // Act
+        var response = await client.DeleteAsync($"/api/v1/customers/{otherCustomerId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_Management_AnyAccount_Returns204NoContent()
+    {
+        // Arrange - Management can delete any account
+        var customerId = 5;
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.DeleteCustomerAsync(customerId))
+                .Returns(Task.CompletedTask);
+        }, authenticated: true, userId: "999", role: "Management");
+
+        // Act
+        var response = await client.DeleteAsync($"/api/v1/customers/{customerId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_NonExistentCustomer_Returns404NotFound()
+    {
+        // Arrange - Given account deleted (or never existed)
+        var customerId = 999;
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.DeleteCustomerAsync(customerId))
+                .ThrowsAsync(new KeyNotFoundException("Customer not found."));
+        }, authenticated: true, userId: customerId.ToString(), role: "Management");
+
+        // Act - When attempting to delete
+        var response = await client.DeleteAsync($"/api/v1/customers/{customerId}");
+
+        // Assert - Then "Account not found" error (404)
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_Unauthenticated_Returns401Unauthorized()
+    {
+        // Arrange - Not authenticated
+        var customerId = 1;
+
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            // Should not be called
+        }, authenticated: false);
+
+        // Act
+        var response = await client.DeleteAsync($"/api/v1/customers/{customerId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_AfterAccountDeleted_Returns401Unauthorized()
+    {
+        // Arrange - Given account deleted, When attempting login
+        var client = CreateClientWithMockedLegacyApi(mock =>
+        {
+            mock.Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
+                .ThrowsAsync(new UnauthorizedAccessException("Account not found."));
+        });
+
+        var request = new CustomerLoginRequest("deleted@example.com", "Password123!");
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1/customers/login", request);
+
+        // Assert - Then "Account not found" error (401 Unauthorized)
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    #endregion
 }

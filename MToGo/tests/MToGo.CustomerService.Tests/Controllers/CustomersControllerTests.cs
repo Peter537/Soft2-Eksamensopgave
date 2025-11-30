@@ -427,4 +427,111 @@ public class CustomersControllerTests
     }
 
     #endregion
+
+    #region DeleteAccount Tests
+
+    [Fact]
+    public async Task DeleteAccount_WithValidCustomerId_Returns204NoContent()
+    {
+        // Arrange
+        var customerId = 1;
+
+        _mockCustomerService
+            .Setup(x => x.DeleteCustomerAsync(customerId))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.DeleteAccount(customerId);
+
+        // Assert
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(204, noContentResult.StatusCode);
+        _mockCustomerService.Verify(x => x.DeleteCustomerAsync(customerId), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_CustomerAccessingOtherAccount_Returns403Forbid()
+    {
+        // Arrange
+        var customerId = 1;
+        var otherCustomerId = 2;
+
+        _mockUserContext.Setup(x => x.UserId).Returns(customerId);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
+
+        // Act
+        var result = await _sut.DeleteAccount(otherCustomerId);
+
+        // Assert
+        Assert.IsType<ForbidResult>(result);
+        _mockCustomerService.Verify(x => x.DeleteCustomerAsync(It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_ManagementDeletingAnyAccount_Returns204NoContent()
+    {
+        // Arrange
+        var customerId = 5;
+
+        _mockUserContext.Setup(x => x.UserId).Returns(999);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
+
+        _mockCustomerService
+            .Setup(x => x.DeleteCustomerAsync(customerId))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.DeleteAccount(customerId);
+
+        // Assert
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(204, noContentResult.StatusCode);
+        _mockCustomerService.Verify(x => x.DeleteCustomerAsync(customerId), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_WithNonExistentId_Returns404NotFound()
+    {
+        // Arrange
+        var customerId = 999;
+
+        // Set up as Management so authorization passes and we can test the 404
+        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
+
+        _mockCustomerService
+            .Setup(x => x.DeleteCustomerAsync(customerId))
+            .ThrowsAsync(new KeyNotFoundException("Customer not found."));
+
+        // Act
+        var result = await _sut.DeleteAccount(customerId);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal(404, notFoundResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteAccount_CustomerDeletingOwnAccount_MarkedDeletedAndLogsOut()
+    {
+        // Arrange - Customer deleting own account
+        var customerId = 1;
+
+        _mockUserContext.Setup(x => x.UserId).Returns(customerId);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
+
+        _mockCustomerService
+            .Setup(x => x.DeleteCustomerAsync(customerId))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.DeleteAccount(customerId);
+
+        // Assert - Returns 204 NoContent (client should handle logout)
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(204, noContentResult.StatusCode);
+        _mockCustomerService.Verify(x => x.DeleteCustomerAsync(customerId), Times.Once);
+    }
+
+    #endregion
 }

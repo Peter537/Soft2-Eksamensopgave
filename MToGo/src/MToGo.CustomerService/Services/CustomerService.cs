@@ -32,4 +32,9 @@ public class CustomerService : ICustomerService
     {
         return await _legacyApiClient.UpdateCustomerAsync(id, request);
     }
+
+    public async Task DeleteCustomerAsync(int id)
+    {
+        await _legacyApiClient.DeleteCustomerAsync(id);
+    }
 }

@@ -124,4 +124,21 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
         
         return result ?? throw new InvalidOperationException("Failed to deserialize update response.");
     }
+
+    public async Task DeleteCustomerAsync(int id)
+    {
+        _logger.LogInformation("Deleting customer with ID: {Id}", id);
+
+        var response = await _httpClient.DeleteAsync($"/api/v1/legacy/customers/delete/{id}");
+
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Customer not found: {Id}", id);
+            throw new KeyNotFoundException($"Customer with ID {id} not found.");
+        }
+
+        response.EnsureSuccessStatusCode();
+
+        _logger.LogInformation("Customer {Id} deleted successfully", id);
+    }
 }
