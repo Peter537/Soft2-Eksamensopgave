@@ -16,6 +16,7 @@ namespace MToGo.OrderService.Services
         Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId);
         Task<PickupResult> PickupOrderAsync(int orderId);
         Task<DeliveryResult> CompleteDeliveryAsync(int orderId);
+        Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
     }
 
     public enum AssignAgentResult
@@ -429,6 +430,34 @@ namespace MToGo.OrderService.Services
             _logger.PublishedOrderDeliveredEvent(order.Id);
 
             return DeliveryResult.Success;
+        }
+
+        public async Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null)
+        {
+            _logger.GettingOrderHistory(customerId, startDate, endDate);
+
+            var orders = await _orderRepository.GetOrdersByCustomerIdAsync(customerId, startDate, endDate);
+
+            _logger.OrderHistoryRetrieved(customerId, orders.Count);
+
+            return orders.Select(o => new CustomerOrderResponse
+            {
+                Id = o.Id,
+                PartnerId = o.PartnerId,
+                AgentId = o.AgentId,
+                DeliveryAddress = o.DeliveryAddress,
+                ServiceFee = o.ServiceFee,
+                DeliveryFee = o.DeliveryFee,
+                Status = o.Status.ToString(),
+                OrderCreatedTime = o.CreatedAt.ToString("O"),
+                Items = o.Items.Select(i => new CustomerOrderItemResponse
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToList();
         }
     }
 }
