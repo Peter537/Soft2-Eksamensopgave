@@ -34,14 +34,29 @@
                                     <h6 class="card-title">Order #@order.OrderId</h6>
                                     <small class="text-muted">@order.ReceivedAt.ToString("HH:mm:ss")</small>
                                 </div>
+                                @if (!string.IsNullOrEmpty(order.Distance))
+                                {
+                                    <p class="text-info mb-1"><small>📍 Distance: @order.Distance</small></p>
+                                }
                                 <ul class="list-unstyled mb-2">
                                     @foreach (var item in order.Items)
                                     {
                                         <li>@item.Quantity x @item.Name</li>
                                     }
                                 </ul>
+                                <div class="mb-2">
+                                    <label class="form-label small mb-1">Estimated prep time (minutes)*</label>
+                                    <input type="number" 
+                                           class="form-control form-control-sm" 
+                                           min="1" 
+                                           max="120"
+                                           placeholder="e.g. 15"
+                                           @bind="order.EstimatedMinutes" />
+                                </div>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-success btn-sm" @onclick="() => AcceptOrder(order)">
+                                    <button class="btn btn-success btn-sm" 
+                                            disabled="@(!order.EstimatedMinutes.HasValue || order.EstimatedMinutes < 1)"
+                                            @onclick="() => AcceptOrder(order)">
                                         Accept
                                     </button>
                                     <button class="btn btn-danger btn-sm" @onclick="() => RejectOrder(order)">
@@ -167,12 +182,13 @@
     }
 
     [JSInvokable]
-    public void OnOrderCreated(int orderId, string orderCreatedTime, OrderItemDto[] items)
+    public void OnOrderCreated(int orderId, string orderCreatedTime, string distance, OrderItemDto[] items)
     {
         var order = new IncomingOrder
         {
             OrderId = orderId,
             OrderCreatedTime = orderCreatedTime,
+            Distance = distance,
             Items = items.ToList(),
             ReceivedAt = DateTime.Now
         };
@@ -213,16 +229,19 @@
         {
             OrderId = order.OrderId,
             Items = order.Items,
+            Distance = order.Distance,
+            EstimatedMinutes = order.EstimatedMinutes ?? 0,
             AcceptedAt = DateTime.Now,
             AgentId = null
         });
 
         // Call Gateway to accept order (fire-and-forget for now)
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
-        StatusMessage = $"Order #{order.OrderId} accepted!";
+        StatusMessage = $"Order #{order.OrderId} accepted! ETA: {order.EstimatedMinutes} min";
         
-        // TODO: call OrderService when implemented
-        // await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/accept", null);
+        // TODO: call OrderService when implemented - include EstimatedMinutes
+        // await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/accept", 
+        //     new { estimatedMinutes = order.EstimatedMinutes });
         
         await InvokeAsync(StateHasChanged);
     }
@@ -264,14 +283,18 @@
     {
         public int OrderId { get; set; }
         public string OrderCreatedTime { get; set; } = "";
+        public string Distance { get; set; } = "";
         public List<OrderItemDto> Items { get; set; } = new();
         public DateTime ReceivedAt { get; set; }
+        public int? EstimatedMinutes { get; set; }
     }
 
     public class AcceptedOrder
     {
         public int OrderId { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
+        public string Distance { get; set; } = "";
+        public int EstimatedMinutes { get; set; }
         public DateTime? AcceptedAt { get; set; }
         public int? AgentId { get; set; }
         public bool IsReady { get; set; }

@@ -1,0 +1,232 @@
+@page "/agent/available-jobs"
+@rendermode InteractiveServer
+@inject IConfiguration Configuration
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<h3 class="mb-4">Agent · Jobs</h3>
+
+@* Active toggle - just for show *@
+<div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" id="activeCheck" @bind="IsActive">
+    <label class="form-check-label" for="activeCheck">Active</label>
+</div>
+
+@* Available Jobs List *@
+<div class="jobs-container">
+    @if (Jobs.Count == 0)
+    {
+        <div class="text-center text-muted py-5">
+            <span style="font-size: 2rem;">📦</span>
+            <p class="mt-2">No available deliveries right now...</p>
+            <p class="small">New jobs will appear here when restaurants accept orders</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var job in Jobs.OrderByDescending(j => j.ReceivedAt))
+        {
+            <div class="card mb-3 job-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex">
+                            @* Placeholder image *@
+                            <div class="job-image me-3">
+                                <div class="bg-light rounded" style="width: 60px; height: 60px;"></div>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">@job.PartnerName</h5>
+                                <div class="text-muted small">
+                                    📍 @job.Distance · ETA @job.EtaMinutes min
+                                </div>
+                                <div class="text-muted small">
+                                    @ShortenAddress(job.PartnerAddress) → @ShortenAddress(job.DeliveryAddress)
+                                </div>
+
+                                @* Collapsible items *@
+                                <div class="mt-2">
+                                    <a class="text-decoration-none small" 
+                                       data-bs-toggle="collapse" 
+                                       href="#items-@job.OrderId" 
+                                       role="button">
+                                        ▼ Items (@job.Items.Count)
+                                    </a>
+                                    <div class="collapse" id="items-@job.OrderId">
+                                        <ul class="list-unstyled mt-1 ms-2 small text-muted">
+                                            @foreach (var item in job.Items)
+                                            {
+                                                <li>• @item.Quantity x @item.Name</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold">DKK @job.DeliveryFee.ToString("0")</div>
+                            <button class="btn btn-outline-primary btn-sm mt-2" @onclick="() => AcceptJob(job)">
+                                Accept
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@* Connection Status *@
+<div class="mt-3 d-flex justify-content-between align-items-center status-bar">
+    <div>
+        <span class="badge @(IsConnected ? "bg-success" : "bg-danger")">
+            @(IsConnected ? "Connected" : "Disconnected")
+        </span>
+        @if (!string.IsNullOrEmpty(StatusMessage))
+        {
+            <span class="ms-2 text-muted small">@StatusMessage</span>
+        }
+    </div>
+    <div class="text-muted small">
+        To view your deliveries, go to: /agent/my-deliveries/{your-id}
+    </div>
+</div>
+
+@code {
+    private List<AvailableJob> Jobs { get; set; } = new();
+    private bool IsConnected { get; set; }
+    private bool IsActive { get; set; } = true;
+    private string StatusMessage { get; set; } = "Connecting...";
+
+    private DotNetObjectReference<AvailableJobs>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            
+            // Connect to the broadcast room for all available jobs
+            var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:8080";
+            var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
+            wsUrl = $"{wsUrl}/api/v1/ws/agents";
+
+            await JS.InvokeVoidAsync("agentWebSocket.connect", wsUrl, _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public void OnConnected()
+    {
+        IsConnected = true;
+        StatusMessage = "Listening for jobs...";
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnDisconnected(string reason)
+    {
+        IsConnected = false;
+        StatusMessage = $"Disconnected: {reason}";
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnOrderAccepted(int orderId, string partnerName, string partnerAddress, 
+                                 string deliveryAddress, decimal deliveryFee, 
+                                 string distance, int estimatedMinutes, OrderItemDto[] items)
+    {
+        // Prevent duplicate entries (Blazor can call this multiple times)
+        if (Jobs.Any(j => j.OrderId == orderId))
+        {
+            return;
+        }
+
+        var job = new AvailableJob
+        {
+            OrderId = orderId,
+            PartnerName = partnerName,
+            PartnerAddress = partnerAddress,
+            DeliveryAddress = deliveryAddress,
+            DeliveryFee = deliveryFee,
+            Distance = distance,
+            EtaMinutes = estimatedMinutes,
+            Items = items.ToList(),
+            ReceivedAt = DateTime.Now
+        };
+
+        Jobs.Add(job);
+        StatusMessage = $"New job from {partnerName}!";
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnAgentAssigned(int orderId, int agentId)
+    {
+        // Another agent took this job - remove from our list
+        var job = Jobs.FirstOrDefault(j => j.OrderId == orderId);
+        if (job != null)
+        {
+            Jobs.Remove(job);
+            StatusMessage = $"Job #{orderId} was taken";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    [JSInvokable]
+    public void OnOrderReady(int orderId, string partnerName, string partnerAddress)
+    {
+        // This would be handled on the MyDeliveries page, not here
+        // But we include the handler in case someone connects to personal room
+        StatusMessage = $"Order #{orderId} is ready at {partnerName}!";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AcceptJob(AvailableJob job)
+    {
+        // For now, just remove from list locally
+        // In real implementation, this would call the Agent API
+        Jobs.Remove(job);
+        StatusMessage = $"You accepted job #{job.OrderId}!";
+        
+        // TODO: Call Agent API to assign this agent to the order
+        // This will trigger AgentAssignedEvent which broadcasts to all other agents
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string ShortenAddress(string address)
+    {
+        // Take just the street part if address is long
+        if (string.IsNullOrEmpty(address)) return "Unknown";
+        var parts = address.Split(',');
+        return parts[0].Length > 25 ? parts[0].Substring(0, 22) + "..." : parts[0];
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dotNetRef != null)
+        {
+            await JS.InvokeVoidAsync("agentWebSocket.disconnect");
+            _dotNetRef.Dispose();
+        }
+    }
+
+    public class AvailableJob
+    {
+        public int OrderId { get; set; }
+        public string PartnerName { get; set; } = "";
+        public string PartnerAddress { get; set; } = "";
+        public string DeliveryAddress { get; set; } = "";
+        public decimal DeliveryFee { get; set; }
+        public string Distance { get; set; } = "";
+        public int EtaMinutes { get; set; }
+        public List<OrderItemDto> Items { get; set; } = new();
+        public DateTime ReceivedAt { get; set; }
+    }
+
+    public class OrderItemDto
+    {
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
+}

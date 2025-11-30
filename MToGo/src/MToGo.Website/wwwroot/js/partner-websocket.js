@@ -68,6 +68,7 @@ window.partnerWebSocket = {
                     'OnOrderCreated',
                     orderPayload.orderId,
                     orderPayload.orderCreatedTime,
+                    orderPayload.distance || '',
                     items
                 );
                 break;
