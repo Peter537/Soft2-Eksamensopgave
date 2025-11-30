@@ -13,16 +13,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PageTitle" xml:space="preserve">
-    <value>Registrer - MToGo</value>
+    <value>Agent Registrering - MToGo</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Opret konto</value>
+    <value>Agent Registrering</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Navn</value>
+    <value>Fulde Navn</value>
   </data>
   <data name="NamePlaceholder" xml:space="preserve">
-    <value>Indtast dit navn</value>
+    <value>Indtast dit fulde navn</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>Email</value>
@@ -36,32 +36,14 @@
   <data name="PasswordPlaceholder" xml:space="preserve">
     <value>Indtast din adgangskode</value>
   </data>
-  <data name="DeliveryAddress" xml:space="preserve">
-    <value>Leveringsadresse</value>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Bekræft Adgangskode</value>
   </data>
-  <data name="DeliveryAddressPlaceholder" xml:space="preserve">
-    <value>Indtast din leveringsadresse</value>
-  </data>
-  <data name="PhoneNumber" xml:space="preserve">
-    <value>Telefonnummer</value>
-  </data>
-  <data name="PhoneNumberPlaceholder" xml:space="preserve">
-    <value>+45 12345678</value>
-  </data>
-  <data name="NotificationPreference" xml:space="preserve">
-    <value>Notifikationspræference</value>
-  </data>
-  <data name="NotificationEmail" xml:space="preserve">
-    <value>Email</value>
-  </data>
-  <data name="NotificationSms" xml:space="preserve">
-    <value>SMS</value>
-  </data>
-  <data name="NotificationPush" xml:space="preserve">
-    <value>Push-notifikation</value>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Bekræft din adgangskode</value>
   </data>
   <data name="RegisterButton" xml:space="preserve">
-    <value>Registrer</value>
+    <value>Registrer som Agent</value>
   </data>
   <data name="CreatingAccount" xml:space="preserve">
     <value>Opretter konto...</value>
@@ -72,28 +54,16 @@
   <data name="LoginHere" xml:space="preserve">
     <value>Log ind her</value>
   </data>
-  <data name="RestaurantQuestion" xml:space="preserve">
-    <value>Er du en restaurant?</value>
-  </data>
-  <data name="RestaurantRegister" xml:space="preserve">
-    <value>Restaurant Registrering</value>
-  </data>
   <data name="RegistrationSuccessful" xml:space="preserve">
-    <value>Registrering lykkedes! Dit konto-ID er {0}</value>
+    <value>Registrering lykkedes! Dit agent-ID er {0}</value>
   </data>
   <data name="RegistrationFailed" xml:space="preserve">
     <value>Registrering mislykkedes. Prøv igen.</value>
   </data>
-  <data name="AgentQuestion" xml:space="preserve">
-    <value>Er du en agent?</value>
-  </data>
-  <data name="AgentRegister" xml:space="preserve">
-    <value>Agent Registrering</value>
-  </data>
-  <data name="LanguagePreference" xml:space="preserve">
-    <value>Sprogpræference</value>
-  </data>
   <data name="ErrorOccurred" xml:space="preserve">
     <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="PasswordMismatch" xml:space="preserve">
+    <value>Adgangskoderne matcher ikke.</value>
   </data>
 </root>
