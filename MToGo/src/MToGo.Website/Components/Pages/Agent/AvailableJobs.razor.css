@@ -1,0 +1,21 @@
+.job-card {
+    border: 1px solid #e0e0e0;
+    transition: box-shadow 0.2s;
+}
+
+.job-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.job-image {
+    flex-shrink: 0;
+}
+
+.jobs-container {
+    min-height: 200px;
+}
+
+.status-bar {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.75rem;
+}
