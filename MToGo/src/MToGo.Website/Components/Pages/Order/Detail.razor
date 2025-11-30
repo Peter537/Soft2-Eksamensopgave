@@ -1,0 +1,326 @@
+@page "/order/{OrderId:int}"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Order.Detail.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">@L.GetString("Pages.Order.Detail.Title", OrderId)</h3>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="NavigateBack">
+                        <i class="bi bi-arrow-left"></i> @L["Pages.Order.Detail.BackButton"]
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (!CultureService.IsLoggedIn)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.Order.Detail.LoginRequired"] <a href="/login">@L["Pages.Order.Detail.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">@L["Pages.Order.Detail.Loading"]</span>
+                            </div>
+                        </div>
+                    }
+                    else if (isForbidden)
+                    {
+                        <div class="alert alert-danger">
+                            <h5 class="alert-heading">@L["Pages.Order.Detail.AccessDeniedTitle"]</h5>
+                            <p class="mb-0">@L["Pages.Order.Detail.AccessDeniedMessage"]</p>
+                        </div>
+                    }
+                    else if (isNotFound)
+                    {
+                        <div class="alert alert-warning">
+                            <h5 class="alert-heading">@L["Pages.Order.Detail.NotFoundTitle"]</h5>
+                            <p class="mb-0">@L.GetString("Pages.Order.Detail.NotFoundMessage", OrderId)</p>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+                    else if (order != null)
+                    {
+                        <!-- Order Status Section -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge @GetStatusBadgeClass(order.Status) fs-5">@order.Status</span>
+                                    </div>
+                                    <div class="text-muted">
+                                        @L["Pages.Order.Detail.OrderDate"]: @FormatDate(order.OrderCreatedTime)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Info Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Pages.Order.Detail.Customer"]</h6>
+                                        <p class="card-text">@L.GetString("Pages.Order.Detail.CustomerLabel", order.CustomerId)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Pages.Order.Detail.Partner"]</h6>
+                                        <p class="card-text">@L.GetString("Pages.Order.Detail.PartnerLabel", order.PartnerId)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Pages.Order.Detail.Agent"]</h6>
+                                        <p class="card-text">
+                                            @if (order.AgentId.HasValue)
+                                            {
+                                                @L.GetString("Pages.Order.Detail.AgentLabel", order.AgentId.Value)
+                                            }
+                                            else
+                                            {
+                                                @L["Pages.Order.Detail.NoAgent"]
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Address -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-muted">@L["Pages.Order.Detail.DeliveryAddress"]</h6>
+                                        <p class="card-text mb-0">@order.DeliveryAddress</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5>@L["Pages.Order.Detail.Items"]</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>@L["Pages.Order.Detail.ItemName"]</th>
+                                                <th class="text-center">@L["Pages.Order.Detail.Quantity"]</th>
+                                                <th class="text-end">@L["Pages.Order.Detail.UnitPrice"]</th>
+                                                <th class="text-end">@L["Pages.Order.Detail.Subtotal"]</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in order.Items)
+                                            {
+                                                <tr>
+                                                    <td>@item.Name</td>
+                                                    <td class="text-center">@item.Quantity</td>
+                                                    <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                                                    <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Totals -->
+                        <div class="row">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>@L["Pages.Order.Detail.ItemsSubtotal"]</span>
+                                            <span>@CalculateItemsSubtotal().ToString("C")</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>@L["Pages.Order.Detail.ServiceFee"]</span>
+                                            <span>@order.ServiceFee.ToString("C")</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>@L["Pages.Order.Detail.DeliveryFee"]</span>
+                                            <span>@order.DeliveryFee.ToString("C")</span>
+                                        </div>
+                                        <hr />
+                                        <div class="d-flex justify-content-between">
+                                            <strong>@L["Pages.Order.Detail.Total"]</strong>
+                                            <strong>@CalculateTotal().ToString("C")</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private OrderDetailResponse? order;
+    private string? errorMessage;
+    private bool isLoading = true;
+    private bool isForbidden;
+    private bool isNotFound;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CultureService.IsLoggedIn)
+        {
+            await LoadOrderDetail();
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadOrderDetail()
+    {
+        isLoading = true;
+        errorMessage = null;
+        isForbidden = false;
+        isNotFound = false;
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/orders/order/{OrderId}");
+            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                order = await response.Content.ReadFromJsonAsync<OrderDetailResponse>();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                isForbidden = true;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                isNotFound = true;
+            }
+            else
+            {
+                errorMessage = L["Pages.Order.Detail.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Order.Detail.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        // Navigate to home - user can navigate to their role-specific orders page from there
+        Navigation.NavigateTo("/");
+    }
+
+    private string FormatDate(string isoDate)
+    {
+        if (DateTime.TryParse(isoDate, out var date))
+        {
+            return date.ToLocalTime().ToString("g");
+        }
+        return isoDate;
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Placed" => "bg-secondary",
+            "Accepted" => "bg-info",
+            "Ready" => "bg-primary",
+            "PickedUp" => "bg-warning text-dark",
+            "Delivered" => "bg-success",
+            "Rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private decimal CalculateItemsSubtotal()
+    {
+        return order?.Items.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
+    }
+
+    private decimal CalculateTotal()
+    {
+        if (order == null) return 0;
+        return CalculateItemsSubtotal() + order.ServiceFee + order.DeliveryFee;
+    }
+
+    public class OrderDetailResponse
+    {
+        public int Id { get; set; }
+        public int CustomerId { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public decimal ServiceFee { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string OrderCreatedTime { get; set; } = string.Empty;
+        public List<OrderItemResponse> Items { get; set; } = new();
+    }
+
+    public class OrderItemResponse
+    {
+        public int FoodItemId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+}

@@ -108,6 +108,7 @@
                                                 <th>@L["Pages.Agent.Orders.Items"]</th>
                                                 <th>@L["Pages.Agent.Orders.Status"]</th>
                                                 <th class="text-end">@L["Pages.Agent.Orders.DeliveryFee"]</th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -131,6 +132,11 @@
                                                     </td>
                                                     <td class="text-end">
                                                         <strong>@delivery.DeliveryFee.ToString("C")</strong>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <a href="/order/@delivery.Id" class="btn btn-sm btn-outline-primary">
+                                                            @L["Pages.Agent.Orders.ViewDetails"]
+                                                        </a>
                                                     </td>
                                                 </tr>
                                             }

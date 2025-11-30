@@ -227,5 +227,27 @@ namespace MToGo.OrderService.Logging
         // Audit log
         [LoggerMessage(Level = LogLevel.Information, Message = "Partner order history retrieved: PartnerId={PartnerId}, OrderCount={OrderCount}")]
         public static partial void PartnerOrderHistoryRetrieved(this ILogger logger, int partnerId, int orderCount);
+
+        // Get Order Detail - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetOrderDetail request for OrderId: {OrderId}, UserId: {UserId}, Role: {Role}")]
+        public static partial void ReceivedGetOrderDetailRequest(this ILogger logger, int orderId, int userId, string role);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetOrderDetail completed: OrderId={OrderId}")]
+        public static partial void GetOrderDetailCompleted(this ILogger logger, int orderId);
+
+        // Get Order Detail - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting order detail: OrderId={OrderId}, UserId={UserId}, Role={Role}")]
+        public static partial void GettingOrderDetail(this ILogger logger, int orderId, int userId, string role);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Order detail not found: OrderId={OrderId}")]
+        public static partial void OrderDetailNotFound(this ILogger logger, int orderId);
+
+        [LoggerMessage(Level = LogLevel.Warning, Message = "Order detail access denied: OrderId={OrderId}, UserId={UserId}, Role={Role}")]
+        public static partial void OrderDetailAccessDenied(this ILogger logger, int orderId, int userId, string role);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order detail retrieved: OrderId={OrderId}, UserId={UserId}, Role={Role}")]
+        public static partial void OrderDetailRetrieved(this ILogger logger, int orderId, int userId, string role);
     }
 }
