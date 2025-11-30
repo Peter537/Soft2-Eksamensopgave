@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using LegacyMToGo.Data;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,7 @@ using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
 using MToGo.Shared.Models.Customer;
+using MToGo.Testing;
 using Testcontainers.PostgreSql;
 
 namespace MToGo.CustomerService.Tests.E2E;
@@ -93,6 +95,15 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
                         var logger = sp.GetRequiredService<ILogger<LegacyCustomerApiClientForE2E>>();
                         return new LegacyCustomerApiClientForE2E(_legacyClient, logger);
                     });
+
+                    // Add test authentication
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
+                    })
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.AuthenticationScheme, options => { });
                 });
             });
 
@@ -112,6 +123,16 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
             
         if (_postgresContainer != null)
             await _postgresContainer.DisposeAsync();
+    }
+
+    private void SetupTestUser(string? userId = null, string role = "Customer")
+    {
+        TestAuthenticationHandler.SetTestUser(userId ?? "1", role);
+    }
+
+    private void SetupManagementUser()
+    {
+        TestAuthenticationHandler.SetTestUser("admin", "Management");
     }
 
     #region US-1: Customer Registration E2E Tests
@@ -316,6 +337,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
         var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
 
+        // Setup authentication for the registered customer
+        SetupTestUser(registeredCustomer!.Id.ToString());
+
         // Act
         var getResponse = await _customerServiceClient.GetAsync($"/api/v1/customers/{registeredCustomer!.Id}");
 
@@ -333,6 +357,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     [Fact]
     public async Task GetProfile_WithNonExistentId_Returns404()
     {
+        // Setup authentication as management to access any profile
+        SetupManagementUser();
+
         // Act
         var response = await _customerServiceClient.GetAsync("/api/v1/customers/99999");
 
@@ -359,6 +386,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
         var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Setup authentication for the registered customer
+        SetupTestUser(registeredCustomer!.Id.ToString());
 
         // Act
         var getResponse = await _customerServiceClient.GetAsync($"/api/v1/customers/{registeredCustomer!.Id}");
@@ -393,6 +423,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
         var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Setup authentication for the registered customer
+        SetupTestUser(registeredCustomer!.Id.ToString());
 
         // Act - Update delivery address
         var updateRequest = new CustomerUpdateRequest(
@@ -439,6 +472,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
         var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
 
+        // Setup authentication for the registered customer
+        SetupTestUser(registeredCustomer!.Id.ToString());
+
         // Act - Update to Danish
         var updateRequest = new CustomerUpdateRequest(
             Name: null,
@@ -484,6 +520,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
         var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
 
+        // Setup authentication for the registered customer
+        SetupTestUser(registeredCustomer!.Id.ToString());
+
         // Act - Update to SMS
         var updateRequest = new CustomerUpdateRequest(
             Name: null,
@@ -505,6 +544,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     [Fact]
     public async Task UpdateProfile_WithNonExistentId_Returns404()
     {
+        // Setup authentication as management to access any profile
+        SetupManagementUser();
+
         // Arrange
         var updateRequest = new CustomerUpdateRequest(
             Name: "Test",
@@ -540,6 +582,9 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var registerResponse = await _customerServiceClient.PostAsJsonAsync("/api/v1/customers", registerRequest);
         Assert.Equal(HttpStatusCode.Created, registerResponse.StatusCode);
         var registeredCustomer = await registerResponse.Content.ReadFromJsonAsync<CreateCustomerResponse>();
+
+        // Setup authentication for the registered customer
+        SetupTestUser(registeredCustomer!.Id.ToString());
 
         // Act - Update all fields
         var updateRequest = new CustomerUpdateRequest(

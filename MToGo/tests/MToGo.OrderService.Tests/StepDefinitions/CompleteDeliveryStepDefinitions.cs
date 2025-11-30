@@ -4,6 +4,7 @@ using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
 using MToGo.OrderService.Tests.Fixtures;
 using FluentAssertions;
+using MToGo.Testing;
 
 namespace MToGo.OrderService.Tests.StepDefinitions
 {
@@ -20,6 +21,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the agent marks the order as delivered")]
         public async Task WhenTheAgentMarksTheOrderAsDelivered()
         {
+            // Set up Agent role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Agent");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
 
@@ -30,6 +34,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the agent marks order (\d+) as delivered")]
         public async Task WhenTheAgentMarksOrderAsDelivered(int orderId)
         {
+            // Set up Agent role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Agent");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
 
             var response = await client.PostAsync($"/orders/order/{orderId}/complete-delivery", null);

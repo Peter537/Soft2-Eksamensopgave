@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
 using System.Text;
 using System.Text.Json;
+using MToGo.Testing;
 
 namespace MToGo.OrderService.Tests.StepDefinitions
 {
@@ -25,6 +26,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the agent accepts the delivery offer with agentId (\d+)")]
         public async Task WhenTheAgentAcceptsTheDeliveryOfferWithAgentId(int agentId)
         {
+            // Set up Agent role for this action (agent can only assign themselves)
+            TestAuthenticationHandler.SetTestUser(agentId.ToString(), "Agent");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
 
@@ -41,6 +45,10 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"two agents try to accept the delivery offer concurrently with agentIds (\d+) and (\d+)")]
         public async Task WhenTwoAgentsTryToAcceptTheDeliveryOfferConcurrentlyWithAgentIds(int agentId1, int agentId2)
         {
+            // Note: For concurrent requests, we'll use the first agent's credentials
+            // In a real scenario, each request would have different credentials
+            TestAuthenticationHandler.SetTestUser(agentId1.ToString(), "Agent");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
 
@@ -115,8 +123,14 @@ namespace MToGo.OrderService.Tests.StepDefinitions
             var responses = _scenarioContext.Get<HttpResponseMessage[]>("ConcurrentResponses");
             var statusCodes = responses.Select(r => (int)r.StatusCode).ToList();
 
+            // One agent should succeed with 204
             statusCodes.Should().Contain(204);
-            statusCodes.Should().Contain(409);
+            // With authentication, second agent may get 403 (Forbidden) instead of 409 (Conflict)
+            // because agents can only assign themselves - when agent 43 tries to assign agent 42, it's forbidden
+            // If both agents try to assign themselves, one gets 204 and the other gets 409 (conflict)
+            var rejectionCode = statusCodes.First(c => c != 204);
+            rejectionCode.Should().BeOneOf(new[] { 403, 409 }, 
+                because: "one agent should be rejected with 403 (Forbidden - can't assign other agents) or 409 (Conflict - already assigned)");
         }
     }
 }

@@ -1,3 +1,4 @@
+using MToGo.Shared.Security;
 using MToGo.WebSocketAgentService.BackgroundServices;
 using MToGo.WebSocketAgentService.Handlers;
 using MToGo.WebSocketAgentService.Services;
@@ -8,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add HTTP context accessor for user context
+builder.Services.AddHttpContextAccessor();
+
+// Add MToGo Security with WebSocket support (token from query string)
+builder.Services.AddMToGoSecurityWithWebSockets(builder.Configuration);
 
 // Register our services
 builder.Services.AddSingleton<AgentConnectionManager>();
@@ -33,6 +40,7 @@ app.UseWebSockets(new WebSocketOptions
     KeepAliveInterval = TimeSpan.FromSeconds(30)
 });
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

@@ -2,12 +2,16 @@ using LegacyMToGo.Data;
 using LegacyMToGo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/customers")]
-public class CustomersController(LegacyContext dbContext) : ControllerBase
+public class CustomersController(LegacyContext dbContext, IConfiguration configuration) : ControllerBase
 {
     [HttpPost("post")]
     public async Task<ActionResult<object>> Create(CustomerCreateRequest request, CancellationToken cancellationToken)
@@ -49,8 +53,9 @@ public class CustomersController(LegacyContext dbContext) : ControllerBase
             return Unauthorized();
         }
 
-        // This is a legacy system, so we emulate the issuance of a JWT token.
-        return Ok(new { jwt = $"legacy-token-{customer.Id}" });
+        // Generate real JWT token
+        var token = GenerateJwtToken(customer);
+        return Ok(new { jwt = token });
     }
 
     [HttpGet("get/{id:int}")]
@@ -130,6 +135,37 @@ public class CustomersController(LegacyContext dbContext) : ControllerBase
         dbContext.Customers.Remove(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Ok();
+    }
+
+    private string GenerateJwtToken(Customer customer)
+    {
+        var jwtSettings = configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"] ?? "MToGo-Super-Secret-Key-That-Should-Be-At-Least-256-Bits-Long-For-Security!";
+        var issuer = jwtSettings["Issuer"] ?? "MToGo";
+        var audience = jwtSettings["Audience"] ?? "MToGo-Services";
+        var expirationMinutes = int.TryParse(jwtSettings["ExpirationMinutes"], out var exp) ? exp : 60;
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new List<Claim>
+        {
+            new("userId", customer.Id.ToString()),
+            new("email", customer.Email),
+            new("role", "Customer"),
+            new(ClaimTypes.Role, "Customer"),
+            new("name", customer.Name)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: issuer,
+            audience: audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     private static string HashPassword(string value)

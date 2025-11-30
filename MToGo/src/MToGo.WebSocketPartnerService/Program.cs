@@ -1,4 +1,5 @@
 using MToGo.Shared.Kafka;
+using MToGo.Shared.Security;
 using MToGo.WebSocketPartnerService.BackgroundServices;
 using MToGo.WebSocketPartnerService.Handlers;
 using MToGo.WebSocketPartnerService.Services;
@@ -25,6 +26,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add HTTP context accessor for user context
+builder.Services.AddHttpContextAccessor();
+
+// Add MToGo Security with WebSocket support (token from query string)
+builder.Services.AddMToGoSecurityWithWebSockets(builder.Configuration);
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -39,6 +46,7 @@ app.UseWebSockets(new WebSocketOptions
     KeepAliveInterval = TimeSpan.FromSeconds(30)
 });
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

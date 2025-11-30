@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -131,6 +132,15 @@ namespace MToGo.OrderService.Tests.Fixtures
                     services.Remove(agentDescriptor);
                 }
                 services.AddSingleton<IAgentServiceClient>(_agentServiceClientMock.Object);
+
+                // Add test authentication
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
+                    options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                    TestAuthenticationHandler.AuthenticationScheme, options => { });
             });
         }
     }

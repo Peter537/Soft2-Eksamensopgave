@@ -1,4 +1,5 @@
 using MToGo.OrderService.Tests.Fixtures;
+using MToGo.Testing;
 using Reqnroll;
 
 namespace MToGo.OrderService.Tests.Hooks
@@ -19,6 +20,9 @@ namespace MToGo.OrderService.Tests.Hooks
             await factory.InitializeDatabaseAsync();
             await factory.CleanupDatabaseAsync();
 
+            // Set up default test authentication (can be overridden per scenario)
+            TestAuthenticationHandler.SetTestUser("1", "Customer");
+
             var client = factory.CreateClient();
 
             scenarioContext["ContainerFixture"] = _containerFixture;
@@ -30,6 +34,9 @@ namespace MToGo.OrderService.Tests.Hooks
         [AfterScenario]
         public async Task AfterScenario(ScenarioContext scenarioContext)
         {
+            // Clear test authentication
+            TestAuthenticationHandler.ClearTestUser();
+
             if (scenarioContext.TryGetValue("Factory", out SharedTestWebApplicationFactory? factory) && factory != null)
             {
                 await factory.DisposeAsync();

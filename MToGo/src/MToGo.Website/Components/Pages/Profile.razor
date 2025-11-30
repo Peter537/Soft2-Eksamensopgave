@@ -165,7 +165,13 @@
 
         try
         {
-            var response = await Http.GetAsync($"/api/v1/customers/{CultureService.CustomerId}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/customers/{CultureService.CustomerId}");
+            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+            }
+            
+            var response = await Http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -217,7 +223,16 @@
                 LanguagePreference = model.LanguagePreference
             };
 
-            var response = await Http.PatchAsJsonAsync($"/api/v1/customers/{CultureService.CustomerId}", updateRequest);
+            var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/customers/{CultureService.CustomerId}")
+            {
+                Content = JsonContent.Create(updateRequest)
+            };
+            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+            }
+            
+            var response = await Http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {

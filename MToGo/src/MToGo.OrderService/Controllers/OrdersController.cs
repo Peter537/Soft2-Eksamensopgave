@@ -1,24 +1,33 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MToGo.OrderService.Logging;
 using MToGo.OrderService.Models;
 using MToGo.OrderService.Services;
+using MToGo.Shared.Security;
 
 namespace MToGo.OrderService.Controllers
 {
     [ApiController]
     [Route("orders")]
+    [Authorize] // Require authentication by default
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IUserContextAccessor _userContextAccessor;
         private readonly ILogger<OrdersController> _logger;
 
-        public OrdersController(IOrderService orderService, ILogger<OrdersController> logger)
+        public OrdersController(
+            IOrderService orderService, 
+            IUserContextAccessor userContextAccessor,
+            ILogger<OrdersController> logger)
         {
             _orderService = orderService;
+            _userContextAccessor = userContextAccessor;
             _logger = logger;
         }
 
         [HttpPost("order")]
+        [Authorize(Policy = AuthorizationPolicies.CustomerOnly)]
         [ProducesResponseType(typeof(OrderCreateResponse), 201)]
         public async Task<IActionResult> CreateOrder(OrderCreateRequest request)
         {
@@ -33,6 +42,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpPost("order/{id}/accept")]
+        [Authorize(Policy = AuthorizationPolicies.PartnerOnly)]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> AcceptOrder(int id, [FromBody] OrderAcceptRequest request)
@@ -55,6 +65,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpPost("order/{id}/reject")]
+        [Authorize(Policy = AuthorizationPolicies.PartnerOnly)]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> RejectOrder(int id, [FromBody] OrderRejectRequest? request = null)
@@ -77,6 +88,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpPost("order/{id}/set-ready")]
+        [Authorize(Policy = AuthorizationPolicies.PartnerOnly)]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         public async Task<IActionResult> SetReady(int id)
@@ -99,11 +111,20 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpPost("order/{id}/assign-agent")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         public async Task<IActionResult> AssignAgent(int id, [FromBody] AssignAgentRequest request)
         {
+            var userContext = _userContextAccessor.UserContext;
+            
+            // Agent can only assign themselves
+            if (userContext.UserId != request.AgentId)
+            {
+                return Forbid();
+            }
+
             _logger.ReceivedAssignAgentRequest(id, request.AgentId);
 
             var result = await _orderService.AssignAgentAsync(id, request.AgentId);
@@ -117,6 +138,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpPost("order/{id}/pickup")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]
@@ -141,6 +163,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpPost("order/{id}/complete-delivery")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(403)]

@@ -108,7 +108,10 @@
                 var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
                 if (result?.Jwt != null)
                 {
-                    // Extract customer ID from JWT token (format: "legacy-token-{id}")
+                    // Store the JWT token for authenticated API calls
+                    CultureService.SetJwtToken(result.Jwt);
+                    
+                    // Extract customer ID from JWT token
                     var customerId = ExtractCustomerIdFromToken(result.Jwt);
                     if (customerId > 0)
                     {
@@ -161,14 +164,21 @@
 
     private int ExtractCustomerIdFromToken(string jwt)
     {
-        // Legacy JWT format: "legacy-token-{id}"
-        if (jwt.StartsWith("legacy-token-"))
+        try
         {
-            var idPart = jwt.Replace("legacy-token-", "");
-            if (int.TryParse(idPart, out var id))
+            // Decode the JWT token to extract the userId claim
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(jwt);
+            
+            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "userId");
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
             {
-                return id;
+                return userId;
             }
+        }
+        catch
+        {
+            // Token parsing failed
         }
         return 0;
     }
@@ -177,7 +187,13 @@
     {
         try
         {
-            var profileResponse = await Http.GetAsync($"/api/v1/customers/{customerId}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/customers/{customerId}");
+            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+            }
+            
+            var profileResponse = await Http.SendAsync(request);
             if (profileResponse.IsSuccessStatusCode)
             {
                 var profile = await profileResponse.Content.ReadFromJsonAsync<CustomerProfile>();

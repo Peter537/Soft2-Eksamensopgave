@@ -8,6 +8,7 @@ using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
 using FluentAssertions;
+using MToGo.Testing;
 
 namespace MToGo.OrderService.Tests.StepDefinitions
 {
@@ -46,6 +47,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"submitting the order")]
         public async Task WhenSubmittingTheOrder()
         {
+            // Set up Customer role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Customer");
+
             _response = await Client.PostAsJsonAsync("/orders/order", _request);
             if (_response.IsSuccessStatusCode)
             {
