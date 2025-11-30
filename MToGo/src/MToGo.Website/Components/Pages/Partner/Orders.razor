@@ -1,4 +1,4 @@
-@page "/customer/orders"
+@page "/partner/orders"
 @inject HttpClient Http
 @inject CultureService CultureService
 @inject NavigationManager Navigation
@@ -6,20 +6,20 @@
 @implements IDisposable
 @rendermode InteractiveServer
 
-<PageTitle>@L["Pages.Customer.Orders.PageTitle"]</PageTitle>
+<PageTitle>@L["Pages.Partner.Orders.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-10">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="mb-0">@L["Pages.Customer.Orders.Title"]</h3>
+                    <h3 class="mb-0">@L["Pages.Partner.Orders.Title"]</h3>
                 </div>
                 <div class="card-body">
                     @if (!CultureService.IsLoggedIn)
                     {
                         <div class="alert alert-warning">
-                            <p class="mb-0">@L["Pages.Customer.Orders.LoginRequired"] <a href="/login">@L["Pages.Customer.Orders.LoginLink"]</a></p>
+                            <p class="mb-0">@L["Pages.Partner.Orders.LoginRequired"] <a href="/login">@L["Pages.Partner.Orders.LoginLink"]</a></p>
                         </div>
                     }
                     else
@@ -27,19 +27,19 @@
                         <!-- Date Filter Section -->
                         <div class="row mb-4">
                             <div class="col-md-4">
-                                <label for="startDate" class="form-label">@L["Pages.Customer.Orders.StartDate"]</label>
+                                <label for="startDate" class="form-label">@L["Pages.Partner.Orders.StartDate"]</label>
                                 <input type="date" id="startDate" class="form-control" @bind="startDate" />
                             </div>
                             <div class="col-md-4">
-                                <label for="endDate" class="form-label">@L["Pages.Customer.Orders.EndDate"]</label>
+                                <label for="endDate" class="form-label">@L["Pages.Partner.Orders.EndDate"]</label>
                                 <input type="date" id="endDate" class="form-control" @bind="endDate" />
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
                                 <button type="button" class="btn btn-primary me-2" @onclick="LoadOrders">
-                                    @L["Pages.Customer.Orders.FilterButton"]
+                                    @L["Pages.Partner.Orders.FilterButton"]
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary" @onclick="ClearFilter">
-                                    @L["Pages.Customer.Orders.ClearButton"]
+                                    @L["Pages.Partner.Orders.ClearButton"]
                                 </button>
                             </div>
                         </div>
@@ -48,7 +48,7 @@
                         {
                             <div class="text-center">
                                 <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">@L["Pages.Customer.Orders.Loading"]</span>
+                                    <span class="visually-hidden">@L["Pages.Partner.Orders.Loading"]</span>
                                 </div>
                             </div>
                         }
@@ -64,21 +64,49 @@
                             @if (orders == null || !orders.Any())
                             {
                                 <div class="alert alert-info">
-                                    @L["Pages.Customer.Orders.NoOrders"]
+                                    @L["Pages.Partner.Orders.NoOrders"]
                                 </div>
                             }
                             else
                             {
+                                <!-- Summary Section -->
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">@L["Pages.Partner.Orders.TotalOrders"]</h5>
+                                                <p class="card-text display-6">@orders.Count</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">@L["Pages.Partner.Orders.TotalRevenue"]</h5>
+                                                <p class="card-text display-6">@CalculateTotalRevenue().ToString("C")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-light">
+                                            <div class="card-body text-center">
+                                                <h5 class="card-title">@L["Pages.Partner.Orders.AverageOrderValue"]</h5>
+                                                <p class="card-text display-6">@CalculateAverageOrderValue().ToString("C")</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="table-responsive">
                                     <table class="table table-striped table-hover">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th>@L["Pages.Customer.Orders.OrderId"]</th>
-                                                <th>@L["Pages.Customer.Orders.Date"]</th>
-                                                <th>@L["Pages.Customer.Orders.Partner"]</th>
-                                                <th>@L["Pages.Customer.Orders.Items"]</th>
-                                                <th>@L["Pages.Customer.Orders.Status"]</th>
-                                                <th class="text-end">@L["Pages.Customer.Orders.Total"]</th>
+                                                <th>@L["Pages.Partner.Orders.OrderId"]</th>
+                                                <th>@L["Pages.Partner.Orders.Date"]</th>
+                                                <th>@L["Pages.Partner.Orders.Customer"]</th>
+                                                <th>@L["Pages.Partner.Orders.Items"]</th>
+                                                <th>@L["Pages.Partner.Orders.Status"]</th>
+                                                <th class="text-end">@L["Pages.Partner.Orders.Total"]</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -87,7 +115,7 @@
                                                 <tr>
                                                     <td>#@order.Id</td>
                                                     <td>@FormatDate(order.OrderCreatedTime)</td>
-                                                    <td>@L.GetString("Pages.Customer.Orders.PartnerLabel", order.PartnerId)</td>
+                                                    <td>@L.GetString("Pages.Partner.Orders.CustomerLabel", order.CustomerId)</td>
                                                     <td>
                                                         <ul class="list-unstyled mb-0">
                                                             @foreach (var item in order.Items)
@@ -100,10 +128,10 @@
                                                         <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
                                                     </td>
                                                     <td class="text-end">
-                                                        <div>@L["Pages.Customer.Orders.ServiceFee"]: @order.ServiceFee.ToString("C")</div>
-                                                        <div>@L["Pages.Customer.Orders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
+                                                        <div>@L["Pages.Partner.Orders.ServiceFee"]: @order.ServiceFee.ToString("C")</div>
+                                                        <div>@L["Pages.Partner.Orders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
                                                         <hr class="my-1" />
-                                                        <strong>@CalculateTotal(order).ToString("C")</strong>
+                                                        <strong>@CalculateOrderTotal(order).ToString("C")</strong>
                                                     </td>
                                                 </tr>
                                             }
@@ -120,7 +148,7 @@
 </div>
 
 @code {
-    private List<CustomerOrderResponse>? orders;
+    private List<PartnerOrderResponse>? orders;
     private DateTime? startDate;
     private DateTime? endDate;
     private string? errorMessage;
@@ -160,7 +188,7 @@
 
         try
         {
-            var url = $"/api/v1/orders/customer/{CultureService.CustomerId}";
+            var url = $"/api/v1/orders/partner/{CultureService.CustomerId}";
             
             var queryParams = new List<string>();
             if (startDate.HasValue)
@@ -187,16 +215,16 @@
 
             if (response.IsSuccessStatusCode)
             {
-                orders = await response.Content.ReadFromJsonAsync<List<CustomerOrderResponse>>();
+                orders = await response.Content.ReadFromJsonAsync<List<PartnerOrderResponse>>();
             }
             else
             {
-                errorMessage = L["Pages.Customer.Orders.LoadFailed"];
+                errorMessage = L["Pages.Partner.Orders.LoadFailed"];
             }
         }
         catch (Exception ex)
         {
-            errorMessage = L.GetString("Pages.Customer.Orders.ErrorOccurred", ex.Message);
+            errorMessage = L.GetString("Pages.Partner.Orders.ErrorOccurred", ex.Message);
         }
         finally
         {
@@ -234,26 +262,38 @@
         };
     }
 
-    private decimal CalculateTotal(CustomerOrderResponse order)
+    private decimal CalculateOrderTotal(PartnerOrderResponse order)
     {
         var itemsTotal = order.Items.Sum(i => i.Quantity * i.UnitPrice);
         return itemsTotal + order.ServiceFee + order.DeliveryFee;
     }
 
-    public class CustomerOrderResponse
+    private decimal CalculateTotalRevenue()
+    {
+        return orders?.Sum(o => CalculateOrderTotal(o)) ?? 0;
+    }
+
+    private decimal CalculateAverageOrderValue()
+    {
+        if (orders == null || !orders.Any())
+            return 0;
+        return orders.Average(o => CalculateOrderTotal(o));
+    }
+
+    public class PartnerOrderResponse
     {
         public int Id { get; set; }
-        public int PartnerId { get; set; }
+        public int CustomerId { get; set; }
         public int? AgentId { get; set; }
         public string DeliveryAddress { get; set; } = string.Empty;
         public decimal ServiceFee { get; set; }
         public decimal DeliveryFee { get; set; }
         public string Status { get; set; } = string.Empty;
         public string OrderCreatedTime { get; set; } = string.Empty;
-        public List<CustomerOrderItemResponse> Items { get; set; } = new();
+        public List<PartnerOrderItemResponse> Items { get; set; } = new();
     }
 
-    public class CustomerOrderItemResponse
+    public class PartnerOrderItemResponse
     {
         public int FoodItemId { get; set; }
         public string Name { get; set; } = string.Empty;
