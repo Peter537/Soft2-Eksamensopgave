@@ -26,7 +26,8 @@ namespace MToGo.OrderService.Tests.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Assign Agent to Order", "    As an agent\r\n    I want to accept order assignment\r\n    So that I secure work", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Assign Agent to Order", "    As an agent\r\n    I want to accept order assignment\r\n    So that I secure work" +
+                "", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         
@@ -191,14 +192,14 @@ namespace MToGo.OrderService.Tests.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Cannot assign agent to order that is not in Ready status")]
+        [Xunit.SkippableFactAttribute(DisplayName="Cannot assign agent to order that is not in Ready or Accepted status")]
         [Xunit.TraitAttribute("FeatureTitle", "Assign Agent to Order")]
-        [Xunit.TraitAttribute("Description", "Cannot assign agent to order that is not in Ready status")]
-        public async System.Threading.Tasks.Task CannotAssignAgentToOrderThatIsNotInReadyStatus()
+        [Xunit.TraitAttribute("Description", "Cannot assign agent to order that is not in Ready or Accepted status")]
+        public async System.Threading.Tasks.Task CannotAssignAgentToOrderThatIsNotInReadyOrAcceptedStatus()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Cannot assign agent to order that is not in Ready status", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Cannot assign agent to order that is not in Ready or Accepted status", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 23
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -210,7 +211,7 @@ namespace MToGo.OrderService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 24
-        await testRunner.GivenAsync("an order exists with Accepted status and no agent assigned", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+        await testRunner.GivenAsync("an order exists with Placed status and no agent assigned", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 25
         await testRunner.WhenAsync("the agent accepts the delivery offer with agentId 42", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");

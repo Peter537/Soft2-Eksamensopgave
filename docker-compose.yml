@@ -114,6 +114,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       GatewayUrl: http://gateway:8080
+      GatewayPublicUrl: http://localhost:8080
     depends_on:
       - gateway
     networks:
@@ -127,7 +128,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_orders;Username=mtogo;Password=mtogo_password
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo;Username=mtogo;Password=mtogo_password
       Kafka__BootstrapServers: kafka:9092
       Gateway__BaseUrl: http://gateway:8080
     depends_on:

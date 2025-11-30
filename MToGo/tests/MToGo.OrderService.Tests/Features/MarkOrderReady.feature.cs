@@ -26,8 +26,8 @@ namespace MToGo.OrderService.Tests.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Mark Order Ready", ("    As a partner\r\n    I want to mark order prepared\r\n    So that agent can pick u" +
-                "p"), global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Mark Order Ready", "    As a partner\r\n    I want to mark order prepared\r\n    So that agent can pick u" +
+                "p", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         

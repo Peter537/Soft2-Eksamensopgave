@@ -8,6 +8,8 @@ namespace MToGo.Shared.Kafka.Events
         public string PartnerAddress { get; set; } = string.Empty;
         public string DeliveryAddress { get; set; } = string.Empty;
         public decimal DeliveryFee { get; set; }
+        public string Distance { get; set; } = string.Empty;
+        public int EstimatedMinutes { get; set; }
         public string Timestamp { get; set; } = string.Empty;
         public List<OrderAcceptedItem> Items { get; set; } = new();
 

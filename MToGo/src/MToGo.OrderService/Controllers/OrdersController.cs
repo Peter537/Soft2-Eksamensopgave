@@ -35,11 +35,11 @@ namespace MToGo.OrderService.Controllers
         [HttpPost("order/{id}/accept")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
-        public async Task<IActionResult> AcceptOrder(int id)
+        public async Task<IActionResult> AcceptOrder(int id, [FromBody] OrderAcceptRequest request)
         {
             _logger.ReceivedAcceptOrderRequest(id);
 
-            var success = await _orderService.AcceptOrderAsync(id);
+            var success = await _orderService.AcceptOrderAsync(id, request.EstimatedMinutes);
 
             if (!success)
             {

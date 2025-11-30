@@ -14,6 +14,8 @@ namespace MToGo.OrderService.Entities
         public decimal DeliveryFee { get; set; }
         public decimal ServiceFee { get; set; }
         public decimal TotalAmount { get; set; }
+        public string Distance { get; set; } = string.Empty;
+        public int EstimatedMinutes { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Placed;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<OrderItem> Items { get; set; } = new();
