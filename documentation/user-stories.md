@@ -253,6 +253,8 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 **I want** to register account,  
 **So that** I can pick deliveries.  
 **AC-1:** Given valid details, When submitting, Then account created.
+**AC-2:** Given details and menu items, When submitting, Then account created.
+**AC-3:** Given empty menu, When registering, Then 400 error.
 
 ---
 
