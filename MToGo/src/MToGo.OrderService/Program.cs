@@ -2,16 +2,19 @@ using MToGo.OrderService.Entities;
 using MToGo.OrderService.Repositories;
 using MToGo.OrderService.Services;
 using MToGo.Shared.Kafka;
+using MToGo.Shared.Security;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-// builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen();
+
+// Add HTTP context accessor for user context
+builder.Services.AddHttpContextAccessor();
+
+// Add MToGo Security (JWT Authentication & Authorization)
+builder.Services.AddMToGoSecurity(builder.Configuration);
 
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -42,15 +45,9 @@ if (app.Environment.IsDevelopment())
     dbContext.Database.EnsureCreated();
 }
 
-// Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
-
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

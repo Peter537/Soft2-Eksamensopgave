@@ -5,18 +5,29 @@ using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
 using MToGo.CustomerService.Services;
 using MToGo.Shared.Models.Customer;
+using MToGo.Shared.Security;
 
 namespace MToGo.CustomerService.Tests.Controllers;
 
 public class CustomersControllerTests
 {
     private readonly Mock<ICustomerService> _mockCustomerService;
+    private readonly Mock<IUserContextAccessor> _mockUserContextAccessor;
+    private readonly Mock<IUserContext> _mockUserContext;
     private readonly CustomersController _sut;
 
     public CustomersControllerTests()
     {
         _mockCustomerService = new Mock<ICustomerService>();
-        _sut = new CustomersController(_mockCustomerService.Object);
+        _mockUserContextAccessor = new Mock<IUserContextAccessor>();
+        _mockUserContext = new Mock<IUserContext>();
+        
+        // Default setup: Customer with ID 1 accessing their own data
+        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
+        _mockUserContextAccessor.Setup(x => x.UserContext).Returns(_mockUserContext.Object);
+        
+        _sut = new CustomersController(_mockCustomerService.Object, _mockUserContextAccessor.Object);
     }
 
     #region Register Tests
@@ -207,6 +218,10 @@ public class CustomersControllerTests
     {
         // Arrange
         var customerId = 999;
+        
+        // Set up as Management so authorization passes and we can test the 404
+        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockCustomerService
             .Setup(x => x.GetCustomerAsync(customerId))
@@ -300,6 +315,10 @@ public class CustomersControllerTests
             PhoneNumber: null,
             LanguagePreference: null
         );
+
+        // Set up as Management so authorization passes and we can test the 404
+        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockCustomerService
             .Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))

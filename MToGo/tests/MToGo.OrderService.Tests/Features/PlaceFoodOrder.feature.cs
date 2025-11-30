@@ -26,8 +26,8 @@ namespace MToGo.OrderService.Tests.Features
         
         private static string[] featureTags = ((string[])(null));
         
-        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Place Food Order", "    As a customer\r\n    I want to place order with items and payment\r\n    So that " +
-                "food is delivered", global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
+        private static global::Reqnroll.FeatureInfo featureInfo = new global::Reqnroll.FeatureInfo(new System.Globalization.CultureInfo("en-US"), "Features", "Place Food Order", ("    As a customer\r\n    I want to place order with items and payment\r\n    So that " +
+                "food is delivered"), global::Reqnroll.ProgrammingLanguage.CSharp, featureTags);
         
         private Xunit.Abstractions.ITestOutputHelper _testOutputHelper;
         

@@ -2,6 +2,7 @@ using Reqnroll;
 using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
+using MToGo.Testing;
 using System.Text;
 using System.Text.Json;
 
@@ -20,6 +21,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the partner accepts the order")]
         public async Task WhenThePartnerAcceptsTheOrder()
         {
+            // Set up Partner role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Partner");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
             var content = new StringContent(

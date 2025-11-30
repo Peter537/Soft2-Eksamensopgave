@@ -2,6 +2,7 @@ using Reqnroll;
 using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
+using MToGo.Testing;
 
 namespace MToGo.OrderService.Tests.StepDefinitions
 {
@@ -18,6 +19,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the partner marks the order as ready")]
         public async Task WhenThePartnerMarksTheOrderAsReady()
         {
+            // Set up Partner role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Partner");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
             var response = await client.PostAsync($"/orders/order/{orderId}/set-ready", null);

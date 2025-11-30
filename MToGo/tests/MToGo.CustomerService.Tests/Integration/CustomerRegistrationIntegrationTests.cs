@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -7,6 +8,7 @@ using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
 using MToGo.Shared.Models.Customer;
+using MToGo.Testing;
 
 namespace MToGo.CustomerService.Tests.Integration;
 
@@ -19,10 +21,19 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         _factory = factory;
     }
 
-    private HttpClient CreateClientWithMockedLegacyApi(Action<Mock<ILegacyCustomerApiClient>> setupMock)
+    private HttpClient CreateClientWithMockedLegacyApi(Action<Mock<ILegacyCustomerApiClient>> setupMock, bool authenticated = false, string? userId = null, string? role = null)
     {
         var mockLegacyClient = new Mock<ILegacyCustomerApiClient>();
         setupMock(mockLegacyClient);
+
+        if (authenticated)
+        {
+            TestAuthenticationHandler.SetTestUser(userId ?? "1", role ?? "Customer");
+        }
+        else
+        {
+            TestAuthenticationHandler.ClearTestUser();
+        }
 
         return _factory.WithWebHostBuilder(builder =>
         {
@@ -38,6 +49,15 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
 
                 // Add mock
                 services.AddSingleton(mockLegacyClient.Object);
+
+                // Add test authentication
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
+                    options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
+                })
+                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                    TestAuthenticationHandler.AuthenticationScheme, options => { });
             });
         }).CreateClient();
     }
@@ -223,7 +243,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.GetCustomerAsync(customerId))
                 .ReturnsAsync(expectedProfile);
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
 
         // Act
         var response = await client.GetAsync($"/api/v1/customers/{customerId}");
@@ -247,7 +267,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.GetCustomerAsync(customerId))
                 .ThrowsAsync(new KeyNotFoundException("Customer not found."));
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Management");
 
         // Act
         var response = await client.GetAsync($"/api/v1/customers/{customerId}");
@@ -273,7 +293,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.GetCustomerAsync(customerId))
                 .ReturnsAsync(expectedProfile);
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
 
         // Act
         var response = await client.GetAsync($"/api/v1/customers/{customerId}");
@@ -313,7 +333,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
                 .ReturnsAsync(expectedProfile);
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
 
         // Act
         var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
@@ -343,7 +363,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
                 .ThrowsAsync(new KeyNotFoundException("Customer not found."));
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Management");
 
         // Act
         var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
@@ -376,7 +396,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
                 .ReturnsAsync(expectedProfile);
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
 
         // Act
         var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
@@ -415,7 +435,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
                 .ReturnsAsync(expectedProfile);
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
 
         // Act
         var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);
@@ -454,7 +474,7 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
         {
             mock.Setup(x => x.UpdateCustomerAsync(customerId, It.IsAny<CustomerUpdateRequest>()))
                 .ReturnsAsync(expectedProfile);
-        });
+        }, authenticated: true, userId: customerId.ToString(), role: "Customer");
 
         // Act
         var response = await client.PatchAsJsonAsync($"/api/v1/customers/{customerId}", updateRequest);

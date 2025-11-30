@@ -4,6 +4,7 @@ using MToGo.OrderService.Models;
 using Moq;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
+using MToGo.Testing;
 
 namespace MToGo.OrderService.Tests.StepDefinitions
 {
@@ -20,6 +21,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the partner rejects the order without reason")]
         public async Task WhenThePartnerRejectsTheOrderWithoutReason()
         {
+            // Set up Partner role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Partner");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
             var response = await client.PostAsync($"/orders/order/{orderId}/reject", null);
@@ -29,6 +33,9 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [When(@"the partner rejects the order with reason ""(.*)""")]
         public async Task WhenThePartnerRejectsTheOrderWithReason(string reason)
         {
+            // Set up Partner role for this action
+            TestAuthenticationHandler.SetTestUser("1", "Partner");
+
             var client = _scenarioContext.Get<HttpClient>("Client");
             var orderId = _scenarioContext.Get<int>("OrderId");
             var request = new OrderRejectRequest { Reason = reason };
