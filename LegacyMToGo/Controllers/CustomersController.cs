@@ -48,7 +48,7 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
     public async Task<ActionResult<object>> Login(CustomerLoginRequest request, CancellationToken cancellationToken)
     {
         var customer = await dbContext.Customers.FirstOrDefaultAsync(c => c.Email == request.Email, cancellationToken);
-        if (customer is null || !VerifyPassword(request.Password, customer.Password))
+        if (customer is null || customer.IsDeleted || !VerifyPassword(request.Password, customer.Password))
         {
             return Unauthorized();
         }
@@ -62,7 +62,7 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
     public async Task<ActionResult<CustomerResponse>> Get(int id, CancellationToken cancellationToken)
     {
         var customer = await dbContext.Customers.FindAsync([id], cancellationToken);
-        return customer is null
+        return customer is null || customer.IsDeleted
             ? NotFound()
             : new CustomerResponse(
                 customer.Name, 
@@ -76,7 +76,7 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
     public async Task<ActionResult<CustomerResponse>> Update(int id, CustomerUpdateRequest request, CancellationToken cancellationToken)
     {
         var customer = await dbContext.Customers.FindAsync([id], cancellationToken);
-        if (customer is null)
+        if (customer is null || customer.IsDeleted)
         {
             return NotFound();
         }
@@ -127,14 +127,15 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var customer = await dbContext.Customers.FindAsync([id], cancellationToken);
-        if (customer is null)
+        if (customer is null || customer.IsDeleted)
         {
             return NotFound();
         }
 
-        dbContext.Customers.Remove(customer);
+        customer.IsDeleted = true;
+        customer.DeletedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
-        return Ok();
+        return NoContent();
     }
 
     private string GenerateJwtToken(Customer customer)

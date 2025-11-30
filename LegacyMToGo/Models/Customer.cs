@@ -23,4 +23,6 @@ public class Customer
     public required string Password { get; set; }
     public string? PhoneNumber { get; set; }
     public LanguagePreference LanguagePreference { get; set; } = LanguagePreference.En;
+    public bool IsDeleted { get; set; } = false;
+    public DateTime? DeletedAt { get; set; }
 }

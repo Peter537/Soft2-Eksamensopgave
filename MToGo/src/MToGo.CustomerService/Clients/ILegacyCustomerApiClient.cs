@@ -9,4 +9,5 @@ public interface ILegacyCustomerApiClient
     Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request);
     Task<CustomerProfileResponse> GetCustomerAsync(int id);
     Task<CustomerProfileResponse> UpdateCustomerAsync(int id, CustomerUpdateRequest request);
+    Task DeleteCustomerAsync(int id);
 }
