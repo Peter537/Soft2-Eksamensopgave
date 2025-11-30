@@ -186,5 +186,22 @@ namespace MToGo.OrderService.Controllers
                     return BadRequest();
             }
         }
+
+        [HttpGet("customer/{id}")]
+        [Authorize(Policy = AuthorizationPolicies.CustomerOnly)]
+        [ProducesResponseType(typeof(List<CustomerOrderResponse>), 200)]
+        public async Task<IActionResult> GetCustomerOrders(
+            int id, 
+            [FromQuery] DateTime? startDate = null, 
+            [FromQuery] DateTime? endDate = null)
+        {
+            _logger.ReceivedGetCustomerOrdersRequest(id, startDate, endDate);
+
+            var orders = await _orderService.GetOrdersByCustomerIdAsync(id, startDate, endDate);
+
+            _logger.GetCustomerOrdersCompleted(id, orders.Count);
+
+            return Ok(orders);
+        }
     }
 }

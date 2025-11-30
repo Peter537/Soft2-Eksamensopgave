@@ -179,5 +179,21 @@ namespace MToGo.OrderService.Logging
 
         [LoggerMessage(Level = LogLevel.Debug, Message = "Published OrderDeliveredEvent to Kafka for OrderId: {OrderId}")]
         public static partial void PublishedOrderDeliveredEvent(this ILogger logger, int orderId);
+
+        // Get Customer Orders - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetCustomerOrders request for CustomerId: {CustomerId}, StartDate: {StartDate}, EndDate: {EndDate}")]
+        public static partial void ReceivedGetCustomerOrdersRequest(this ILogger logger, int customerId, DateTime? startDate, DateTime? endDate);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetCustomerOrders completed: CustomerId={CustomerId}, OrderCount={OrderCount}")]
+        public static partial void GetCustomerOrdersCompleted(this ILogger logger, int customerId, int orderCount);
+
+        // Get Customer Orders - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting order history for CustomerId: {CustomerId}, StartDate: {StartDate}, EndDate: {EndDate}")]
+        public static partial void GettingOrderHistory(this ILogger logger, int customerId, DateTime? startDate, DateTime? endDate);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Order history retrieved: CustomerId={CustomerId}, OrderCount={OrderCount}")]
+        public static partial void OrderHistoryRetrieved(this ILogger logger, int customerId, int orderCount);
     }
 }
