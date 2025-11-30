@@ -101,7 +101,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Customer views their own order details", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 7
+#line 6
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -111,16 +111,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 8
+#line 7
         await testRunner.GivenAsync("a customer with ID 1 has an order with ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 9
+#line 8
         await testRunner.WhenAsync("the customer requests order details for order ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 10
+#line 9
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 11
+#line 10
         await testRunner.AndAsync("the response contains order details including items, status, dates, and totals", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
@@ -135,7 +135,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Partner views order details for their restaurant", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 14
+#line 12
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -145,16 +145,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 15
+#line 13
         await testRunner.GivenAsync("a partner with ID 1 has an order with ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 16
+#line 14
         await testRunner.WhenAsync("the partner requests order details for order ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 17
+#line 15
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 18
+#line 16
         await testRunner.AndAsync("the response contains order details including items, status, dates, and totals", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
@@ -169,7 +169,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Agent views order details for their assigned delivery", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 20
+#line 18
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -179,16 +179,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 21
+#line 19
         await testRunner.GivenAsync("an agent with ID 1 is assigned to order with ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 22
+#line 20
         await testRunner.WhenAsync("the agent requests order details for order ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 23
+#line 21
         await testRunner.ThenAsync("the response status code should be 200", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 24
+#line 22
         await testRunner.AndAsync("the response contains order details including items, status, dates, and totals", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
@@ -203,7 +203,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Customer cannot view order belonging to another customer", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 27
+#line 24
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -213,16 +213,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 28
+#line 25
         await testRunner.GivenAsync("a customer with ID 2 has an order with ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 29
+#line 26
         await testRunner.AndAsync("a customer with ID 1 is authenticated", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 30
+#line 27
         await testRunner.WhenAsync("the customer requests order details for order ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 31
+#line 28
         await testRunner.ThenAsync("the response status code should be 403", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -237,7 +237,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Partner cannot view order from another restaurant", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 33
+#line 30
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -247,16 +247,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 34
+#line 31
         await testRunner.GivenAsync("a partner with ID 2 has an order with ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 35
+#line 32
         await testRunner.AndAsync("a partner with ID 1 is authenticated", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 36
+#line 33
         await testRunner.WhenAsync("the partner requests order details for order ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 37
+#line 34
         await testRunner.ThenAsync("the response status code should be 403", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -271,7 +271,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Agent cannot view order not assigned to them", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 39
+#line 36
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -281,16 +281,16 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 40
+#line 37
         await testRunner.GivenAsync("an agent with ID 2 is assigned to order with ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 41
+#line 38
         await testRunner.AndAsync("an agent with ID 1 is authenticated", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
-#line 42
+#line 39
         await testRunner.WhenAsync("the agent requests order details for order ID 1", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 43
+#line 40
         await testRunner.ThenAsync("the response status code should be 403", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -305,7 +305,7 @@ namespace MToGo.OrderService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Requesting non-existent order returns 404", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 45
+#line 42
     this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -315,13 +315,13 @@ namespace MToGo.OrderService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 46
+#line 43
         await testRunner.GivenAsync("a customer with ID 1 is authenticated", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 47
+#line 44
         await testRunner.WhenAsync("the customer requests order details for order ID 99999", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 48
+#line 45
         await testRunner.ThenAsync("the response status code should be 404", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
