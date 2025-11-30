@@ -19,6 +19,7 @@ namespace MToGo.OrderService.Services
         Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
         Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
         Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<GetOrderDetailResult> GetOrderDetailAsync(int orderId, int userId, string userRole);
     }
 
     public enum AssignAgentResult
@@ -43,6 +44,19 @@ namespace MToGo.OrderService.Services
         OrderNotFound,
         InvalidStatus,
         NoAgentAssigned
+    }
+
+    public class GetOrderDetailResult
+    {
+        public bool Success { get; init; }
+        public OrderDetailResponse? Order { get; init; }
+        public GetOrderDetailError? Error { get; init; }
+    }
+
+    public enum GetOrderDetailError
+    {
+        NotFound,
+        Forbidden
     }
 
     public class OrderService : IOrderService
@@ -516,6 +530,68 @@ namespace MToGo.OrderService.Services
                     UnitPrice = i.UnitPrice
                 }).ToList()
             }).ToList();
+        }
+
+        public async Task<GetOrderDetailResult> GetOrderDetailAsync(int orderId, int userId, string userRole)
+        {
+            _logger.GettingOrderDetail(orderId, userId, userRole);
+
+            var order = await _orderRepository.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+            {
+                _logger.OrderDetailNotFound(orderId);
+                return new GetOrderDetailResult
+                {
+                    Success = false,
+                    Error = GetOrderDetailError.NotFound
+                };
+            }
+
+            // Check ownership based on user role
+            var hasAccess = userRole switch
+            {
+                "Customer" => order.CustomerId == userId,
+                "Partner" => order.PartnerId == userId,
+                "Agent" => order.AgentId == userId,
+                _ => false
+            };
+
+            if (!hasAccess)
+            {
+                _logger.OrderDetailAccessDenied(orderId, userId, userRole);
+                return new GetOrderDetailResult
+                {
+                    Success = false,
+                    Error = GetOrderDetailError.Forbidden
+                };
+            }
+
+            _logger.OrderDetailRetrieved(orderId, userId, userRole);
+
+            return new GetOrderDetailResult
+            {
+                Success = true,
+                Order = new OrderDetailResponse
+                {
+                    Id = order.Id,
+                    CustomerId = order.CustomerId,
+                    PartnerId = order.PartnerId,
+                    AgentId = order.AgentId,
+                    DeliveryAddress = order.DeliveryAddress,
+                    ServiceFee = order.ServiceFee,
+                    DeliveryFee = order.DeliveryFee,
+                    Status = order.Status.ToString(),
+                    OrderCreatedTime = order.CreatedAt.ToString("O"),
+                    Items = order.Items.Select(i => new OrderDetailItemResponse
+                    {
+                        FoodItemId = i.FoodItemId,
+                        Name = i.Name,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice
+                    }).ToList()
+                }
+            };
         }
     }
 }
