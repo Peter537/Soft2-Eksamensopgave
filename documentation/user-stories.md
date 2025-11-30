@@ -148,6 +148,40 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 
 ---
 
+**Size:** M  
+**Priority:** Low  
+**US-32:** View Agent Delivery History  
+**As an** agent,  
+**I want** to view my past deliveries,  
+**So that** I can track my performance and earnings.  
+**AC-1:** Given logged in as agent, When navigating delivery history, Then list with dates, partners, customers, and delivery fees shown.  
+**AC-2:** Given date range, When filtering, Then only matching deliveries shown.
+
+---
+
+**Size:** M  
+**Priority:** Low  
+**US-33:** View Partner Order History  
+**As a** partner,  
+**I want** to view past orders for my restaurant,  
+**So that** I can track sales and order patterns.  
+**AC-1:** Given logged in as partner, When navigating order history, Then list with dates, customers, items, and totals shown.  
+**AC-2:** Given date range, When filtering, Then only matching orders shown.
+
+---
+
+**Size:** M  
+**Priority:** Low  
+**US-34:** View Order Details  
+**As a** user,  
+**I want** to view details of a specific order,  
+**So that** I can see complete order information.  
+**AC-1:** Given authenticated, When requesting order by ID, Then order details including items, status, dates, and totals returned.  
+**AC-2:** Given order belongs to user (customer, partner, or agent), When requesting, Then full details shown.  
+**AC-3:** Given order does not belong to user, When requesting, Then 403 Forbidden returned.
+
+---
+
 ## Service: Partner Service
 
 **Size:** M  
@@ -302,6 +336,16 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 
 ---
 
+**Size:** S  
+**Priority:** Medium  
+**US-31:** Partner Notified When Order Picked Up  
+**As a** partner,  
+**I want** to be notified when an agent picks up an order,  
+**So that** the order is removed from my active orders view.  
+**AC-1:** Given connected to WebSocket, When OrderPickedUp event occurs, Then order is removed from accepted orders list.
+
+---
+
 **Size:** M  
 **Priority:** High  
 **US-26:** Notify Agents When Orders Are Accepted  
@@ -353,15 +397,5 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 **I want** to monitor system health metrics,  
 **So that** I can ensure platform reliability.  
 **AC-1:** Given access to monitoring tool, When viewing metrics, Then CPU usage, memory consumption, request latency displayed.
-
----
-
-**Size:** S  
-**Priority:** Medium  
-**US-31:** Partner Notified When Order Picked Up  
-**As a** partner,  
-**I want** to be notified when an agent picks up an order,  
-**So that** the order is removed from my active orders view.  
-**AC-1:** Given connected to WebSocket, When OrderPickedUp event occurs, Then order is removed from accepted orders list.
 
 ---
