@@ -1,3 +1,4 @@
+using MToGo.NotificationService.BackgroundServices;
 using MToGo.NotificationService.Clients;
 using MToGo.NotificationService.Services;
 using MToGo.Shared.Security;
@@ -21,6 +22,12 @@ builder.Services.AddHttpClient<ILegacyNotificationApiClient, LegacyNotificationA
     var gatewayBaseUrl = builder.Configuration["Gateway:BaseUrl"] ?? "http://gateway:8080";
     client.BaseAddress = new Uri(gatewayBaseUrl);
 });
+
+// Register Kafka consumers as background services
+builder.Services.AddHostedService<OrderAcceptedNotificationConsumer>();
+builder.Services.AddHostedService<OrderRejectedNotificationConsumer>();
+builder.Services.AddHostedService<OrderPickedUpNotificationConsumer>();
+builder.Services.AddHostedService<OrderDeliveredNotificationConsumer>();
 
 // Add MToGo Security (JWT Authentication & Authorization)
 builder.Services.AddMToGoSecurity(builder.Configuration);

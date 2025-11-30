@@ -237,5 +237,38 @@ namespace MToGo.OrderService.Controllers
 
             return Ok(orders);
         }
+
+        [HttpGet("order/{id}")]
+        [Authorize(Policy = AuthorizationPolicies.AllAuthenticated)]
+        [ProducesResponseType(typeof(OrderDetailResponse), 200)]
+        [ProducesResponseType(403)]
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> GetOrderDetail(int id)
+        {
+            var userContext = _userContextAccessor.UserContext;
+
+            if (!userContext.UserId.HasValue || string.IsNullOrEmpty(userContext.Role))
+            {
+                return Forbid();
+            }
+            
+            _logger.ReceivedGetOrderDetailRequest(id, userContext.UserId.Value, userContext.Role);
+
+            var result = await _orderService.GetOrderDetailAsync(id, userContext.UserId.Value, userContext.Role);
+
+            if (!result.Success)
+            {
+                return result.Error switch
+                {
+                    GetOrderDetailError.NotFound => NotFound(),
+                    GetOrderDetailError.Forbidden => Forbid(),
+                    _ => BadRequest()
+                };
+            }
+
+            _logger.GetOrderDetailCompleted(id);
+
+            return Ok(result.Order);
+        }
     }
 }
