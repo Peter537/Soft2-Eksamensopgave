@@ -1,3 +1,5 @@
+using MToGo.NotificationService.Clients;
+using MToGo.NotificationService.Services;
 using MToGo.Shared.Security;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +11,16 @@ builder.Services.AddSwaggerGen();
 
 // Add HTTP context accessor for user context
 builder.Services.AddHttpContextAccessor();
+
+// Register services
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Configure HttpClient for Legacy API via Gateway
+builder.Services.AddHttpClient<ILegacyNotificationApiClient, LegacyNotificationApiClient>(client =>
+{
+    var gatewayBaseUrl = builder.Configuration["Gateway:BaseUrl"] ?? "http://gateway:8080";
+    client.BaseAddress = new Uri(gatewayBaseUrl);
+});
 
 // Add MToGo Security (JWT Authentication & Authorization)
 builder.Services.AddMToGoSecurity(builder.Configuration);
@@ -30,3 +42,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make Program accessible for integration tests
+public partial class Program { }
