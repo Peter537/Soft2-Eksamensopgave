@@ -4,7 +4,8 @@ using MToGo.AgentService.Controllers;
 using MToGo.AgentService.Exceptions;
 using MToGo.AgentService.Models;
 using MToGo.AgentService.Services;
-using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Context;
 
 namespace MToGo.AgentService.Tests.Controllers;
 
@@ -22,7 +23,7 @@ public class AgentsControllerTests
         _mockUserContext = new Mock<IUserContext>();
 
         // Default setup: Agent with ID 1 accessing their own data
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
         _mockUserContextAccessor.Setup(x => x.UserContext).Returns(_mockUserContext.Object);
 
@@ -221,7 +222,7 @@ public class AgentsControllerTests
             IsActive = true
         };
 
-        _mockUserContext.Setup(x => x.UserId).Returns(agentId);
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         _mockAgentService
@@ -247,7 +248,7 @@ public class AgentsControllerTests
         var agentId = 1;
         var otherAgentId = 2;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(agentId);
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         // Act
@@ -271,7 +272,7 @@ public class AgentsControllerTests
             IsActive = true
         };
 
-        _mockUserContext.Setup(x => x.UserId).Returns(999);
+        _mockUserContext.Setup(x => x.Id).Returns(999);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockAgentService
@@ -293,7 +294,7 @@ public class AgentsControllerTests
         var agentId = 999;
 
         // Set up as Management so authorization passes
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockAgentService
@@ -347,7 +348,7 @@ public class AgentsControllerTests
         // Arrange
         var agentId = 1;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(agentId);
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         _mockAgentService
@@ -370,7 +371,7 @@ public class AgentsControllerTests
         var agentId = 1;
         var otherAgentId = 2;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(agentId);
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         // Act
@@ -387,7 +388,7 @@ public class AgentsControllerTests
         // Arrange
         var agentId = 5;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(999);
+        _mockUserContext.Setup(x => x.Id).Returns(999);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockAgentService
@@ -410,7 +411,7 @@ public class AgentsControllerTests
         var agentId = 999;
 
         // Set up as Management so authorization passes
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockAgentService

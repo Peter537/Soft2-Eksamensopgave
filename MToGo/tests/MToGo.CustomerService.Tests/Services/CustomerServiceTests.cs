@@ -3,19 +3,28 @@ using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
 using MToGo.CustomerService.Services;
-using MToGo.Shared.Models.Customer;
+using MToGo.Shared.Security.Authentication;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Password;
 
 namespace MToGo.CustomerService.Tests.Services;
 
 public class CustomerServiceTests
 {
     private readonly Mock<ILegacyCustomerApiClient> _mockLegacyClient;
+    private readonly Mock<IPasswordHasher> _mockPasswordHasher;
+    private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly CustomerService.Services.CustomerService _sut;
 
     public CustomerServiceTests()
     {
         _mockLegacyClient = new Mock<ILegacyCustomerApiClient>();
-        _sut = new CustomerService.Services.CustomerService(_mockLegacyClient.Object);
+        _mockPasswordHasher = new Mock<IPasswordHasher>();
+        _mockJwtTokenService = new Mock<IJwtTokenService>();
+        _sut = new CustomerService.Services.CustomerService(
+            _mockLegacyClient.Object,
+            _mockPasswordHasher.Object,
+            _mockJwtTokenService.Object);
     }
 
     #region RegisterCustomerAsync Tests
@@ -36,6 +45,10 @@ public class CustomerServiceTests
         };
         var expectedResponse = new CreateCustomerResponse { Id = 1 };
 
+        _mockPasswordHasher
+            .Setup(x => x.HashPassword(It.IsAny<string>()))
+            .Returns("hashed-password");
+
         _mockLegacyClient
             .Setup(x => x.CreateCustomerAsync(It.IsAny<Customer>()))
             .ReturnsAsync(expectedResponse);
@@ -45,7 +58,8 @@ public class CustomerServiceTests
 
         // Assert
         Assert.Equal(expectedResponse.Id, result.Id);
-        _mockLegacyClient.Verify(x => x.CreateCustomerAsync(It.IsAny<Customer>()), Times.Once);
+        _mockPasswordHasher.Verify(x => x.HashPassword("SecurePass123!"), Times.Once);
+        _mockLegacyClient.Verify(x => x.CreateCustomerAsync(It.Is<Customer>(c => c.Password == "hashed-password")), Times.Once);
     }
 
     [Fact]
@@ -62,6 +76,10 @@ public class CustomerServiceTests
             PhoneNumber = "+4512345678",
             LanguagePreference = "en"
         };
+
+        _mockPasswordHasher
+            .Setup(x => x.HashPassword(It.IsAny<string>()))
+            .Returns("hashed-password");
 
         _mockLegacyClient
             .Setup(x => x.CreateCustomerAsync(It.IsAny<Customer>()))
@@ -92,6 +110,10 @@ public class CustomerServiceTests
         };
         var expectedResponse = new CreateCustomerResponse { Id = 1 };
 
+        _mockPasswordHasher
+            .Setup(x => x.HashPassword(It.IsAny<string>()))
+            .Returns("hashed-password");
+
         _mockLegacyClient
             .Setup(x => x.CreateCustomerAsync(It.IsAny<Customer>()))
             .ReturnsAsync(expectedResponse);
@@ -112,18 +134,29 @@ public class CustomerServiceTests
     {
         // Arrange
         var request = new CustomerLoginRequest("john@example.com", "SecurePass123!");
-        var expectedResponse = new CustomerLoginResponse("legacy-token-1");
+        var legacyResponse = new LegacyLoginResponse(1, "John Doe", "john@example.com", "hashed-password");
+        var expectedJwt = "generated-jwt-token";
 
         _mockLegacyClient
             .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
-            .ReturnsAsync(expectedResponse);
+            .ReturnsAsync(legacyResponse);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword("SecurePass123!", "hashed-password"))
+            .Returns(true);
+
+        _mockJwtTokenService
+            .Setup(x => x.GenerateToken(1, "john@example.com", UserRoles.Customer, "John Doe"))
+            .Returns(expectedJwt);
 
         // Act
         var result = await _sut.LoginAsync(request);
 
         // Assert
-        Assert.Equal(expectedResponse.Jwt, result.Jwt);
+        Assert.Equal(expectedJwt, result.Jwt);
         _mockLegacyClient.Verify(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()), Times.Once);
+        _mockPasswordHasher.Verify(x => x.VerifyPassword("SecurePass123!", "hashed-password"), Times.Once);
+        _mockJwtTokenService.Verify(x => x.GenerateToken(1, "john@example.com", UserRoles.Customer, "John Doe"), Times.Once);
     }
 
     [Fact]
@@ -131,10 +164,15 @@ public class CustomerServiceTests
     {
         // Arrange
         var request = new CustomerLoginRequest("john@example.com", "WrongPassword!");
+        var legacyResponse = new LegacyLoginResponse(1, "John Doe", "john@example.com", "hashed-password");
 
         _mockLegacyClient
             .Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
-            .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
+            .ReturnsAsync(legacyResponse);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword("WrongPassword!", "hashed-password"))
+            .Returns(false);
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedAccessException>(

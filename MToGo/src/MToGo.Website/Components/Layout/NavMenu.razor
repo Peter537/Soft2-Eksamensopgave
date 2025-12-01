@@ -1,4 +1,5 @@
 ﻿@inject CultureService CultureService
+@inject AuthService Auth
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject ILocalizerService L
@@ -25,16 +26,24 @@
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Home"]
             </NavLink>
         </div>
-        @if (CultureService.IsLoggedIn)
+        @if (Auth.IsCustomer)
         {
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="profile">
-                <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Profile"]
+            <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Profile"]
             </NavLink>
             </div>
             <div class="nav-item px-3">
-            <button class="nav-link" @onclick="HandleSignOut">
-                <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            <button class="nav-link" @onclick="HandleSignOutCustomer">
+            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            </button>
+            </div>
+        }
+        else if (Auth.IsAgent)
+        {
+            <div class="nav-item px-3">
+            <button class="nav-link" @onclick="HandleSignOutAgent">
+            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
             </button>
             </div>
         }
@@ -42,12 +51,12 @@
         {
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="register">
-                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Register"]
+            <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Register"]
             </NavLink>
             </div>
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="login">
-                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Login"]
+            <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Login"]
             </NavLink>
             </div>
         }
@@ -56,6 +65,7 @@
         protected override void OnInitialized()
         {
             CultureService.OnChange += OnCultureChanged;
+            Auth.OnChange += OnAuthChanged;
         }
 
         private void OnCultureChanged()
@@ -63,19 +73,31 @@
             InvokeAsync(StateHasChanged);
         }
 
+        private void OnAuthChanged()
+        {
+            InvokeAsync(StateHasChanged);
+        }
+
         public void Dispose()
         {
             CultureService.OnChange -= OnCultureChanged;
+            Auth.OnChange -= OnAuthChanged;
         }
     }
     </nav>
 </div>
 
 @code {
-    private void HandleSignOut()
+    private async Task HandleSignOutCustomer()
     {
-        CultureService.Logout();
+        await Auth.LogoutAsync();
         Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private async Task HandleSignOutAgent()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/agent/login", forceLoad: true);
     }
 
     private async Task HandleLanguageChange(ChangeEventArgs e)
@@ -83,13 +105,13 @@
         var culture = e.Value?.ToString() ?? "en";
         CultureService.SetCulture(culture);
 
-        // If user is logged in, persist the language preference to the backend
-        if (CultureService.IsLoggedIn)
+        // If user is logged in as customer, persist the language preference to the backend
+        if (Auth.IsCustomer)
         {
             try
             {
                 var updateRequest = new { LanguagePreference = culture };
-                await Http.PatchAsJsonAsync($"/api/v1/customers/{CultureService.CustomerId}", updateRequest);
+                await Http.PatchAsJsonAsync($"/api/v1/customers/{Auth.Id}", updateRequest);
             }
             catch
             {

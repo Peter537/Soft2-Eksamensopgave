@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using MToGo.OrderService.Logging;
 using MToGo.OrderService.Models;
 using MToGo.OrderService.Services;
-using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Context;
 
 namespace MToGo.OrderService.Controllers
 {
@@ -120,7 +121,7 @@ namespace MToGo.OrderService.Controllers
             var userContext = _userContextAccessor.UserContext;
             
             // Agent can only assign themselves
-            if (userContext.UserId != request.AgentId)
+            if (userContext.Id != request.AgentId)
             {
                 return Forbid();
             }
@@ -289,14 +290,14 @@ namespace MToGo.OrderService.Controllers
         {
             var userContext = _userContextAccessor.UserContext;
 
-            if (!userContext.UserId.HasValue || string.IsNullOrEmpty(userContext.Role))
+            if (!userContext.Id.HasValue || string.IsNullOrEmpty(userContext.Role))
             {
                 return Forbid();
             }
             
-            _logger.ReceivedGetOrderDetailRequest(id, userContext.UserId.Value, userContext.Role);
+            _logger.ReceivedGetOrderDetailRequest(id, userContext.Id.Value, userContext.Role);
 
-            var result = await _orderService.GetOrderDetailAsync(id, userContext.UserId.Value, userContext.Role);
+            var result = await _orderService.GetOrderDetailAsync(id, userContext.Id.Value, userContext.Role);
 
             if (!result.Success)
             {

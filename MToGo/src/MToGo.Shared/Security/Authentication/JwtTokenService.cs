@@ -3,8 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using MToGo.Shared.Security.Authorization;
 
-namespace MToGo.Shared.Security;
+namespace MToGo.Shared.Security.Authentication;
 
 public class JwtTokenService : IJwtTokenService
 {
@@ -24,7 +25,7 @@ public class JwtTokenService : IJwtTokenService
 
         var claims = new List<Claim>
         {
-            new(JwtClaims.UserId, userId.ToString()),
+            new(JwtClaims.Id, userId.ToString()),
             new(JwtClaims.Email, email),
             new(JwtClaims.Role, role),
             new(ClaimTypes.Role, role) // Standard role claim for [Authorize(Roles = "...")] support
@@ -91,12 +92,12 @@ public class JwtTokenService : IJwtTokenService
         try
         {
             var jwtToken = _tokenHandler.ReadJwtToken(token);
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtClaims.UserId);
+            var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtClaims.Id);
             var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtClaims.Role);
 
-            if (userIdClaim != null && roleClaim != null && int.TryParse(userIdClaim.Value, out var userId))
+            if (idClaim != null && roleClaim != null && int.TryParse(idClaim.Value, out var id))
             {
-                return (userId, roleClaim.Value);
+                return (id, roleClaim.Value);
             }
 
             return null;

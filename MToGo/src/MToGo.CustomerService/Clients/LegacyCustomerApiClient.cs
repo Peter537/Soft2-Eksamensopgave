@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
-using MToGo.Shared.Models.Customer;
 
 namespace MToGo.CustomerService.Clients;
 
@@ -56,7 +55,7 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
         return result ?? throw new InvalidOperationException("Failed to deserialize registration response.");
     }
 
-    public async Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request)
+    public async Task<LegacyLoginResponse> LoginAsync(CustomerLoginRequest request)
     {
         _logger.LogInformation("Attempting to log in");
 
@@ -65,15 +64,15 @@ public class LegacyCustomerApiClient : ILegacyCustomerApiClient
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogWarning("Login failed - invalid credentials for email");
+            _logger.LogWarning("Login failed - customer not found for email");
             throw new UnauthorizedAccessException("Invalid email or password.");
         }
 
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<CustomerLoginResponse>();
+        var result = await response.Content.ReadFromJsonAsync<LegacyLoginResponse>();
         
-        _logger.LogInformation("Login successful");
+        _logger.LogInformation("Customer data retrieved for login verification");
         
         return result ?? throw new InvalidOperationException("Failed to deserialize login response.");
     }
