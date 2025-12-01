@@ -29,12 +29,20 @@
         {
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="profile">
-                <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Profile"]
+            <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Profile"]
             </NavLink>
             </div>
             <div class="nav-item px-3">
-            <button class="nav-link" @onclick="HandleSignOut">
-                <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            <button class="nav-link" @onclick="HandleSignOutCustomer">
+            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            </button>
+            </div>
+        }
+        else if (CultureService.IsAgentLoggedIn)
+        {
+            <div class="nav-item px-3">
+            <button class="nav-link" @onclick="HandleSignOutAgent">
+            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
             </button>
             </div>
         }
@@ -42,12 +50,12 @@
         {
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="register">
-                <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Register"]
+            <span class="bi bi-person-plus-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Register"]
             </NavLink>
             </div>
             <div class="nav-item px-3">
             <NavLink class="nav-link" href="login">
-                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Login"]
+            <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Login"]
             </NavLink>
             </div>
         }
@@ -72,10 +80,16 @@
 </div>
 
 @code {
-    private void HandleSignOut()
+    private void HandleSignOutCustomer()
     {
         CultureService.Logout();
         Navigation.NavigateTo("/login", forceLoad: true);
+    }
+
+    private void HandleSignOutAgent()
+    {
+        CultureService.AgentLogout();
+        Navigation.NavigateTo("/agent/login", forceLoad: true);
     }
 
     private async Task HandleLanguageChange(ChangeEventArgs e)
