@@ -1,0 +1,40 @@
+gateway:
+  - MToGo/src/MToGo.Gateway/**/*
+  - MToGo/src/MToGo.Gateway/*
+
+frontend:
+  - MToGo/src/MToGo.Website/**/*
+  - MToGo/src/MToGo.Website/*
+
+e2e-test:
+  - MToGo/tests/MToGo.E2ETest/**/*
+  - MToGo/tests/MToGo.E2ETest/*
+
+integration-test:
+  - MToGo/tests/MToGo.IntegrationTest/**/*
+  - MToGo/tests/MToGo.IntegrationTest/*
+
+performance-test:
+  - MToGo/tests/MToGo.PerformanceTest/**/*
+  - MToGo/tests/MToGo.PerformanceTest/*
+
+backend-lowercase:
+  match: MToGo/src/MToGo.([^/]+)/**
+  replace: $1-backend
+  transform: lowercase
+
+test:
+  - MToGo/tests/MToGo.*.Tests/**/*
+  - MToGo/tests/MToGo.*.Tests/*
+
+legacy-backend:
+  - LegacyMToGo/**/*
+
+docs:
+  - documentation/**/*
+
+devops:
+  - .github/**/*
+  - .github/*
+  - terraform/**/*
+  - terraform/*
