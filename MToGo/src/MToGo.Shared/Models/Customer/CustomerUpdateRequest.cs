@@ -1,9 +1,2 @@
-namespace MToGo.Shared.Models.Customer;
-
-public record CustomerUpdateRequest(
-    string? Name,
-    string? DeliveryAddress,
-    string? NotificationMethod,
-    string? PhoneNumber,
-    string? LanguagePreference
-);
+// Types moved to `MToGo.CustomerService.Models`.
+// Kept an empty placeholder to avoid breaking other projects that may reference the file path.

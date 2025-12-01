@@ -2,7 +2,9 @@ using MToGo.AgentService.Entities;
 using MToGo.AgentService.Exceptions;
 using MToGo.AgentService.Models;
 using MToGo.AgentService.Repositories;
-using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authentication;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Password;
 
 namespace MToGo.AgentService.Services;
 
