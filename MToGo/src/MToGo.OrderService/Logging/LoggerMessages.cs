@@ -249,5 +249,53 @@ namespace MToGo.OrderService.Logging
         // Audit log
         [LoggerMessage(Level = LogLevel.Information, Message = "Order detail retrieved: OrderId={OrderId}, UserId={UserId}, Role={Role}")]
         public static partial void OrderDetailRetrieved(this ILogger logger, int orderId, int userId, string role);
+
+        // Get Active Customer Orders - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetActiveCustomerOrders request for CustomerId: {CustomerId}")]
+        public static partial void ReceivedGetActiveCustomerOrdersRequest(this ILogger logger, int customerId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetActiveCustomerOrders completed: CustomerId={CustomerId}, OrderCount={OrderCount}")]
+        public static partial void GetActiveCustomerOrdersCompleted(this ILogger logger, int customerId, int orderCount);
+
+        // Get Active Customer Orders - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting active orders for CustomerId: {CustomerId}")]
+        public static partial void GettingActiveCustomerOrders(this ILogger logger, int customerId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Active customer orders retrieved: CustomerId={CustomerId}, OrderCount={OrderCount}")]
+        public static partial void ActiveCustomerOrdersRetrieved(this ILogger logger, int customerId, int orderCount);
+
+        // Get Active Partner Orders - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetActivePartnerOrders request for PartnerId: {PartnerId}")]
+        public static partial void ReceivedGetActivePartnerOrdersRequest(this ILogger logger, int partnerId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetActivePartnerOrders completed: PartnerId={PartnerId}, OrderCount={OrderCount}")]
+        public static partial void GetActivePartnerOrdersCompleted(this ILogger logger, int partnerId, int orderCount);
+
+        // Get Active Partner Orders - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting active orders for PartnerId: {PartnerId}")]
+        public static partial void GettingActivePartnerOrders(this ILogger logger, int partnerId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Active partner orders retrieved: PartnerId={PartnerId}, OrderCount={OrderCount}")]
+        public static partial void ActivePartnerOrdersRetrieved(this ILogger logger, int partnerId, int orderCount);
+
+        // Get Active Agent Orders - Controller logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Received GetActiveAgentOrders request for AgentId: {AgentId}")]
+        public static partial void ReceivedGetActiveAgentOrdersRequest(this ILogger logger, int agentId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "GetActiveAgentOrders completed: AgentId={AgentId}, OrderCount={OrderCount}")]
+        public static partial void GetActiveAgentOrdersCompleted(this ILogger logger, int agentId, int orderCount);
+
+        // Get Active Agent Orders - Service logs
+        [LoggerMessage(Level = LogLevel.Information, Message = "Getting active orders for AgentId: {AgentId}")]
+        public static partial void GettingActiveAgentOrders(this ILogger logger, int agentId);
+
+        // Audit log
+        [LoggerMessage(Level = LogLevel.Information, Message = "Active agent orders retrieved: AgentId={AgentId}, OrderCount={OrderCount}")]
+        public static partial void ActiveAgentOrdersRetrieved(this ILogger logger, int agentId, int orderCount);
     }
 }
