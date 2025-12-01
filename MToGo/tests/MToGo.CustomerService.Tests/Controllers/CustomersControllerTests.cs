@@ -4,8 +4,8 @@ using MToGo.CustomerService.Controllers;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
 using MToGo.CustomerService.Services;
-using MToGo.Shared.Models.Customer;
-using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Context;
 
 namespace MToGo.CustomerService.Tests.Controllers;
 
@@ -23,7 +23,7 @@ public class CustomersControllerTests
         _mockUserContext = new Mock<IUserContext>();
         
         // Default setup: Customer with ID 1 accessing their own data
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
         _mockUserContextAccessor.Setup(x => x.UserContext).Returns(_mockUserContext.Object);
         
@@ -220,7 +220,7 @@ public class CustomersControllerTests
         var customerId = 999;
         
         // Set up as Management so authorization passes and we can test the 404
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockCustomerService
@@ -317,7 +317,7 @@ public class CustomersControllerTests
         );
 
         // Set up as Management so authorization passes and we can test the 404
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockCustomerService
@@ -456,7 +456,7 @@ public class CustomersControllerTests
         var customerId = 1;
         var otherCustomerId = 2;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(customerId);
+        _mockUserContext.Setup(x => x.Id).Returns(customerId);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
 
         // Act
@@ -473,7 +473,7 @@ public class CustomersControllerTests
         // Arrange
         var customerId = 5;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(999);
+        _mockUserContext.Setup(x => x.Id).Returns(999);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockCustomerService
@@ -496,7 +496,7 @@ public class CustomersControllerTests
         var customerId = 999;
 
         // Set up as Management so authorization passes and we can test the 404
-        _mockUserContext.Setup(x => x.UserId).Returns(1);
+        _mockUserContext.Setup(x => x.Id).Returns(1);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
 
         _mockCustomerService
@@ -517,7 +517,7 @@ public class CustomersControllerTests
         // Arrange - Customer deleting own account
         var customerId = 1;
 
-        _mockUserContext.Setup(x => x.UserId).Returns(customerId);
+        _mockUserContext.Setup(x => x.Id).Returns(customerId);
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
 
         _mockCustomerService

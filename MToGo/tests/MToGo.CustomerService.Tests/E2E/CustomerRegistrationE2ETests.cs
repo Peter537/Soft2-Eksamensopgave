@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
-using MToGo.Shared.Models.Customer;
+using MToGo.CustomerService.Models;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
 
@@ -660,7 +660,7 @@ internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
         return result ?? throw new InvalidOperationException("Failed to deserialize response.");
     }
 
-    public async Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request)
+    public async Task<LegacyLoginResponse> LoginAsync(CustomerLoginRequest request)
     {
         _logger.LogInformation("E2E: Login attempt for: {Email}", request.Email);
 
@@ -674,8 +674,8 @@ internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
 
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<CustomerLoginResponse>();
-        _logger.LogInformation("E2E: Login successful for: {Email}", request.Email);
+        var result = await response.Content.ReadFromJsonAsync<LegacyLoginResponse>();
+        _logger.LogInformation("E2E: Login data retrieved for: {Email}", request.Email);
         
         return result ?? throw new InvalidOperationException("Failed to deserialize response.");
     }

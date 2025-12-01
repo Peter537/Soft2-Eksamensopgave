@@ -7,7 +7,7 @@ using Moq;
 using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
-using MToGo.Shared.Models.Customer;
+
 using MToGo.Testing;
 
 namespace MToGo.CustomerService.Tests.Integration;
@@ -131,10 +131,14 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
     public async Task Login_WithValidCredentials_ReturnsJwtToken()
     {
         // Arrange
+        // Use a real BCrypt hash of "SecurePass123!" for password verification to work
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("SecurePass123!");
+        var legacyResponse = new LegacyLoginResponse(1, "John Doe", "john@example.com", hashedPassword);
+        
         var client = CreateClientWithMockedLegacyApi(mock =>
         {
             mock.Setup(x => x.LoginAsync(It.IsAny<CustomerLoginRequest>()))
-                .ReturnsAsync(new CustomerLoginResponse("valid-jwt-token"));
+                .ReturnsAsync(legacyResponse);
         });
 
         var request = new CustomerLoginRequest("john@example.com", "SecurePass123!");
