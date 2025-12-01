@@ -1,0 +1,105 @@
+# Backend Services
+agentbonusservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.AgentBonusService/**
+
+agentservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.AgentService/**
+
+customerservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.CustomerService/**
+
+feedbackhubservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.FeedbackHubService/**
+
+notificationservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.NotificationService/**
+
+orderservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.OrderService/**
+
+partnerservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.PartnerService/**
+
+shared-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.Shared/**
+
+websocketagentservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.WebSocketAgentService/**
+
+websocketcustomerservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.WebSocketCustomerService/**
+
+websocketpartnerservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.WebSocketPartnerService/**
+
+# Gateway
+gateway:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.Gateway/**
+
+# Frontend
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.Website/**
+
+# Tests
+e2e-test:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/tests/MToGo.E2ETest/**
+
+integration-test:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/tests/MToGo.IntegrationTest/**
+
+performance-test:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/tests/MToGo.PerformanceTest/**
+
+test:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/tests/MToGo.*.Tests/**
+
+# Other
+legacy-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - LegacyMToGo/**
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - documentation/**
+
+devops:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - terraform/**
