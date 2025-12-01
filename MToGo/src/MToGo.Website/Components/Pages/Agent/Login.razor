@@ -1,6 +1,7 @@
 @page "/agent/login"
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject AuthService Auth
 @inject CultureService CultureService
 @inject ILocalizerService L
 @implements IDisposable
@@ -77,15 +78,23 @@
     private string? successMessage;
     private bool isLoading;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize auth then check if already logged in
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsLoggedIn && Auth.IsAgent)
+            {
+                Navigation.NavigateTo("/agent/orders");
+            }
+        }
+    }
+
     protected override void OnInitialized()
     {
         CultureService.OnChange += OnCultureChanged;
-        
-        // Check if agent is already logged in
-        if (CultureService.IsAgentLoggedIn)
-        {
-            Navigation.NavigateTo("/agent/orders");
-        }
     }
 
     private void OnCultureChanged()
@@ -113,15 +122,8 @@
                 var result = await response.Content.ReadFromJsonAsync<AgentLoginResponse>();
                 if (result?.Jwt != null)
                 {
-                    // Store the JWT token for authenticated API calls
-                    CultureService.SetAgentJwtToken(result.Jwt);
-                    
-                    // Extract agent ID from JWT token
-                    var agentId = ExtractAgentIdFromToken(result.Jwt);
-                    if (agentId > 0)
-                    {
-                        CultureService.SetAgentId(agentId);
-                    }
+                    // Store the JWT token using AuthService (persists to localStorage)
+                    await Auth.LoginAsync(result.Jwt);
                     
                     successMessage = L["Pages.Agent.Login.LoginSuccessful"];
                     
@@ -152,27 +154,6 @@
         {
             isLoading = false;
         }
-    }
-
-    private int ExtractAgentIdFromToken(string jwt)
-    {
-        try
-        {
-            // Decode the JWT token to extract the userId claim
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(jwt);
-            
-            var userIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "userId");
-            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
-            {
-                return userId;
-            }
-        }
-        catch
-        {
-            // Token parsing failed
-        }
-        return 0;
     }
 
     public class AgentLoginModel
