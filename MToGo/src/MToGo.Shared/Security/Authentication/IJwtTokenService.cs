@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace MToGo.Shared.Security;
+namespace MToGo.Shared.Security.Authentication;
 
 public interface IJwtTokenService
 {

@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Http;
+namespace MToGo.Shared.Security.Context;
 
-namespace MToGo.Shared.Security;
+using Microsoft.AspNetCore.Http;
 
 public interface IUserContextAccessor
 {
@@ -16,6 +16,5 @@ public class UserContextAccessor : IUserContextAccessor
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public IUserContext UserContext => 
-        new UserContext(_httpContextAccessor.HttpContext?.User);
+    public IUserContext UserContext => new UserContext(_httpContextAccessor.HttpContext?.User);
 }
