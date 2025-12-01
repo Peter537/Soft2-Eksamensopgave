@@ -69,7 +69,7 @@ namespace MToGo.OrderService.Tests.Fixtures
             _partnerServiceClientMock = new Mock<IPartnerServiceClient>();
             _partnerServiceClientMock
                 .Setup(x => x.GetPartnerByIdAsync(It.IsAny<int>()))
-                .ReturnsAsync(new PartnerResponse { Id = 1, Name = "Test Partner", Location = "Test Location" });
+                .ReturnsAsync(new PartnerResponse { Id = 1, Name = "Test Partner", Address = "Test Address" });
             _agentServiceClientMock = new Mock<IAgentServiceClient>();
             _agentServiceClientMock
                 .Setup(x => x.GetAgentByIdAsync(It.IsAny<int>()))

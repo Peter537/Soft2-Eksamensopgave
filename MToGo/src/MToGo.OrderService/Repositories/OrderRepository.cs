@@ -11,6 +11,9 @@ namespace MToGo.OrderService.Repositories
         Task<List<Order>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
         Task<List<Order>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
         Task<List<Order>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<Order>> GetActiveOrdersByCustomerIdAsync(int customerId);
+        Task<List<Order>> GetActiveOrdersByAgentIdAsync(int agentId);
+        Task<List<Order>> GetActiveOrdersByPartnerIdAsync(int partnerId);
     }
 
     public class OrderRepository : IOrderRepository
@@ -107,6 +110,33 @@ namespace MToGo.OrderService.Repositories
             }
 
             return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+        }
+
+        public async Task<List<Order>> GetActiveOrdersByCustomerIdAsync(int customerId)
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.CustomerId == customerId && o.Status != OrderStatus.Delivered && o.Status != OrderStatus.Rejected)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Order>> GetActiveOrdersByAgentIdAsync(int agentId)
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.AgentId == agentId && o.Status != OrderStatus.Delivered && o.Status != OrderStatus.Rejected)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Order>> GetActiveOrdersByPartnerIdAsync(int partnerId)
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.PartnerId == partnerId && o.Status != OrderStatus.Delivered && o.Status != OrderStatus.Rejected)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
         }
     }
 }

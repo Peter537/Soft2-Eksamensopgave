@@ -20,6 +20,9 @@ namespace MToGo.OrderService.Services
         Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
         Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null);
         Task<GetOrderDetailResult> GetOrderDetailAsync(int orderId, int userId, string userRole);
+        Task<List<CustomerOrderResponse>> GetActiveOrdersByCustomerIdAsync(int customerId);
+        Task<List<PartnerOrderResponse>> GetActiveOrdersByPartnerIdAsync(int partnerId);
+        Task<List<AgentDeliveryResponse>> GetActiveOrdersByAgentIdAsync(int agentId);
     }
 
     public enum AssignAgentResult
@@ -164,7 +167,7 @@ namespace MToGo.OrderService.Services
             // Fetch partner information
             var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
             var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
-            var partnerAddress = partner?.Location ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerAddress = partner?.Address ?? string.Empty; // TODO: Null checks pga manglende Service
 
             // Publish OrderAcceptedEvent
             var orderEvent = new OrderAcceptedEvent
@@ -275,7 +278,7 @@ namespace MToGo.OrderService.Services
             // Fetch partner information
             var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
             var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
-            var partnerAddress = partner?.Location ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerAddress = partner?.Address ?? string.Empty; // TODO: Null checks pga manglende Service
 
             // Publish OrderReadyEvent
             var orderEvent = new OrderReadyEvent
@@ -328,7 +331,7 @@ namespace MToGo.OrderService.Services
             // Fetch partner information for the agent's view
             var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
             var partnerName = partner?.Name ?? string.Empty;
-            var partnerAddress = partner?.Location ?? string.Empty;
+            var partnerAddress = partner?.Address ?? string.Empty;
 
             // Publish AgentAssignedEvent with full order details
             var orderEvent = new AgentAssignedEvent
@@ -592,6 +595,90 @@ namespace MToGo.OrderService.Services
                     }).ToList()
                 }
             };
+        }
+
+        public async Task<List<CustomerOrderResponse>> GetActiveOrdersByCustomerIdAsync(int customerId)
+        {
+            _logger.GettingActiveCustomerOrders(customerId);
+
+            var orders = await _orderRepository.GetActiveOrdersByCustomerIdAsync(customerId);
+
+            _logger.ActiveCustomerOrdersRetrieved(customerId, orders.Count);
+
+            return orders.Select(o => new CustomerOrderResponse
+            {
+                Id = o.Id,
+                PartnerId = o.PartnerId,
+                AgentId = o.AgentId,
+                DeliveryAddress = o.DeliveryAddress,
+                ServiceFee = o.ServiceFee,
+                DeliveryFee = o.DeliveryFee,
+                Status = o.Status.ToString(),
+                OrderCreatedTime = o.CreatedAt.ToString("O"),
+                Items = o.Items.Select(i => new CustomerOrderItemResponse
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<List<PartnerOrderResponse>> GetActiveOrdersByPartnerIdAsync(int partnerId)
+        {
+            _logger.GettingActivePartnerOrders(partnerId);
+
+            var orders = await _orderRepository.GetActiveOrdersByPartnerIdAsync(partnerId);
+
+            _logger.ActivePartnerOrdersRetrieved(partnerId, orders.Count);
+
+            return orders.Select(o => new PartnerOrderResponse
+            {
+                Id = o.Id,
+                CustomerId = o.CustomerId,
+                AgentId = o.AgentId,
+                DeliveryAddress = o.DeliveryAddress,
+                ServiceFee = o.ServiceFee,
+                DeliveryFee = o.DeliveryFee,
+                Status = o.Status.ToString(),
+                OrderCreatedTime = o.CreatedAt.ToString("O"),
+                Items = o.Items.Select(i => new PartnerOrderItemResponse
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToList();
+        }
+
+        public async Task<List<AgentDeliveryResponse>> GetActiveOrdersByAgentIdAsync(int agentId)
+        {
+            _logger.GettingActiveAgentOrders(agentId);
+
+            var orders = await _orderRepository.GetActiveOrdersByAgentIdAsync(agentId);
+
+            _logger.ActiveAgentOrdersRetrieved(agentId, orders.Count);
+
+            return orders.Select(o => new AgentDeliveryResponse
+            {
+                Id = o.Id,
+                CustomerId = o.CustomerId,
+                PartnerId = o.PartnerId,
+                DeliveryAddress = o.DeliveryAddress,
+                ServiceFee = o.ServiceFee,
+                DeliveryFee = o.DeliveryFee,
+                Status = o.Status.ToString(),
+                OrderCreatedTime = o.CreatedAt.ToString("O"),
+                Items = o.Items.Select(i => new AgentDeliveryItemResponse
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            }).ToList();
         }
     }
 }

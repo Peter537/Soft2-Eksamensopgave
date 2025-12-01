@@ -205,6 +205,20 @@ namespace MToGo.OrderService.Controllers
             return Ok(orders);
         }
 
+        [HttpGet("customer/{id}/active")]
+        [Authorize(Policy = AuthorizationPolicies.CustomerOnly)]
+        [ProducesResponseType(typeof(List<CustomerOrderResponse>), 200)]
+        public async Task<IActionResult> GetActiveCustomerOrders(int id)
+        {
+            _logger.ReceivedGetActiveCustomerOrdersRequest(id);
+
+            var orders = await _orderService.GetActiveOrdersByCustomerIdAsync(id);
+
+            _logger.GetActiveCustomerOrdersCompleted(id, orders.Count);
+
+            return Ok(orders);
+        }
+
         [HttpGet("agent/{id}")]
         [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
         [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
@@ -222,6 +236,20 @@ namespace MToGo.OrderService.Controllers
             return Ok(deliveries);
         }
 
+        [HttpGet("agent/{id}/active")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
+        public async Task<IActionResult> GetActiveAgentOrders(int id)
+        {
+            _logger.ReceivedGetActiveAgentOrdersRequest(id);
+
+            var orders = await _orderService.GetActiveOrdersByAgentIdAsync(id);
+
+            _logger.GetActiveAgentOrdersCompleted(id, orders.Count);
+
+            return Ok(orders);
+        }
+
         [HttpGet("partner/{id}")]
         [Authorize(Policy = AuthorizationPolicies.PartnerOnly)]
         [ProducesResponseType(typeof(List<PartnerOrderResponse>), 200)]
@@ -235,6 +263,20 @@ namespace MToGo.OrderService.Controllers
             var orders = await _orderService.GetOrdersByPartnerIdAsync(id, startDate, endDate);
 
             _logger.GetPartnerOrdersCompleted(id, orders.Count);
+
+            return Ok(orders);
+        }
+
+        [HttpGet("partner/{id}/active")]
+        [Authorize(Policy = AuthorizationPolicies.PartnerOnly)]
+        [ProducesResponseType(typeof(List<PartnerOrderResponse>), 200)]
+        public async Task<IActionResult> GetActivePartnerOrders(int id)
+        {
+            _logger.ReceivedGetActivePartnerOrdersRequest(id);
+
+            var orders = await _orderService.GetActiveOrdersByPartnerIdAsync(id);
+
+            _logger.GetActivePartnerOrdersCompleted(id, orders.Count);
 
             return Ok(orders);
         }

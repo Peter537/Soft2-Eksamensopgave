@@ -211,8 +211,12 @@ namespace MToGo.OrderService.Tests.StepDefinitions
         [Then(@"the response contains an empty list")]
         public void ThenTheResponseContainsAnEmptyList()
         {
-            _orders.Should().NotBeNull();
-            _orders.Should().BeEmpty();
+            // Try to get orders from ScenarioContext first (for shared usage), fall back to local field
+            var orders = _scenarioContext.TryGetValue("Orders", out var contextOrders) 
+                ? contextOrders as List<CustomerOrderResponse> 
+                : _orders;
+            orders.Should().NotBeNull();
+            orders.Should().BeEmpty();
         }
 
         [Then(@"only orders within the date range are returned")]
