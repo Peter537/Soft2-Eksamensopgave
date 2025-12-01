@@ -37,7 +37,7 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 
         var claims = new List<Claim>
         {
-            new("userId", TestUserId),
+            new("id", TestUserId),
             new("email", TestUserEmail ?? "test@example.com"),
             new("role", TestUserRole),
             new(ClaimTypes.Role, TestUserRole),

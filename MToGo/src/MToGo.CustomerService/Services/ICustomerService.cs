@@ -1,5 +1,4 @@
 using MToGo.CustomerService.Models;
-using MToGo.Shared.Models.Customer;
 
 namespace MToGo.CustomerService.Services;
 

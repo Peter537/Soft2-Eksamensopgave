@@ -1,5 +1,8 @@
-namespace MToGo.Shared.Security;
+namespace MToGo.Shared.Security.Authentication;
 
+/// <summary>
+/// Configuration settings for JWT token generation and validation.
+/// </summary>
 public class JwtSettings
 {
     public const string SectionName = "JwtSettings";

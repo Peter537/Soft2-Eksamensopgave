@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using MToGo.AgentService.Exceptions;
 using MToGo.AgentService.Models;
 using MToGo.AgentService.Services;
-using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Context;
 
 namespace MToGo.AgentService.Controllers;
 
@@ -73,7 +74,7 @@ public class AgentsController : ControllerBase
         var userContext = _userContextAccessor.UserContext;
 
         // Agents can only view their own profile, Management can view any
-        if (userContext.Role != UserRoles.Management && userContext.UserId != id)
+        if (userContext.Role != UserRoles.Management && userContext.Id != id)
         {
             return Forbid();
         }
@@ -102,7 +103,7 @@ public class AgentsController : ControllerBase
         var userContext = _userContextAccessor.UserContext;
 
         // Agents can only delete their own account, Management can delete any
-        if (userContext.Role != UserRoles.Management && userContext.UserId != id)
+        if (userContext.Role != UserRoles.Management && userContext.Id != id)
         {
             return Forbid();
         }

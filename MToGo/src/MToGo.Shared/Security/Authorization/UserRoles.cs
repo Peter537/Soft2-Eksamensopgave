@@ -1,4 +1,4 @@
-namespace MToGo.Shared.Security;
+namespace MToGo.Shared.Security.Authorization;
 
 public static class UserRoles
 {

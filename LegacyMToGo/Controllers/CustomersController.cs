@@ -2,16 +2,12 @@ using LegacyMToGo.Data;
 using LegacyMToGo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/customers")]
-public class CustomersController(LegacyContext dbContext, IConfiguration configuration) : ControllerBase
+public class CustomersController(LegacyContext dbContext) : ControllerBase
 {
     [HttpPost("post")]
     public async Task<ActionResult<object>> Create(CustomerCreateRequest request, CancellationToken cancellationToken)
@@ -33,7 +29,7 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
             Email = request.Email,
             DeliveryAddress = request.DeliveryAddress,
             NotificationMethod = method,
-            Password = HashPassword(request.Password),
+            Password = request.Password, // Password should already be hashed by CustomerService
             PhoneNumber = request.PhoneNumber,
             LanguagePreference = languagePref
         };
@@ -48,14 +44,18 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
     public async Task<ActionResult<object>> Login(CustomerLoginRequest request, CancellationToken cancellationToken)
     {
         var customer = await dbContext.Customers.FirstOrDefaultAsync(c => c.Email == request.Email, cancellationToken);
-        if (customer is null || customer.IsDeleted || !VerifyPassword(request.Password, customer.Password))
+        if (customer is null || customer.IsDeleted)
         {
             return Unauthorized();
         }
 
-        // Generate real JWT token
-        var token = GenerateJwtToken(customer);
-        return Ok(new { jwt = token });
+        // Return customer data and hashed password for CustomerService to verify and generate JWT
+        return Ok(new LegacyLoginResponse(
+            customer.Id,
+            customer.Name,
+            customer.Email,
+            customer.Password // Return hashed password for verification by CustomerService
+        ));
     }
 
     [HttpGet("get/{id:int}")]
@@ -138,55 +138,8 @@ public class CustomersController(LegacyContext dbContext, IConfiguration configu
         return NoContent();
     }
 
-    private string GenerateJwtToken(Customer customer)
-    {
-        var jwtSettings = configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? "MToGo-Super-Secret-Key-That-Should-Be-At-Least-256-Bits-Long-For-Security!";
-        var issuer = jwtSettings["Issuer"] ?? "MToGo";
-        var audience = jwtSettings["Audience"] ?? "MToGo-Services";
-        var expirationMinutes = int.TryParse(jwtSettings["ExpirationMinutes"], out var exp) ? exp : 60;
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var claims = new List<Claim>
-        {
-            new("userId", customer.Id.ToString()),
-            new("email", customer.Email),
-            new("role", "Customer"),
-            new(ClaimTypes.Role, "Customer"),
-            new("name", customer.Name)
-        };
-
-        var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
-            signingCredentials: credentials
-        );
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    private static string HashPassword(string value)
-    {
-        return BCrypt.Net.BCrypt.HashPassword(value ?? string.Empty, workFactor: 12);
-    }
-
-
-    private static bool VerifyPassword(string? plaintext, string hashed) 
-    {
-        return !string.IsNullOrEmpty(plaintext) && BCrypt.Net.BCrypt.Verify(plaintext, hashed);
-    }
-
     private static bool TryParseMethod(string? value, out NotificationMethod method)
     {
         return Enum.TryParse(value, true, out method);
     }
 }
-
-public record CustomerCreateRequest(string Name, string Email, string DeliveryAddress, string NotificationMethod, string Password, string PhoneNumber, string? LanguagePreference = "en");
-public record CustomerLoginRequest(string Email, string Password);
-public record CustomerUpdateRequest(string? Name, string? DeliveryAddress, string? NotificationMethod, string? PhoneNumber, string? LanguagePreference);
-public record CustomerResponse(string Name, string DeliveryAddress, string NotificationMethod, string? PhoneNumber, string? LanguagePreference);

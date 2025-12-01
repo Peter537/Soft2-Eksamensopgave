@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using MToGo.Shared.Security.Authentication;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Context;
+using MToGo.Shared.Security.Password;
 using System.Text;
 
 namespace MToGo.Shared.Security;

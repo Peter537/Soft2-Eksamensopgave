@@ -1,6 +1,7 @@
 @page "/order/{OrderId:int}"
 @inject HttpClient Http
 @inject CultureService CultureService
+@inject AuthService Auth
 @inject NavigationManager Navigation
 @inject ILocalizerService L
 @implements IDisposable
@@ -19,7 +20,7 @@
                     </button>
                 </div>
                 <div class="card-body">
-                    @if (!CultureService.IsLoggedIn)
+                    @if (!Auth.IsLoggedIn)
                     {
                         <div class="alert alert-warning">
                             <p class="mb-0">@L["Pages.Order.Detail.LoginRequired"] <a href="/login">@L["Pages.Order.Detail.LoginLink"]</a></p>
@@ -206,15 +207,22 @@
         CultureService.OnChange -= OnCultureChanged;
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (CultureService.IsLoggedIn)
+        if (firstRender)
         {
-            await LoadOrderDetail();
-        }
-        else
-        {
-            isLoading = false;
+            // Initialize auth (loads token from localStorage)
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsLoggedIn)
+            {
+                await LoadOrderDetail();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
         }
     }
 
@@ -228,9 +236,9 @@
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/orders/order/{OrderId}");
-            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            if (!string.IsNullOrEmpty(Auth.Token))
             {
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
             }
 
             var response = await Http.SendAsync(request);

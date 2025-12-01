@@ -71,7 +71,7 @@
                             </button>
 
                             <div class="mt-3 text-center">
-                                <p class="mb-0">@L["Pages.Agent.Register.HasAccount"] <a href="/login">@L["Pages.Agent.Register.LoginHere"]</a></p>
+                                <p class="mb-0">@L["Pages.Agent.Register.HasAccount"] <a href="/agent/login">@L["Pages.Agent.Register.LoginHere"]</a></p>
                             </div>
                         </div>
                     </EditForm>
@@ -133,7 +133,7 @@
                 successMessage = L.GetString("Pages.Agent.Register.RegistrationSuccessful", result?.Id ?? 0);
                 model = new();
                 await Task.Delay(1500);
-                Navigation.NavigateTo("/login");
+                Navigation.NavigateTo("/agent/login");
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
             {

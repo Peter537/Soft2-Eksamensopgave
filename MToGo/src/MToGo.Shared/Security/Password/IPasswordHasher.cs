@@ -1,5 +1,4 @@
-namespace MToGo.Shared.Security;
-
+namespace MToGo.Shared.Security.Password;
 
 public interface IPasswordHasher
 {

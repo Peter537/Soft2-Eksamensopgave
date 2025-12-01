@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
 using MToGo.CustomerService.Services;
-using MToGo.Shared.Models.Customer;
-using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authorization;
+using MToGo.Shared.Security.Context;
 
 namespace MToGo.CustomerService.Controllers;
 
@@ -74,7 +74,7 @@ public class CustomersController : ControllerBase
         var userContext = _userContextAccessor.UserContext;
         
         // Customers can only access their own profile, Management can access all
-        if (userContext.Role == UserRoles.Customer && userContext.UserId != id)
+        if (userContext.Role == UserRoles.Customer && userContext.Id != id)
         {
             return Forbid();
         }
@@ -104,7 +104,7 @@ public class CustomersController : ControllerBase
         var userContext = _userContextAccessor.UserContext;
         
         // Customers can only update their own profile, Management can update all
-        if (userContext.Role == UserRoles.Customer && userContext.UserId != id)
+        if (userContext.Role == UserRoles.Customer && userContext.Id != id)
         {
             return Forbid();
         }
@@ -137,7 +137,7 @@ public class CustomersController : ControllerBase
         var userContext = _userContextAccessor.UserContext;
         
         // Customers can only delete their own account, Management can delete any
-        if (userContext.Role == UserRoles.Customer && userContext.UserId != id)
+        if (userContext.Role == UserRoles.Customer && userContext.Id != id)
         {
             return Forbid();
         }

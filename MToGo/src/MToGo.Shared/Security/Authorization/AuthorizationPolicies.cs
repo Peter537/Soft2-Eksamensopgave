@@ -1,5 +1,9 @@
-namespace MToGo.Shared.Security;
+namespace MToGo.Shared.Security.Authorization;
 
+/// <summary>
+/// Policy names for authorization throughout the application.
+/// Use these with [Authorize(Policy = AuthorizationPolicies.XXX)]
+/// </summary>
 public static class AuthorizationPolicies
 {
     public const string CustomerOnly = "CustomerOnly";

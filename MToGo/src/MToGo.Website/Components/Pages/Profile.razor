@@ -1,6 +1,7 @@
 @page "/profile"
 @inject HttpClient Http
 @inject CultureService CultureService
+@inject AuthService Auth
 @inject NavigationManager Navigation
 @inject ILocalizerService L
 @implements IDisposable
@@ -16,7 +17,7 @@
                     <h3 class="mb-0">@L["Pages.Profile.Title"]</h3>
                 </div>
                 <div class="card-body">
-                    @if (!CultureService.IsLoggedIn)
+                    @if (!Auth.IsCustomer)
                     {
                         <div class="alert alert-warning">
                             <p class="mb-0">@L["Pages.Profile.LoginRequired"] <a href="/login">@L["Pages.Profile.LoginLink"]</a></p>
@@ -188,15 +189,22 @@
         CultureService.OnChange -= OnCultureChanged;
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (CultureService.IsLoggedIn)
+        if (firstRender)
         {
-            await LoadProfile();
-        }
-        else
-        {
-            isLoading = false;
+            // Initialize auth (loads token from localStorage)
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsCustomer)
+            {
+                await LoadProfile();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
         }
     }
 
@@ -207,10 +215,10 @@
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/customers/{CultureService.CustomerId}");
-            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/customers/{Auth.Id}");
+            if (!string.IsNullOrEmpty(Auth.Token))
             {
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
             }
             
             var response = await Http.SendAsync(request);
@@ -265,13 +273,13 @@
                 LanguagePreference = model.LanguagePreference
             };
 
-            var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/customers/{CultureService.CustomerId}")
+            var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/customers/{Auth.Id}")
             {
                 Content = JsonContent.Create(updateRequest)
             };
-            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            if (!string.IsNullOrEmpty(Auth.Token))
             {
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
             }
             
             var response = await Http.SendAsync(request);
@@ -321,10 +329,10 @@
 
         try
         {
-            var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/v1/customers/{CultureService.CustomerId}");
-            if (!string.IsNullOrEmpty(CultureService.JwtToken))
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/v1/customers/{Auth.Id}");
+            if (!string.IsNullOrEmpty(Auth.Token))
             {
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", CultureService.JwtToken);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
             }
 
             var response = await Http.SendAsync(request);
@@ -332,7 +340,7 @@
             if (response.IsSuccessStatusCode)
             {
                 // Log out the user and redirect to home
-                CultureService.Logout();
+                await Auth.LogoutAsync();
                 Navigation.NavigateTo("/", forceLoad: true);
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
