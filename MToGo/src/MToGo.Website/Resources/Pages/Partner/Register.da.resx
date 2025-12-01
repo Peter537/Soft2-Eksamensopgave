@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Partner Registrering - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Restaurant Registrering</value>
+  </data>
+  <data name="RestaurantInfo" xml:space="preserve">
+    <value>Restaurant Information</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Restaurant Navn</value>
+  </data>
+  <data name="NamePlaceholder" xml:space="preserve">
+    <value>Indtast restaurant navn</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Adresse</value>
+  </data>
+  <data name="AddressPlaceholder" xml:space="preserve">
+    <value>Indtast restaurant adresse</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>Indtast din email</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Adgangskode</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Indtast din adgangskode</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Bekræft Adgangskode</value>
+  </data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Bekræft din adgangskode</value>
+  </data>
+  <data name="MenuSection" xml:space="preserve">
+    <value>Menu Varer</value>
+  </data>
+  <data name="MenuDescription" xml:space="preserve">
+    <value>Tilføj mindst én menu vare til din restaurant. Du kan tilføje flere varer senere.</value>
+  </data>
+  <data name="MenuItem" xml:space="preserve">
+    <value>Vare</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Vare Navn</value>
+  </data>
+  <data name="ItemNamePlaceholder" xml:space="preserve">
+    <value>f.eks. Margherita Pizza</value>
+  </data>
+  <data name="ItemPrice" xml:space="preserve">
+    <value>Pris (DKK)</value>
+  </data>
+  <data name="ItemPricePlaceholder" xml:space="preserve">
+    <value>0,00</value>
+  </data>
+  <data name="AddMenuItem" xml:space="preserve">
+    <value>Tilføj Menu Vare</value>
+  </data>
+  <data name="RemoveItem" xml:space="preserve">
+    <value>Fjern</value>
+  </data>
+  <data name="RegisterButton" xml:space="preserve">
+    <value>Registrer Restaurant</value>
+  </data>
+  <data name="CreatingAccount" xml:space="preserve">
+    <value>Opretter konto...</value>
+  </data>
+  <data name="HasAccount" xml:space="preserve">
+    <value>Har du allerede en konto?</value>
+  </data>
+  <data name="LoginHere" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="RegistrationSuccessful" xml:space="preserve">
+    <value>Registrering gennemført! Dit partner ID er {0}</value>
+  </data>
+  <data name="RegistrationFailed" xml:space="preserve">
+    <value>Registrering mislykkedes. Prøv venligst igen.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="PasswordMismatch" xml:space="preserve">
+    <value>Adgangskoderne matcher ikke.</value>
+  </data>
+  <data name="EmptyMenuError" xml:space="preserve">
+    <value>Tilføj venligst mindst én gyldig menu vare med navn og pris.</value>
+  </data>
+</root>
