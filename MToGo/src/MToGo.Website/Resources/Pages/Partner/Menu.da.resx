@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Menustyring - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Menustyring</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind for at administrere din menu.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="NoItems" xml:space="preserve">
+    <value>Ingen menupunkter fundet. Tilføj dit første element for at komme i gang!</value>
+  </data>
+  <data name="AddItem" xml:space="preserve">
+    <value>Tilføj element</value>
+  </data>
+  <data name="AddItemTitle" xml:space="preserve">
+    <value>Tilføj nyt menupunkt</value>
+  </data>
+  <data name="EditItemTitle" xml:space="preserve">
+    <value>Rediger menupunkt</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Elementnavn</value>
+  </data>
+  <data name="ItemPrice" xml:space="preserve">
+    <value>Pris (DKK)</value>
+  </data>
+  <data name="AddButton" xml:space="preserve">
+    <value>Tilføj</value>
+  </data>
+  <data name="SaveButton" xml:space="preserve">
+    <value>Gem</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Annuller</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Navn</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Pris</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Handlinger</value>
+  </data>
+  <data name="EditButton" xml:space="preserve">
+    <value>Rediger</value>
+  </data>
+  <data name="DeleteButton" xml:space="preserve">
+    <value>Slet</value>
+  </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve">
+    <value>Bekræft sletning</value>
+  </data>
+  <data name="DeleteConfirmMessage" xml:space="preserve">
+    <value>Er du sikker på, at du vil slette "{0}"? Denne handling kan ikke fortrydes.</value>
+  </data>
+  <data name="ItemAdded" xml:space="preserve">
+    <value>Menupunkt tilføjet!</value>
+  </data>
+  <data name="ItemUpdated" xml:space="preserve">
+    <value>Menupunkt opdateret!</value>
+  </data>
+  <data name="ItemDeleted" xml:space="preserve">
+    <value>Menupunkt slettet!</value>
+  </data>
+  <data name="AddFailed" xml:space="preserve">
+    <value>Kunne ikke tilføje menupunkt.</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>Kunne ikke opdatere menupunkt.</value>
+  </data>
+  <data name="DeleteFailed" xml:space="preserve">
+    <value>Kunne ikke slette menupunkt.</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse menupunkter.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+</root>

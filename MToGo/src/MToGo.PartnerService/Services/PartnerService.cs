@@ -1,5 +1,6 @@
 using MToGo.PartnerService.Entities;
 using MToGo.PartnerService.Exceptions;
+using MToGo.PartnerService.Logging;
 using MToGo.PartnerService.Models;
 using MToGo.PartnerService.Repositories;
 using MToGo.Shared.Security.Authentication;
@@ -13,15 +14,18 @@ public class PartnerService : IPartnerService
     private readonly IPartnerRepository _partnerRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly ILogger<PartnerService> _logger;
 
     public PartnerService(
         IPartnerRepository partnerRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        ILogger<PartnerService> logger)
     {
         _partnerRepository = partnerRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
+        _logger = logger;
     }
 
     public async Task<CreatePartnerResponse> RegisterPartnerAsync(PartnerRegisterRequest request)
@@ -80,5 +84,122 @@ public class PartnerService : IPartnerService
         );
 
         return new PartnerLoginResponse { Jwt = token };
+    }
+
+    public async Task<PartnerDetailsResponse?> GetPartnerByIdAsync(int partnerId)
+    {
+        var partner = await _partnerRepository.GetByIdAsync(partnerId);
+        if (partner == null)
+        {
+            return null;
+        }
+
+        return new PartnerDetailsResponse
+        {
+            Id = partner.Id,
+            Name = partner.Name,
+            Address = partner.Address,
+            MenuItems = partner.MenuItems.Select(m => new MenuItemResponse
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Price = m.Price
+            }).ToList()
+        };
+    }
+
+    public async Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request)
+    {
+        _logger.AddingMenuItem(partnerId);
+
+        var partner = await _partnerRepository.GetByIdAsync(partnerId);
+        if (partner == null)
+        {
+            _logger.PartnerNotFound(partnerId);
+            throw new PartnerNotFoundException($"Partner with ID {partnerId} not found.");
+        }
+
+        var menuItem = new MenuItem
+        {
+            PartnerId = partnerId,
+            Name = request.Name,
+            Price = request.Price,
+            IsActive = true
+        };
+
+        var createdMenuItem = await _partnerRepository.AddMenuItemAsync(menuItem);
+
+        _logger.MenuItemAdded(partnerId, createdMenuItem.Id);
+
+        return new CreateMenuItemResponse { Id = createdMenuItem.Id };
+    }
+
+    public async Task UpdateMenuItemAsync(int partnerId, int menuItemId, UpdateMenuItemRequest request)
+    {
+        _logger.UpdatingMenuItem(partnerId, menuItemId);
+
+        var partner = await _partnerRepository.GetByIdAsync(partnerId);
+        if (partner == null)
+        {
+            _logger.PartnerNotFound(partnerId);
+            throw new PartnerNotFoundException($"Partner with ID {partnerId} not found.");
+        }
+
+        var menuItem = await _partnerRepository.GetMenuItemByIdAsync(menuItemId);
+        if (menuItem == null)
+        {
+            _logger.MenuItemNotFound(menuItemId);
+            throw new MenuItemNotFoundException($"Menu item with ID {menuItemId} not found.");
+        }
+
+        if (menuItem.PartnerId != partnerId)
+        {
+            _logger.MenuItemNotOwnedByPartner(menuItemId, partnerId);
+            throw new UnauthorizedMenuItemAccessException($"Menu item {menuItemId} does not belong to partner {partnerId}.");
+        }
+
+        // Update only provided fields
+        if (!string.IsNullOrWhiteSpace(request.Name))
+        {
+            menuItem.Name = request.Name;
+        }
+
+        if (request.Price.HasValue)
+        {
+            menuItem.Price = request.Price.Value;
+        }
+
+        await _partnerRepository.UpdateMenuItemAsync(menuItem);
+
+        _logger.MenuItemUpdated(partnerId, menuItemId);
+    }
+
+    public async Task DeleteMenuItemAsync(int partnerId, int menuItemId)
+    {
+        _logger.DeletingMenuItem(partnerId, menuItemId);
+
+        var partner = await _partnerRepository.GetByIdAsync(partnerId);
+        if (partner == null)
+        {
+            _logger.PartnerNotFound(partnerId);
+            throw new PartnerNotFoundException($"Partner with ID {partnerId} not found.");
+        }
+
+        var menuItem = await _partnerRepository.GetMenuItemByIdAsync(menuItemId);
+        if (menuItem == null)
+        {
+            _logger.MenuItemNotFound(menuItemId);
+            throw new MenuItemNotFoundException($"Menu item with ID {menuItemId} not found.");
+        }
+
+        if (menuItem.PartnerId != partnerId)
+        {
+            _logger.MenuItemNotOwnedByPartner(menuItemId, partnerId);
+            throw new UnauthorizedMenuItemAccessException($"Menu item {menuItemId} does not belong to partner {partnerId}.");
+        }
+
+        await _partnerRepository.DeleteMenuItemAsync(menuItem);
+
+        _logger.MenuItemDeleted(partnerId, menuItemId);
     }
 }
