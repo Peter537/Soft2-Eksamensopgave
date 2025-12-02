@@ -15,11 +15,11 @@ public static partial class LoggerMessages
     public static partial void AddMenuItemFailed(this ILogger logger, int partnerId, string reason);
 
     // Add Menu Item - Service logs
-    [LoggerMessage(Level = LogLevel.Information, Message = "Adding menu item for PartnerId: {PartnerId}, Name: {Name}, Price: {Price}")]
-    public static partial void AddingMenuItem(this ILogger logger, int partnerId, string name, decimal price);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Adding menu item for PartnerId: {PartnerId}")]
+    public static partial void AddingMenuItem(this ILogger logger, int partnerId);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Menu item added: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Name={Name}")]
-    public static partial void MenuItemAdded(this ILogger logger, int partnerId, int menuItemId, string name);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Menu item added: PartnerId={PartnerId}, MenuItemId={MenuItemId}")]
+    public static partial void MenuItemAdded(this ILogger logger, int partnerId, int menuItemId);
 
     // Update Menu Item - Controller logs
     [LoggerMessage(Level = LogLevel.Information, Message = "Received UpdateMenuItem request for PartnerId: {PartnerId}, MenuItemId: {MenuItemId}")]

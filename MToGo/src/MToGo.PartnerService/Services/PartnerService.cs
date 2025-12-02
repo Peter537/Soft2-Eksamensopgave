@@ -110,7 +110,7 @@ public class PartnerService : IPartnerService
 
     public async Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request)
     {
-        _logger.AddingMenuItem(partnerId, request.Name, request.Price);
+        _logger.AddingMenuItem(partnerId);
 
         var partner = await _partnerRepository.GetByIdAsync(partnerId);
         if (partner == null)
@@ -129,7 +129,7 @@ public class PartnerService : IPartnerService
 
         var createdMenuItem = await _partnerRepository.AddMenuItemAsync(menuItem);
 
-        _logger.MenuItemAdded(partnerId, createdMenuItem.Id, createdMenuItem.Name);
+        _logger.MenuItemAdded(partnerId, createdMenuItem.Id);
 
         return new CreateMenuItemResponse { Id = createdMenuItem.Id };
     }
