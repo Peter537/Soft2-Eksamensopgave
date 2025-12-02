@@ -10,4 +10,5 @@ public interface IAgentRepository
     Task<Agent> UpdateAsync(Agent agent);
     Task DeleteAsync(int id);
     Task<bool> EmailExistsAsync(string email);
+    Task UpdateActiveStatusAsync(int id, bool isActive);
 }
