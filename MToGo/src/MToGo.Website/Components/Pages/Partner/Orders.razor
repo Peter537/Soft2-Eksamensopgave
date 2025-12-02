@@ -130,7 +130,6 @@
                                                         <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
                                                     </td>
                                                     <td class="text-end">
-                                                        <div>@L["Pages.Partner.Orders.ServiceFee"]: @order.ServiceFee.ToString("C")</div>
                                                         <div>@L["Pages.Partner.Orders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
                                                         <hr class="my-1" />
                                                         <strong>@CalculateOrderTotal(order).ToString("C")</strong>
@@ -279,7 +278,7 @@
     private decimal CalculateOrderTotal(PartnerOrderResponse order)
     {
         var itemsTotal = order.Items.Sum(i => i.Quantity * i.UnitPrice);
-        return itemsTotal + order.ServiceFee + order.DeliveryFee;
+        return itemsTotal + order.DeliveryFee;
     }
 
     private decimal CalculateTotalRevenue()

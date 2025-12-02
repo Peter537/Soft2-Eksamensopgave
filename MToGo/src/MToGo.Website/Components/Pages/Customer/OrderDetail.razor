@@ -173,10 +173,6 @@
                                     <span>@GetItemsSubtotal().ToString("C")</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Service Fee</span>
-                                    <span>@order.ServiceFee.ToString("C")</span>
-                                </div>
-                                <div class="d-flex justify-content-between mb-2">
                                     <span class="text-muted">Delivery Fee</span>
                                     <span>@order.DeliveryFee.ToString("C")</span>
                                 </div>
@@ -569,7 +565,7 @@
     private decimal CalculateTotal()
     {
         if (order == null) return 0;
-        return GetItemsSubtotal() + order.ServiceFee + order.DeliveryFee;
+        return GetItemsSubtotal() + order.DeliveryFee;
     }
 
     public async ValueTask DisposeAsync()
