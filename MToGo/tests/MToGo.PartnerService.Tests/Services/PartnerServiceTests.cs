@@ -1599,4 +1599,160 @@ public class PartnerServiceTests
     }
 
     #endregion
+
+    #region SetPartnerActiveStatusAsync Tests
+
+    [Fact]
+    public async Task SetPartnerActiveStatusAsync_WithExistingPartner_ReturnsTrue()
+    {
+        // Arrange
+        var partnerId = 1;
+        var newActiveStatus = false;
+
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Pizza Palace",
+            Address = "123 Main Street",
+            Email = "pizza@example.com",
+            Password = "hashed",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByIdIncludeInactiveAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        _mockPartnerRepository
+            .Setup(x => x.UpdatePartnerActiveStatusAsync(partnerId, newActiveStatus))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, newActiveStatus);
+
+        // Assert
+        Assert.True(result);
+        _mockPartnerRepository.Verify(x => x.GetByIdIncludeInactiveAsync(partnerId), Times.Once);
+        _mockPartnerRepository.Verify(x => x.UpdatePartnerActiveStatusAsync(partnerId, newActiveStatus), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetPartnerActiveStatusAsync_WithNonExistentPartner_ReturnsFalse()
+    {
+        // Arrange
+        var partnerId = 999;
+        var newActiveStatus = true;
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByIdIncludeInactiveAsync(partnerId))
+            .ReturnsAsync((Partner?)null);
+
+        // Act
+        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, newActiveStatus);
+
+        // Assert
+        Assert.False(result);
+        _mockPartnerRepository.Verify(x => x.GetByIdIncludeInactiveAsync(partnerId), Times.Once);
+        _mockPartnerRepository.Verify(x => x.UpdatePartnerActiveStatusAsync(It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SetPartnerActiveStatusAsync_WithValidPartner_UpdatesToRequestedStatus(bool targetStatus)
+    {
+        // Arrange
+        var partnerId = 1;
+
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Test Partner",
+            Address = "Test Address",
+            Email = "test@example.com",
+            Password = "hashed",
+            IsActive = !targetStatus // Start with opposite status
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByIdIncludeInactiveAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        _mockPartnerRepository
+            .Setup(x => x.UpdatePartnerActiveStatusAsync(partnerId, targetStatus))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, targetStatus);
+
+        // Assert
+        Assert.True(result);
+        _mockPartnerRepository.Verify(x => x.UpdatePartnerActiveStatusAsync(partnerId, targetStatus), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetPartnerActiveStatusAsync_ActivatingInactivePartner_ReturnsTrue()
+    {
+        // Arrange
+        var partnerId = 1;
+
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Inactive Partner",
+            Address = "Test Address",
+            Email = "inactive@example.com",
+            Password = "hashed",
+            IsActive = false
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByIdIncludeInactiveAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        _mockPartnerRepository
+            .Setup(x => x.UpdatePartnerActiveStatusAsync(partnerId, true))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, true);
+
+        // Assert
+        Assert.True(result);
+        _mockPartnerRepository.Verify(x => x.UpdatePartnerActiveStatusAsync(partnerId, true), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetPartnerActiveStatusAsync_DeactivatingActivePartner_ReturnsTrue()
+    {
+        // Arrange
+        var partnerId = 1;
+
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Active Partner",
+            Address = "Test Address",
+            Email = "active@example.com",
+            Password = "hashed",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByIdIncludeInactiveAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        _mockPartnerRepository
+            .Setup(x => x.UpdatePartnerActiveStatusAsync(partnerId, false))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, false);
+
+        // Assert
+        Assert.True(result);
+        _mockPartnerRepository.Verify(x => x.UpdatePartnerActiveStatusAsync(partnerId, false), Times.Once);
+    }
+
+    #endregion
 }
