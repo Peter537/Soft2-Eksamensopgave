@@ -68,6 +68,20 @@
             </button>
             </div>
         }
+        else if (Auth.IsManagement)
+        {
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="management/">
+            <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Dashboard"]
+            </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+            <button class="nav-link" @onclick="HandleSignOutManagement">
+            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            </button>
+            </div>
+        }
         else
         {
             <div class="nav-item px-3">
@@ -125,6 +139,12 @@
     {
         await Auth.LogoutAsync();
         Navigation.NavigateTo("/partner/login", forceLoad: true);
+    }
+
+    private async Task HandleSignOutManagement()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/management/login", forceLoad: true);
     }
 
     private async Task HandleLanguageChange(ChangeEventArgs e)
