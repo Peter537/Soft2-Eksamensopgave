@@ -1318,4 +1318,285 @@ public class PartnerServiceTests
     }
 
     #endregion
+
+    #region GetAllActivePartnersAsync Tests
+
+    [Fact]
+    public async Task GetAllActivePartnersAsync_WithActivePartners_ReturnsAllPartners()
+    {
+        // Arrange
+        var partners = new List<Partner>
+        {
+            new Partner { Id = 1, Name = "Pizza Palace", Address = "123 Main St", Email = "a@b.com", Password = "h", IsActive = true },
+            new Partner { Id = 2, Name = "Burger Joint", Address = "456 Oak Ave", Email = "c@d.com", Password = "h", IsActive = true }
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetAllActivePartnersAsync())
+            .ReturnsAsync(partners);
+
+        // Act
+        var result = await _sut.GetAllActivePartnersAsync();
+
+        // Assert
+        var resultList = result.ToList();
+        Assert.Equal(2, resultList.Count);
+        Assert.Equal("Pizza Palace", resultList[0].Name);
+        Assert.Equal("123 Main St", resultList[0].Address);
+        Assert.Equal("Burger Joint", resultList[1].Name);
+        Assert.Equal("456 Oak Ave", resultList[1].Address);
+    }
+
+    [Fact]
+    public async Task GetAllActivePartnersAsync_WithNoPartners_ReturnsEmptyList()
+    {
+        // Arrange
+        _mockPartnerRepository
+            .Setup(x => x.GetAllActivePartnersAsync())
+            .ReturnsAsync(new List<Partner>());
+
+        // Act
+        var result = await _sut.GetAllActivePartnersAsync();
+
+        // Assert
+        Assert.Empty(result);
+    }
+
+    #endregion
+
+    #region GetPartnerMenuAsync Tests
+
+    [Fact]
+    public async Task GetPartnerMenuAsync_WithExistingPartner_ReturnsMenu()
+    {
+        // Arrange
+        var partnerId = 1;
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Pizza Palace",
+            Address = "123 Main St",
+            Email = "pizza@example.com",
+            Password = "hashed",
+            IsActive = true,
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem { Id = 1, Name = "Margherita", Price = 89.00m, IsActive = true },
+                new MenuItem { Id = 2, Name = "Pepperoni", Price = 99.00m, IsActive = true }
+            }
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        // Act
+        var result = await _sut.GetPartnerMenuAsync(partnerId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(partnerId, result!.PartnerId);
+        Assert.Equal("Pizza Palace", result.PartnerName);
+        Assert.True(result.IsActive);
+        Assert.Equal(2, result.Items.Count);
+        Assert.Equal("Margherita", result.Items[0].Name);
+        Assert.Equal(89.00m, result.Items[0].Price);
+    }
+
+    [Fact]
+    public async Task GetPartnerMenuAsync_WithNonExistentPartner_ReturnsNull()
+    {
+        // Arrange
+        var partnerId = 999;
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync((Partner?)null);
+
+        // Act
+        var result = await _sut.GetPartnerMenuAsync(partnerId);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetPartnerMenuAsync_WithInactivePartner_ReturnsMenuWithIsActiveFalse()
+    {
+        // Arrange
+        var partnerId = 1;
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Inactive Partner",
+            Address = "123 Main St",
+            Email = "inactive@example.com",
+            Password = "hashed",
+            IsActive = false,
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem { Id = 1, Name = "Item", Price = 50.00m, IsActive = true }
+            }
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        // Act
+        var result = await _sut.GetPartnerMenuAsync(partnerId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result!.IsActive);
+    }
+
+    [Fact]
+    public async Task GetPartnerMenuAsync_WithEmptyMenu_ReturnsEmptyItemsList()
+    {
+        // Arrange
+        var partnerId = 1;
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "New Partner",
+            Address = "123 Main St",
+            Email = "new@example.com",
+            Password = "hashed",
+            IsActive = true,
+            MenuItems = new List<MenuItem>()
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        // Act
+        var result = await _sut.GetPartnerMenuAsync(partnerId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result!.Items);
+    }
+
+    #endregion
+
+    #region GetMenuItemAsync Tests
+
+    [Fact]
+    public async Task GetMenuItemAsync_WithExistingItem_ReturnsItem()
+    {
+        // Arrange
+        var partnerId = 1;
+        var menuItemId = 2;
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Pizza Palace",
+            Address = "123 Main St",
+            Email = "pizza@example.com",
+            Password = "hashed",
+            IsActive = true,
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem { Id = 1, Name = "Margherita", Price = 89.00m, IsActive = true },
+                new MenuItem { Id = 2, Name = "Pepperoni", Price = 99.00m, IsActive = true }
+            }
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        // Act
+        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(menuItemId, result!.Id);
+        Assert.Equal("Pepperoni", result.Name);
+        Assert.Equal(99.00m, result.Price);
+    }
+
+    [Fact]
+    public async Task GetMenuItemAsync_WithNonExistentPartner_ReturnsNull()
+    {
+        // Arrange
+        var partnerId = 999;
+        var menuItemId = 1;
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync((Partner?)null);
+
+        // Act
+        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetMenuItemAsync_WithNonExistentMenuItem_ReturnsNull()
+    {
+        // Arrange
+        var partnerId = 1;
+        var menuItemId = 999;
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Pizza Palace",
+            Address = "123 Main St",
+            Email = "pizza@example.com",
+            Password = "hashed",
+            IsActive = true,
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem { Id = 1, Name = "Margherita", Price = 89.00m, IsActive = true }
+            }
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        // Act
+        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task GetMenuItemAsync_WithItemFromDifferentPartner_ReturnsNull()
+    {
+        // Arrange
+        var partnerId = 1;
+        var menuItemId = 5; // This item belongs to a different partner
+        var partner = new Partner
+        {
+            Id = partnerId,
+            Name = "Pizza Palace",
+            Address = "123 Main St",
+            Email = "pizza@example.com",
+            Password = "hashed",
+            IsActive = true,
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem { Id = 1, Name = "Margherita", Price = 89.00m, IsActive = true }
+            }
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetPartnerWithMenuAsync(partnerId))
+            .ReturnsAsync(partner);
+
+        // Act
+        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    #endregion
 }
