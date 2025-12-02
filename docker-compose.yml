@@ -93,6 +93,7 @@ services:
       ReverseProxy__Clusters__agentbonuses-cluster__Destinations__agentbonus-destination__Address: http://agent-bonus-service:8080
       ReverseProxy__Clusters__feedback-cluster__Destinations__feedbackhub-destination__Address: http://feedback-hub-service:8080
       ReverseProxy__Clusters__partners-cluster__Destinations__partners-destination__Address: http://partner-service:8080
+      ReverseProxy__Clusters__management-cluster__Destinations__management-destination__Address: http://management-service:8080
       ReverseProxy__Clusters__wsagents-cluster__Destinations__wsagents-destination__Address: http://websocket-agent-service:8080
       ReverseProxy__Clusters__wscustomers-cluster__Destinations__wscustomers-destination__Address: http://websocket-customer-service:8080
       ReverseProxy__Clusters__wspartners-cluster__Destinations__wspartners-destination__Address: http://websocket-partner-service:8080
@@ -220,6 +221,23 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_partners;Username=mtogo;Password=mtogo_password
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  management-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.ManagementService/Dockerfile
+    container_name: mtogo-management-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_management;Username=mtogo;Password=mtogo_password
+      Management__Username: ${MANAGEMENT_USERNAME}
+      Management__Password: ${MANAGEMENT_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
