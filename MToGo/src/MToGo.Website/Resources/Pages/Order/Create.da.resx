@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Opret Ordre - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Opret Din Ordre</value>
+  </data>
+  <data name="BackButton" xml:space="preserve">
+    <value>Tilbage</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Log venligst ind for at oprette en ordre.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="PartnerNotFound" xml:space="preserve">
+    <value>Partner ikke fundet eller er ikke længere aktiv.</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse partner information. Prøv venligst igen.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="OrderingFrom" xml:space="preserve">
+    <value>Bestiller fra</value>
+  </data>
+  <data name="YourOrder" xml:space="preserve">
+    <value>Din Ordre</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Vare</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Antal</value>
+  </data>
+  <data name="UnitPrice" xml:space="preserve">
+    <value>Pris</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Subtotal</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Handlinger</value>
+  </data>
+  <data name="AddMoreItems" xml:space="preserve">
+    <value>Tilføj Flere Varer</value>
+  </data>
+  <data name="DeliveryAddress" xml:space="preserve">
+    <value>Leveringsadresse</value>
+  </data>
+  <data name="DeliveryAddressPlaceholder" xml:space="preserve">
+    <value>Indtast din leveringsadresse</value>
+  </data>
+  <data name="OrderSummary" xml:space="preserve">
+    <value>Ordreoversigt</value>
+  </data>
+  <data name="ItemsSubtotal" xml:space="preserve">
+    <value>Varer Subtotal</value>
+  </data>
+  <data name="DeliveryFee" xml:space="preserve">
+    <value>Leveringsgebyr</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="PlaceOrder" xml:space="preserve">
+    <value>Afgiv Ordre</value>
+  </data>
+  <data name="RequiredFields" xml:space="preserve">
+    <value>Tilføj venligst varer og indtast en leveringsadresse for at afgive din ordre.</value>
+  </data>
+  <data name="OrderFailed" xml:space="preserve">
+    <value>Kunne ikke afgive ordre: {0}</value>
+  </data>
+</root>
