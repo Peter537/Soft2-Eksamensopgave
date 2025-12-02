@@ -306,12 +306,13 @@ Dette diagram viser komponenterne i Agent Service, herunder:
 
 Alle endpoints starter med /agents/
 
-| Endpoint (Method) | Description               | Request body                                                                                                  | Response schema                                   |
-| :---------------- | :------------------------ | :------------------------------------------------------------------------------------------------------------ | :------------------------------------------------ |
-| / (POST)          | Nyoprettet agent          | {<br>&nbsp;&nbsp;"name": "string",<br>&nbsp;&nbsp;"email": "string",<br>&nbsp;&nbsp;"password": "string"<br>} | 201<br><br>{<br>&nbsp;&nbsp;"id": "integer"<br>}  |
-| /login (POST)     | Log ind en agent          | {<br>&nbsp;&nbsp;"email": "string",<br>&nbsp;&nbsp;"password": "string"<br>}                                  | 200<br><br>{<br>&nbsp;&nbsp;"jwt": "string"<br>}  |
-| /{id} (GET)       | Hent information om Agent |                                                                                                               | 200<br><br>{<br>&nbsp;&nbsp;"name": "string"<br>} |
-| /{id} (DELETE)    | Slet en agent             |                                                                                                               | 204                                               |
+| Endpoint (Method)    | Description               | Request body                                                                                                  | Response schema                                   |
+| :------------------- | :------------------------ | :------------------------------------------------------------------------------------------------------------ | :------------------------------------------------ |
+| / (POST)             | Nyoprettet agent          | {<br>&nbsp;&nbsp;"name": "string",<br>&nbsp;&nbsp;"email": "string",<br>&nbsp;&nbsp;"password": "string"<br>} | 201<br><br>{<br>&nbsp;&nbsp;"id": "integer"<br>}  |
+| /login (POST)        | Log ind en agent          | {<br>&nbsp;&nbsp;"email": "string",<br>&nbsp;&nbsp;"password": "string"<br>}                                  | 200<br><br>{<br>&nbsp;&nbsp;"jwt": "string"<br>}  |
+| /{id} (GET)          | Hent information om Agent |                                                                                                               | 200<br><br>{<br>&nbsp;&nbsp;"name": "string"<br>} |
+| /{id} (DELETE)       | Slet en agent             |                                                                                                               | 204                                               |
+| /{id}/active (PATCH) | Toggle agent availability | {<br>&nbsp;&nbsp;"active": "boolean"<br>}                                                                     | 204                                               |
 
 ## Agent Bonus Service
 
