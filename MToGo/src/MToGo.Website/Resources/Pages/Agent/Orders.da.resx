@@ -87,4 +87,7 @@
   <data name="ViewDetails" xml:space="preserve">
     <value>Vis</value>
   </data>
+  <data name="NotAgentMessage" xml:space="preserve">
+    <value>Du er ikke en agent, eller du har glemt at logge ind?</value>
+  </data>
 </root>

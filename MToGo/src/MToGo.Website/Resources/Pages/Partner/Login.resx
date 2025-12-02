@@ -13,10 +13,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PageTitle" xml:space="preserve">
-    <value>Login - MToGo</value>
+    <value>Partner Login - MToGo</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Login</value>
+    <value>Partner Login</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>Email</value>
@@ -42,17 +42,11 @@
   <data name="RegisterHere" xml:space="preserve">
     <value>Register here</value>
   </data>
-  <data name="RestaurantQuestion" xml:space="preserve">
-    <value>Are you a restaurant?</value>
+  <data name="CustomerQuestion" xml:space="preserve">
+    <value>Are you a customer?</value>
   </data>
-  <data name="RestaurantLogin" xml:space="preserve">
-    <value>Restaurant Login</value>
-  </data>
-  <data name="AgentQuestion" xml:space="preserve">
-    <value>Are you an agent?</value>
-  </data>
-  <data name="AgentLogin" xml:space="preserve">
-    <value>Agent Login</value>
+  <data name="CustomerLogin" xml:space="preserve">
+    <value>Customer Login</value>
   </data>
   <data name="LoginSuccessful" xml:space="preserve">
     <value>Login successful!</value>
@@ -65,11 +59,5 @@
   </data>
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred: {0}</value>
-  </data>
-  <data name="PartnerQuestion" xml:space="preserve">
-    <value>Are you a partner?</value>
-  </data>
-  <data name="PartnerLogin" xml:space="preserve">
-    <value>Partner Login</value>
   </data>
 </root>

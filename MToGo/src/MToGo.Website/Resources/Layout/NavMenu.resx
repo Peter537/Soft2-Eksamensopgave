@@ -33,4 +33,10 @@
   <data name="Danish" xml:space="preserve">
     <value>Dansk</value>
   </data>
+  <data name="IncomingOrders" xml:space="preserve">
+    <value>Incoming Orders</value>
+  </data>
+  <data name="AgentOrders" xml:space="preserve">
+    <value>Agent Orders</value>
+  </data>
 </root>

@@ -39,8 +39,29 @@
             </button>
             </div>
         }
+        else if (Auth.IsPartner)
+        {
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="@($"/partner/{Auth.Id}/incoming-orders")">
+            <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.IncomingOrders"]
+            </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+            <button class="nav-link" @onclick="HandleSignOutCustomer">
+            <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
+            </button>
+            </div>
+        }
         else if (Auth.IsAgent)
         {
+            @* /agent/orders *@
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="agent/orders">
+            <span class="bi bi-truck-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.AgentOrders"]
+            </NavLink>
+            </div>
+
             <div class="nav-item px-3">
             <button class="nav-link" @onclick="HandleSignOutAgent">
             <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
@@ -98,6 +119,12 @@
     {
         await Auth.LogoutAsync();
         Navigation.NavigateTo("/agent/login", forceLoad: true);
+    }
+
+    private async Task HandleSignOutPartner()
+    {
+        await Auth.LogoutAsync();
+        Navigation.NavigateTo("/partner/login", forceLoad: true);
     }
 
     private async Task HandleLanguageChange(ChangeEventArgs e)

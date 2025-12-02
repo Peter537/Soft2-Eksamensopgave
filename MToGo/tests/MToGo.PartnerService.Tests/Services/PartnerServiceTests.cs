@@ -4,6 +4,7 @@ using MToGo.PartnerService.Exceptions;
 using MToGo.PartnerService.Models;
 using MToGo.PartnerService.Repositories;
 using MToGo.PartnerService.Services;
+using MToGo.Shared.Security.Authentication;
 using MToGo.Shared.Security.Password;
 
 namespace MToGo.PartnerService.Tests.Services;
@@ -12,16 +13,19 @@ public class PartnerServiceTests
 {
     private readonly Mock<IPartnerRepository> _mockPartnerRepository;
     private readonly Mock<IPasswordHasher> _mockPasswordHasher;
+    private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly PartnerService.Services.PartnerService _sut;
 
     public PartnerServiceTests()
     {
         _mockPartnerRepository = new Mock<IPartnerRepository>();
         _mockPasswordHasher = new Mock<IPasswordHasher>();
+        _mockJwtTokenService = new Mock<IJwtTokenService>();
 
         _sut = new PartnerService.Services.PartnerService(
             _mockPartnerRepository.Object,
-            _mockPasswordHasher.Object
+            _mockPasswordHasher.Object,
+            _mockJwtTokenService.Object
         );
     }
 
@@ -471,6 +475,290 @@ public class PartnerServiceTests
 
         // Email check should never be called if menu validation fails first
         _mockPartnerRepository.Verify(x => x.EmailExistsAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    #endregion
+
+    #region LoginAsync Tests
+
+    [Fact]
+    public async Task LoginAsync_WithValidCredentials_ReturnsJwtToken()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "SecurePass123!"
+        };
+
+        var partner = new Partner
+        {
+            Id = 1,
+            Name = "Pizza Palace",
+            Address = "123 Main Street",
+            Email = "pizza@example.com",
+            Password = "$2a$12$hashedpassword",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(request.Email))
+            .ReturnsAsync(partner);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword(request.Password, partner.Password))
+            .Returns(true);
+
+        _mockJwtTokenService
+            .Setup(x => x.GenerateToken(partner.Id, partner.Email, "Partner", partner.Name))
+            .Returns("jwt-token-123");
+
+        // Act
+        var result = await _sut.LoginAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("jwt-token-123", result.Jwt);
+        _mockPartnerRepository.Verify(x => x.GetByEmailAsync(request.Email), Times.Once);
+        _mockPasswordHasher.Verify(x => x.VerifyPassword(request.Password, partner.Password), Times.Once);
+        _mockJwtTokenService.Verify(x => x.GenerateToken(partner.Id, partner.Email, "Partner", partner.Name), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WithNonExistentEmail_ThrowsInvalidCredentialsException()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "nonexistent@example.com",
+            Password = "SecurePass123!"
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(request.Email))
+            .ReturnsAsync((Partner?)null);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidCredentialsException>(
+            () => _sut.LoginAsync(request)
+        );
+        Assert.Equal("Invalid email or password.", exception.Message);
+
+        _mockPasswordHasher.Verify(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockJwtTokenService.Verify(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoginAsync_WithIncorrectPassword_ThrowsInvalidCredentialsException()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "WrongPassword123!"
+        };
+
+        var partner = new Partner
+        {
+            Id = 1,
+            Name = "Pizza Palace",
+            Address = "123 Main Street",
+            Email = "pizza@example.com",
+            Password = "$2a$12$hashedpassword",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(request.Email))
+            .ReturnsAsync(partner);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword(request.Password, partner.Password))
+            .Returns(false);
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<InvalidCredentialsException>(
+            () => _sut.LoginAsync(request)
+        );
+        Assert.Equal("Invalid email or password.", exception.Message);
+
+        _mockJwtTokenService.Verify(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoginAsync_VerifiesPasswordWithHash_NotPlainText()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "SecurePass123!"
+        };
+
+        var hashedPassword = "$2a$12$hashedpasswordvalue";
+        var partner = new Partner
+        {
+            Id = 1,
+            Name = "Pizza Palace",
+            Address = "123 Main Street",
+            Email = "pizza@example.com",
+            Password = hashedPassword,
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(request.Email))
+            .ReturnsAsync(partner);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword(request.Password, hashedPassword))
+            .Returns(true);
+
+        _mockJwtTokenService
+            .Setup(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns("jwt-token");
+
+        // Act
+        await _sut.LoginAsync(request);
+
+        // Assert - verify that VerifyPassword is called with the plain text password and the hashed password
+        _mockPasswordHasher.Verify(x => x.VerifyPassword("SecurePass123!", "$2a$12$hashedpasswordvalue"), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoginAsync_GeneratesTokenWithCorrectRole()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "SecurePass123!"
+        };
+
+        var partner = new Partner
+        {
+            Id = 5,
+            Name = "Pizza Palace",
+            Address = "123 Main Street",
+            Email = "pizza@example.com",
+            Password = "$2a$12$hashedpassword",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(request.Email))
+            .ReturnsAsync(partner);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(true);
+
+        _mockJwtTokenService
+            .Setup(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns("jwt-token");
+
+        // Act
+        await _sut.LoginAsync(request);
+
+        // Assert - verify the role is "Partner"
+        _mockJwtTokenService.Verify(x => x.GenerateToken(5, "pizza@example.com", "Partner", "Pizza Palace"), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoginAsync_GeneratesTokenWithCorrectUserData()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "burgerjoint@example.com",
+            Password = "BurgerPass123!"
+        };
+
+        var partner = new Partner
+        {
+            Id = 42,
+            Name = "Burger Joint",
+            Address = "456 Oak Street",
+            Email = "burgerjoint@example.com",
+            Password = "$2a$12$hashedpassword",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(request.Email))
+            .ReturnsAsync(partner);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(true);
+
+        int? capturedUserId = null;
+        string? capturedEmail = null;
+        string? capturedRole = null;
+        string? capturedName = null;
+
+        _mockJwtTokenService
+            .Setup(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<int, string, string, string?>((id, email, role, name) =>
+            {
+                capturedUserId = id;
+                capturedEmail = email;
+                capturedRole = role;
+                capturedName = name;
+            })
+            .Returns("jwt-token");
+
+        // Act
+        await _sut.LoginAsync(request);
+
+        // Assert
+        Assert.Equal(42, capturedUserId);
+        Assert.Equal("burgerjoint@example.com", capturedEmail);
+        Assert.Equal("Partner", capturedRole);
+        Assert.Equal("Burger Joint", capturedName);
+    }
+
+    [Theory]
+    [InlineData("partner1@example.com", "Password1!")]
+    [InlineData("partner2@example.com", "Password2!")]
+    [InlineData("partner.special@example.com", "Special123!")]
+    public async Task LoginAsync_WithVariousValidCredentials_ReturnsJwtToken(string email, string password)
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = email,
+            Password = password
+        };
+
+        var partner = new Partner
+        {
+            Id = 1,
+            Name = "Test Partner",
+            Address = "Test Address",
+            Email = email,
+            Password = "$2a$12$hashedpassword",
+            IsActive = true
+        };
+
+        _mockPartnerRepository
+            .Setup(x => x.GetByEmailAsync(email))
+            .ReturnsAsync(partner);
+
+        _mockPasswordHasher
+            .Setup(x => x.VerifyPassword(password, partner.Password))
+            .Returns(true);
+
+        _mockJwtTokenService
+            .Setup(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns("jwt-token");
+
+        // Act
+        var result = await _sut.LoginAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("jwt-token", result.Jwt);
     }
 
     #endregion

@@ -3,11 +3,39 @@
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
 @inject HttpClient Http
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject CultureService CultureService
+@inject ILocalizerService L
 @implements IAsyncDisposable
 
-<h3>Partner @PartnerId - Order Management</h3>
+<PageTitle>@L.GetString("Pages.Partner.IncomingOrders.PageTitle", PartnerId)</PageTitle>
 
-<div class="row">
+<div class="container mt-4">
+    @if (!isInitialized)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!Auth.IsPartner || Auth.Id != PartnerId)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">@L["Pages.Partner.IncomingOrders.AccessDeniedTitle"]</h5>
+                    <p class="mb-0">@L["Pages.Partner.IncomingOrders.LoginRequired"] <a href="/partner/login">@L["Pages.Partner.IncomingOrders.LoginLink"]</a></p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <h3>@L["Pages.Partner.IncomingOrders.Title"]</h3>
+
+        <div class="row">
     @* Left Column: New Orders *@
     <div class="col-md-6">
         <div class="card">
@@ -139,6 +167,8 @@
         <span class="ms-2 text-muted">@StatusMessage</span>
     }
 </div>
+    }
+</div>
 
 @code {
     [Parameter]
@@ -148,21 +178,39 @@
     private List<AcceptedOrder> AcceptedOrders { get; set; } = new();
     private bool IsConnected { get; set; }
     private string StatusMessage { get; set; } = "Connecting...";
+    private bool isInitialized;
 
     private DotNetObjectReference<IncomingOrders>? _dotNetRef;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            _dotNetRef = DotNetObjectReference.Create(this);
+            await Auth.InitializeAsync();
+            isInitialized = true;
             
-            // PublicUrl for browser, GatewayUrl is internal docker hostname
-            var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:8080";
-            var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
-            wsUrl = $"{wsUrl}/api/v1/ws/partners/{PartnerId}";
+            if (Auth.IsPartner && Auth.Id == PartnerId)
+            {
+                _dotNetRef = DotNetObjectReference.Create(this);
+                
+                // PublicUrl for browser, GatewayUrl is internal docker hostname
+                var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:8080";
+                var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
+                wsUrl = $"{wsUrl}/api/v1/ws/partners/{PartnerId}";
 
-            await JS.InvokeVoidAsync("partnerWebSocket.connect", wsUrl, _dotNetRef);
+                await JS.InvokeVoidAsync("partnerWebSocket.connect", wsUrl, _dotNetRef);
+            }
+            StateHasChanged();
         }
     }
 
@@ -295,6 +343,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        CultureService.OnChange -= OnCultureChanged;
         if (_dotNetRef != null)
         {
             await JS.InvokeVoidAsync("partnerWebSocket.disconnect");
