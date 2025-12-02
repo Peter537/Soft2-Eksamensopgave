@@ -293,4 +293,37 @@ public class PartnersController : ControllerBase
 
         return Ok(result);
     }
+
+    /// <summary>
+    /// Toggle partner availability (active/inactive)
+    /// </summary>
+    [HttpPatch("{id}/active")]
+    [Authorize(Roles = UserRoles.Partner)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetActiveStatus(int id, [FromBody] UpdatePartnerActiveRequest request)
+    {
+        _logger.ReceivedSetActiveStatusRequest(id, request.Active);
+
+        // Verify the authenticated user is the partner
+        var userIdClaim = User.FindFirst("id")?.Value;
+        if (!int.TryParse(userIdClaim, out var userId) || userId != id)
+        {
+            _logger.SetActiveStatusFailed(id, "Unauthorized access");
+            return Forbid();
+        }
+
+        var success = await _partnerService.SetPartnerActiveStatusAsync(id, request.Active);
+        if (!success)
+        {
+            _logger.SetActiveStatusFailed(id, "Partner not found");
+            return NotFound(new { error = $"Partner with ID {id} not found." });
+        }
+
+        _logger.SetActiveStatusCompleted(id, request.Active);
+
+        return NoContent();
+    }
 }
