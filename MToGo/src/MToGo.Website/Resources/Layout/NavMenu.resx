@@ -39,6 +39,9 @@
   <data name="AgentOrders" xml:space="preserve">
     <value>Agent Orders</value>
   </data>
+  <data name="AvailableJobs" xml:space="preserve">
+    <value>Available Jobs</value>
+  </data>
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>
   </data>
