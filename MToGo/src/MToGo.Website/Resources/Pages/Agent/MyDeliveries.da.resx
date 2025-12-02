@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Mine Leveringer (Agent {0}) - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>🚗 Mine Leveringer</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind som agent for at se denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="BackToJobs" xml:space="preserve">
+    <value>← Tilbage til Ledige Jobs</value>
+  </data>
+  <data name="NoDeliveries" xml:space="preserve">
+    <value>Ingen aktive leveringer</value>
+  </data>
+  <data name="AcceptOrdersHint" xml:space="preserve">
+    <value>Accepter ordrer fra</value>
+  </data>
+  <data name="AvailableJobsLink" xml:space="preserve">
+    <value>Ledige Jobs</value>
+  </data>
+</root>

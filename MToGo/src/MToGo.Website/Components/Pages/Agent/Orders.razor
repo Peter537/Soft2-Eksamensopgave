@@ -20,6 +20,7 @@
                     @if (!Auth.IsAgent)
                     {
                         <div class="alert alert-warning">
+                            <p>@L["Pages.Agent.Orders.NotAgentMessage"]</p>
                             <p class="mb-0">@L["Pages.Agent.Orders.LoginRequired"] <a href="/agent/login">@L["Pages.Agent.Orders.LoginLink"]</a></p>
                         </div>
                     }

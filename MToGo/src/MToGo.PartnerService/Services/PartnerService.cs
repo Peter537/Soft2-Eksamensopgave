@@ -2,6 +2,8 @@ using MToGo.PartnerService.Entities;
 using MToGo.PartnerService.Exceptions;
 using MToGo.PartnerService.Models;
 using MToGo.PartnerService.Repositories;
+using MToGo.Shared.Security.Authentication;
+using MToGo.Shared.Security.Authorization;
 using MToGo.Shared.Security.Password;
 
 namespace MToGo.PartnerService.Services;
@@ -10,13 +12,16 @@ public class PartnerService : IPartnerService
 {
     private readonly IPartnerRepository _partnerRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenService _jwtTokenService;
 
     public PartnerService(
         IPartnerRepository partnerRepository,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IJwtTokenService jwtTokenService)
     {
         _partnerRepository = partnerRepository;
         _passwordHasher = passwordHasher;
+        _jwtTokenService = jwtTokenService;
     }
 
     public async Task<CreatePartnerResponse> RegisterPartnerAsync(PartnerRegisterRequest request)
@@ -51,5 +56,29 @@ public class PartnerService : IPartnerService
         var createdPartner = await _partnerRepository.CreateAsync(partner);
 
         return new CreatePartnerResponse { Id = createdPartner.Id };
+    }
+
+    public async Task<PartnerLoginResponse> LoginAsync(PartnerLoginRequest request)
+    {
+        var partner = await _partnerRepository.GetByEmailAsync(request.Email);
+
+        if (partner == null)
+        {
+            throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
+        if (!_passwordHasher.VerifyPassword(request.Password, partner.Password))
+        {
+            throw new InvalidCredentialsException("Invalid email or password.");
+        }
+
+        var token = _jwtTokenService.GenerateToken(
+            userId: partner.Id,
+            email: partner.Email,
+            role: UserRoles.Partner,
+            name: partner.Name
+        );
+
+        return new PartnerLoginResponse { Jwt = token };
     }
 }

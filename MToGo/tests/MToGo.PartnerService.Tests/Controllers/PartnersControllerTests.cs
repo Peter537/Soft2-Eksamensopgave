@@ -302,4 +302,157 @@ public class PartnersControllerTests
     }
 
     #endregion
+
+    #region Login Tests
+
+    [Fact]
+    public async Task Login_WithValidCredentials_Returns200Ok()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "SecurePass123!"
+        };
+        var expectedResponse = new PartnerLoginResponse { Jwt = "jwt-token-123" };
+
+        _mockPartnerService
+            .Setup(x => x.LoginAsync(It.IsAny<PartnerLoginRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+        var response = Assert.IsType<PartnerLoginResponse>(okResult.Value);
+        Assert.Equal("jwt-token-123", response.Jwt);
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidCredentials_Returns401Unauthorized()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "WrongPassword!"
+        };
+
+        _mockPartnerService
+            .Setup(x => x.LoginAsync(It.IsAny<PartnerLoginRequest>()))
+            .ThrowsAsync(new InvalidCredentialsException("Invalid email or password."));
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_WithNonExistentEmail_Returns401Unauthorized()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "nonexistent@example.com",
+            Password = "SomePassword123!"
+        };
+
+        _mockPartnerService
+            .Setup(x => x.LoginAsync(It.IsAny<PartnerLoginRequest>()))
+            .ThrowsAsync(new InvalidCredentialsException("Invalid email or password."));
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsCorrectErrorMessage()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "WrongPassword!"
+        };
+
+        _mockPartnerService
+            .Setup(x => x.LoginAsync(It.IsAny<PartnerLoginRequest>()))
+            .ThrowsAsync(new InvalidCredentialsException("Invalid email or password."));
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        var errorObject = unauthorizedResult.Value;
+
+        // Use reflection to get the error property
+        var errorProperty = errorObject?.GetType().GetProperty("error");
+        var errorValue = errorProperty?.GetValue(errorObject) as string;
+
+        Assert.Equal("Invalid email or password.", errorValue);
+    }
+
+    [Fact]
+    public async Task Login_CallsServiceWithCorrectRequest()
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = "pizza@example.com",
+            Password = "SecurePass123!"
+        };
+        var expectedResponse = new PartnerLoginResponse { Jwt = "jwt-token" };
+
+        PartnerLoginRequest? capturedRequest = null;
+        _mockPartnerService
+            .Setup(x => x.LoginAsync(It.IsAny<PartnerLoginRequest>()))
+            .Callback<PartnerLoginRequest>(r => capturedRequest = r)
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        await _sut.Login(request);
+
+        // Assert
+        Assert.NotNull(capturedRequest);
+        Assert.Equal("pizza@example.com", capturedRequest.Email);
+        Assert.Equal("SecurePass123!", capturedRequest.Password);
+    }
+
+    [Theory]
+    [InlineData("partner1@example.com", "Password1!")]
+    [InlineData("partner2@example.com", "Password2!")]
+    [InlineData("partner.special@example.com", "Special123!")]
+    public async Task Login_WithVariousValidCredentials_Returns200Ok(string email, string password)
+    {
+        // Arrange
+        var request = new PartnerLoginRequest
+        {
+            Email = email,
+            Password = password
+        };
+        var expectedResponse = new PartnerLoginResponse { Jwt = "jwt-token-123" };
+
+        _mockPartnerService
+            .Setup(x => x.LoginAsync(It.IsAny<PartnerLoginRequest>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _sut.Login(request);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    #endregion
 }
