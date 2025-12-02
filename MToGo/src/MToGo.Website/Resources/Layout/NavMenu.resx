@@ -54,4 +54,16 @@
   <data name="MyOrders" xml:space="preserve">
     <value>My Orders</value>
   </data>
+  <data name="ActiveOrders" xml:space="preserve">
+    <value>Active Orders</value>
+  </data>
+  <data name="JobOffers" xml:space="preserve">
+    <value>Job Offers</value>
+  </data>
+  <data name="MyDeliveries" xml:space="preserve">
+    <value>My Deliveries</value>
+  </data>
+  <data name="DeliveryHistory" xml:space="preserve">
+    <value>Delivery History</value>
+  </data>
 </root>

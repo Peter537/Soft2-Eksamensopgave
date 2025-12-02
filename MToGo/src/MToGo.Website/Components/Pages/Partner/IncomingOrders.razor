@@ -1,4 +1,4 @@
-@page "/partner/{PartnerId:int}/incoming-orders"
+@page "/partner/incoming-orders"
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
@@ -9,7 +9,7 @@
 @inject ILocalizerService L
 @implements IAsyncDisposable
 
-<PageTitle>@L.GetString("Pages.Partner.IncomingOrders.PageTitle", PartnerId)</PageTitle>
+<PageTitle>@L["Pages.Partner.IncomingOrders.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     @if (!isInitialized)
@@ -20,7 +20,7 @@
             </div>
         </div>
     }
-    else if (!Auth.IsPartner || Auth.Id != PartnerId)
+    else if (!Auth.IsPartner || !Auth.Id.HasValue)
     {
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -171,14 +171,12 @@
 </div>
 
 @code {
-    [Parameter]
-    public int PartnerId { get; set; }
-
     private List<IncomingOrder> NewOrders { get; set; } = new();
     private List<AcceptedOrder> AcceptedOrders { get; set; } = new();
     private bool IsConnected { get; set; }
-    private string StatusMessage { get; set; } = "Connecting...";
+    private string StatusMessage { get; set; } = "Loading...";
     private bool isInitialized;
+    private bool isLoading = true;
 
     private DotNetObjectReference<IncomingOrders>? _dotNetRef;
 
@@ -199,18 +197,100 @@
             await Auth.InitializeAsync();
             isInitialized = true;
             
-            if (Auth.IsPartner && Auth.Id == PartnerId)
+            if (Auth.IsPartner && Auth.Id.HasValue)
             {
+                // Load existing active orders for persistence
+                await LoadActiveOrders();
+                
                 _dotNetRef = DotNetObjectReference.Create(this);
                 
                 // PublicUrl for browser, GatewayUrl is internal docker hostname
                 var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:8080";
                 var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
-                wsUrl = $"{wsUrl}/api/v1/ws/partners/{PartnerId}";
+                wsUrl = $"{wsUrl}/api/v1/ws/partners/{Auth.Id}";
 
                 await JS.InvokeVoidAsync("partnerWebSocket.connect", wsUrl, _dotNetRef);
             }
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadActiveOrders()
+    {
+        isLoading = true;
+        StatusMessage = "Loading active orders...";
+        
+        try
+        {
+            var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{gatewayUrl}/api/v1/orders/partner/{Auth.Id}/active");
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            var response = await Http.SendAsync(request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var orders = await response.Content.ReadFromJsonAsync<List<PartnerOrderResponse>>();
+                
+                if (orders != null)
+                {
+                    foreach (var order in orders)
+                    {
+                        // Orders with status "Placed" go to NewOrders
+                        if (order.Status == "Placed")
+                        {
+                            NewOrders.Add(new IncomingOrder
+                            {
+                                OrderId = order.Id,
+                                OrderCreatedTime = order.OrderCreatedTime,
+                                Distance = "", // Not available from API response
+                                Items = order.Items.Select(i => new OrderItemDto
+                                {
+                                    Name = i.Name,
+                                    Quantity = i.Quantity
+                                }).ToList(),
+                                ReceivedAt = DateTime.TryParse(order.OrderCreatedTime, out var dt) ? dt : DateTime.Now
+                            });
+                        }
+                        // Orders with status "Accepted" or "Ready" go to AcceptedOrders
+                        else if (order.Status == "Accepted" || order.Status == "Ready")
+                        {
+                            AcceptedOrders.Add(new AcceptedOrder
+                            {
+                                OrderId = order.Id,
+                                Items = order.Items.Select(i => new OrderItemDto
+                                {
+                                    Name = i.Name,
+                                    Quantity = i.Quantity
+                                }).ToList(),
+                                Distance = "",
+                                EstimatedMinutes = 0,
+                                AcceptedAt = DateTime.TryParse(order.OrderCreatedTime, out var dt2) ? dt2 : DateTime.Now,
+                                AgentId = order.AgentId,
+                                IsReady = order.Status == "Ready"
+                            });
+                        }
+                    }
+                }
+                
+                StatusMessage = $"Loaded {NewOrders.Count} new orders, {AcceptedOrders.Count} accepted orders";
+            }
+            else
+            {
+                StatusMessage = $"Failed to load orders: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading orders: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
@@ -291,7 +371,15 @@
         try
         {
             var payload = new { estimatedMinutes = order.EstimatedMinutes ?? 15 };
-            var response = await Http.PostAsJsonAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/accept", payload);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/accept");
+            request.Content = JsonContent.Create(payload);
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            var response = await Http.SendAsync(request);
             if (!response.IsSuccessStatusCode)
             {
                 StatusMessage = $"Order #{order.OrderId} accepted locally, but API call failed: {response.StatusCode}";
@@ -313,7 +401,15 @@
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
         try
         {
-            await Http.PostAsJsonAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/reject", new { reason = "Partner rejected" });
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/reject");
+            request.Content = JsonContent.Create(new { reason = "Partner rejected" });
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            await Http.SendAsync(request);
         }
         catch
         {
@@ -331,7 +427,14 @@
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
         try
         {
-            await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/set-ready", null);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{gatewayUrl}/api/v1/orders/order/{order.OrderId}/set-ready");
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            await Http.SendAsync(request);
         }
         catch
         {
@@ -376,5 +479,27 @@
     {
         public string Name { get; set; } = "";
         public int Quantity { get; set; }
+    }
+
+    // Response model for active orders API
+    public class PartnerOrderResponse
+    {
+        public int Id { get; set; }
+        public int CustomerId { get; set; }
+        public int? AgentId { get; set; }
+        public string DeliveryAddress { get; set; } = "";
+        public decimal ServiceFee { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public string Status { get; set; } = "";
+        public string OrderCreatedTime { get; set; } = "";
+        public List<PartnerOrderItemResponse> Items { get; set; } = new();
+    }
+
+    public class PartnerOrderItemResponse
+    {
+        public int FoodItemId { get; set; }
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
     }
 }

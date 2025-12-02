@@ -1,4 +1,4 @@
-@page "/agent/{AgentId:int}/available-jobs"
+@page "/agent/available-jobs"
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
@@ -9,7 +9,7 @@
 @inject ILocalizerService L
 @implements IAsyncDisposable
 
-<PageTitle>@L.GetString("Pages.Agent.AvailableJobs.PageTitle", AgentId)</PageTitle>
+<PageTitle>@L["Pages.Agent.AvailableJobs.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     @if (!isInitialized)
@@ -20,7 +20,7 @@
             </div>
         </div>
     }
-    else if (!Auth.IsAgent || Auth.Id != AgentId)
+    else if (!Auth.IsAgent || !Auth.Id.HasValue)
     {
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -116,21 +116,19 @@
         }
     </div>
     <div class="text-muted small">
-        <a href="/agent/my-deliveries/@AgentId">@L["Pages.Agent.AvailableJobs.ViewMyDeliveries"]</a>
+        <a href="/agent/my-deliveries">@L["Pages.Agent.AvailableJobs.ViewMyDeliveries"]</a>
     </div>
 </div>
     }
 </div>
 
 @code {
-    [Parameter]
-    public int AgentId { get; set; }
-
     private List<AvailableJob> Jobs { get; set; } = new();
     private bool IsConnected { get; set; }
     private bool IsActive { get; set; } = true;
-    private string StatusMessage { get; set; } = "Connecting...";
+    private string StatusMessage { get; set; } = "Loading...";
     private bool isInitialized;
+    private bool isLoading = true;
 
     private DotNetObjectReference<AvailableJobs>? _dotNetRef;
 
@@ -151,8 +149,11 @@
             await Auth.InitializeAsync();
             isInitialized = true;
             
-            if (Auth.IsAgent && Auth.Id == AgentId)
+            if (Auth.IsAgent && Auth.Id.HasValue)
             {
+                // Load available jobs (orders that are Accepted but not yet assigned to an agent)
+                await LoadAvailableJobs();
+                
                 _dotNetRef = DotNetObjectReference.Create(this);
                 
                 // Connect to the broadcast room for all available jobs
@@ -163,6 +164,34 @@
                 await JS.InvokeVoidAsync("agentWebSocket.connect", wsUrl, _dotNetRef);
             }
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadAvailableJobs()
+    {
+        isLoading = true;
+        StatusMessage = "Loading available jobs...";
+        
+        try
+        {
+            // Get all accepted orders that don't have an agent yet
+            // This requires a new endpoint or we can use a different approach
+            // For now, we'll just initialize empty and let WebSocket populate
+            // The /active endpoint returns orders assigned TO this agent, not available ones
+            
+            // NOTE: The available jobs are orders with Status=Accepted and AgentId=null
+            // These come from OrderAccepted events via WebSocket
+            // On refresh, we'd need an endpoint like /orders/available that returns unassigned accepted orders
+            
+            StatusMessage = "Ready - listening for new jobs";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
@@ -243,8 +272,16 @@
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
         try
         {
-            var payload = new { agentId = AgentId };
-            var response = await Http.PostAsJsonAsync($"{gatewayUrl}/api/v1/orders/order/{job.OrderId}/assign-agent", payload);
+            var payload = new { agentId = Auth.Id };
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{gatewayUrl}/api/v1/orders/order/{job.OrderId}/assign-agent");
+            request.Content = JsonContent.Create(payload);
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            var response = await Http.SendAsync(request);
             
             if (response.IsSuccessStatusCode)
             {

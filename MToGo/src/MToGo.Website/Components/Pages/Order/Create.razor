@@ -336,7 +336,8 @@
                 var orderResponse = await response.Content.ReadFromJsonAsync<OrderCreateResponse>();
                 if (orderResponse != null)
                 {
-                    Navigation.NavigateTo($"/order/{orderResponse.Id}");
+                    // Navigate to customer order tracking page
+                    Navigation.NavigateTo($"/customer/orders/{orderResponse.Id}");
                 }
             }
             else
