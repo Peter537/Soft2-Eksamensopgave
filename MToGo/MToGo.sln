@@ -51,6 +51,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.Shared", "src\MToGo.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.Gateway", "src\MToGo.Gateway\MToGo.Gateway.csproj", "{05AB6A10-BAF4-4AA1-B392-79AEB539D750}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.Testing", "tests\MToGo.Testing\MToGo.Testing.csproj", "{2C6335FB-8227-4F62-A326-FE9878AEFA2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.ManagementService", "src\MToGo.ManagementService\MToGo.ManagementService.csproj", "{D1D1BA4D-F7F6-E65C-DAA9-B79219690913}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.ManagementService.Tests", "tests\MToGo.ManagementService.Tests\MToGo.ManagementService.Tests.csproj", "{94085252-F99E-C2FC-FA39-398E72D24936}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +159,18 @@ Global
 		{05AB6A10-BAF4-4AA1-B392-79AEB539D750}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05AB6A10-BAF4-4AA1-B392-79AEB539D750}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05AB6A10-BAF4-4AA1-B392-79AEB539D750}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C6335FB-8227-4F62-A326-FE9878AEFA2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C6335FB-8227-4F62-A326-FE9878AEFA2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C6335FB-8227-4F62-A326-FE9878AEFA2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C6335FB-8227-4F62-A326-FE9878AEFA2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1D1BA4D-F7F6-E65C-DAA9-B79219690913}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1D1BA4D-F7F6-E65C-DAA9-B79219690913}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1D1BA4D-F7F6-E65C-DAA9-B79219690913}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1D1BA4D-F7F6-E65C-DAA9-B79219690913}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94085252-F99E-C2FC-FA39-398E72D24936}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94085252-F99E-C2FC-FA39-398E72D24936}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94085252-F99E-C2FC-FA39-398E72D24936}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94085252-F99E-C2FC-FA39-398E72D24936}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

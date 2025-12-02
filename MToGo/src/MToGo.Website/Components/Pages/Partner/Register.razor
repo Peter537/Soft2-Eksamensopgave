@@ -1,0 +1,220 @@
+@page "/partner/register"
+@using MToGo.Website.Components.Shared
+@inject NavigationManager Navigation
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Partner.Register.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <RegisterForm 
+                FormModel="@model"
+                ApiEndpoint="/api/v1/partners"
+                RedirectUrl="/partner/login"
+                CardTitle="@L["Pages.Partner.Register.Title"]"
+                CardHeaderClass=""
+                ButtonClass="btn-primary"
+                ButtonText="@L["Pages.Partner.Register.RegisterButton"]"
+                FormName="PartnerRegisterForm"
+                TransformRequest="TransformToRequest"
+                CustomValidation="ValidateForm">
+                <ChildContent>
+                    <h5 class="mb-3">@L["Pages.Partner.Register.RestaurantInfo"]</h5>
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">@L["Pages.Partner.Register.Name"]</label>
+                        <InputText id="name" class="form-control" @bind-Value="model.Name" placeholder="@L["Pages.Partner.Register.NamePlaceholder"]" />
+                        <ValidationMessage For="@(() => model.Name)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address" class="form-label">@L["Pages.Partner.Register.Address"]</label>
+                        <InputText id="address" class="form-control" @bind-Value="model.Address" placeholder="@L["Pages.Partner.Register.AddressPlaceholder"]" />
+                        <ValidationMessage For="@(() => model.Address)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">@L["Pages.Partner.Register.Email"]</label>
+                        <InputText id="email" class="form-control" @bind-Value="model.Email" placeholder="@L["Pages.Partner.Register.EmailPlaceholder"]" />
+                        <ValidationMessage For="@(() => model.Email)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">@L["Pages.Partner.Register.Password"]</label>
+                        <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" placeholder="@L["Pages.Partner.Register.PasswordPlaceholder"]" />
+                        <ValidationMessage For="@(() => model.Password)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">@L["Pages.Partner.Register.ConfirmPassword"]</label>
+                        <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="model.ConfirmPassword" placeholder="@L["Pages.Partner.Register.ConfirmPasswordPlaceholder"]" />
+                        <ValidationMessage For="@(() => model.ConfirmPassword)" />
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <h5 class="mb-3">@L["Pages.Partner.Register.MenuSection"]</h5>
+                    <p class="text-muted small">@L["Pages.Partner.Register.MenuDescription"]</p>
+
+                    @for (int i = 0; i < model.Menu.Count; i++)
+                    {
+                        var index = i;
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">@L["Pages.Partner.Register.MenuItem"] @(index + 1)</h6>
+                                    @if (model.Menu.Count > 1)
+                                    {
+                                        <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveMenuItem(index)">
+                                            <i class="bi bi-trash"></i> @L["Pages.Partner.Register.RemoveItem"]
+                                        </button>
+                                    }
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-8 mb-2">
+                                        <label class="form-label">@L["Pages.Partner.Register.ItemName"]</label>
+                                        <InputText class="form-control" @bind-Value="model.Menu[index].Name" placeholder="@L["Pages.Partner.Register.ItemNamePlaceholder"]" />
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label">@L["Pages.Partner.Register.ItemPrice"]</label>
+                                        <InputNumber class="form-control" @bind-Value="model.Menu[index].Price" placeholder="@L["Pages.Partner.Register.ItemPricePlaceholder"]" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <button type="button" class="btn btn-outline-primary mb-4" @onclick="AddMenuItem">
+                        <i class="bi bi-plus-circle"></i> @L["Pages.Partner.Register.AddMenuItem"]
+                    </button>
+                </ChildContent>
+                <AdditionalLinks>
+                    <div class="mt-3 text-center">
+                        <p class="mb-0">@L["Pages.Partner.Register.HasAccount"] <a href="/partner/login">@L["Pages.Partner.Register.LoginHere"]</a></p>
+                    </div>
+                </AdditionalLinks>
+            </RegisterForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private PartnerRegisterModel model { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+        // Ensure at least one menu item exists
+        if (model.Menu.Count == 0)
+        {
+            model.Menu.Add(new MenuItemModel());
+        }
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    private void AddMenuItem()
+    {
+        model.Menu.Add(new MenuItemModel());
+    }
+
+    private void RemoveMenuItem(int index)
+    {
+        if (model.Menu.Count > 1)
+        {
+            model.Menu.RemoveAt(index);
+        }
+    }
+
+    private string? ValidateForm()
+    {
+        if (model.Password != model.ConfirmPassword)
+        {
+            return L["Pages.Partner.Register.PasswordMismatch"];
+        }
+
+        // Validate menu items
+        var validMenuItems = model.Menu.Where(m => !string.IsNullOrWhiteSpace(m.Name) && m.Price > 0).ToList();
+        if (validMenuItems.Count == 0)
+        {
+            return L["Pages.Partner.Register.EmptyMenuError"];
+        }
+
+        return null;
+    }
+
+    private object TransformToRequest(object formModel)
+    {
+        var m = (PartnerRegisterModel)formModel;
+        var validMenuItems = m.Menu.Where(item => !string.IsNullOrWhiteSpace(item.Name) && item.Price > 0).ToList();
+        
+        return new PartnerRegisterRequest
+        {
+            Name = m.Name,
+            Address = m.Address,
+            Email = m.Email,
+            Password = m.Password,
+            Menu = validMenuItems.Select(item => new MenuItemRequest
+            {
+                Name = item.Name,
+                Price = item.Price
+            }).ToList()
+        };
+    }
+
+    public class PartnerRegisterModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Restaurant name is required")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Address is required")]
+        public string Address { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email is required")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Password is required")]
+        [System.ComponentModel.DataAnnotations.MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+        public string Password { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please confirm your password")]
+        [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        public List<MenuItemModel> Menu { get; set; } = new();
+    }
+
+    public class MenuItemModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class PartnerRegisterRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public List<MenuItemRequest> Menu { get; set; } = new();
+    }
+
+    public class MenuItemRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+}

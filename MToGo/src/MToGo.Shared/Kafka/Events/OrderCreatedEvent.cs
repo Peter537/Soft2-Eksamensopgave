@@ -1,17 +1,16 @@
-using System.Collections.Generic;
-
 namespace MToGo.Shared.Kafka.Events
 {
     public class OrderCreatedEvent
     {
         public int OrderId { get; set; }
         public int PartnerId { get; set; }
-        public string OrderCreatedTime { get; set; }
-        public List<OrderCreatedItem> Items { get; set; }
+        public string OrderCreatedTime { get; set; } = string.Empty;
+        public string Distance { get; set; } = string.Empty;
+        public List<OrderCreatedItem> Items { get; set; } = new();
 
         public class OrderCreatedItem
         {
-            public string Name { get; set; }
+            public string Name { get; set; } = string.Empty;
             public int Quantity { get; set; }
         }
     }

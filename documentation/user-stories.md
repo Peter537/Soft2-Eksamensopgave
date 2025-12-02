@@ -148,6 +148,40 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 
 ---
 
+**Size:** M  
+**Priority:** Low  
+**US-32:** View Agent Delivery History  
+**As an** agent,  
+**I want** to view my past deliveries,  
+**So that** I can track my performance and earnings.  
+**AC-1:** Given logged in as agent, When navigating delivery history, Then list with dates, partners, customers, and delivery fees shown.  
+**AC-2:** Given date range, When filtering, Then only matching deliveries shown.
+
+---
+
+**Size:** M  
+**Priority:** Low  
+**US-33:** View Partner Order History  
+**As a** partner,  
+**I want** to view past orders for my restaurant,  
+**So that** I can track sales and order patterns.  
+**AC-1:** Given logged in as partner, When navigating order history, Then list with dates, customers, items, and totals shown.  
+**AC-2:** Given date range, When filtering, Then only matching orders shown.
+
+---
+
+**Size:** M  
+**Priority:** Low  
+**US-34:** View Order Details  
+**As a** user,  
+**I want** to view details of a specific order,  
+**So that** I can see complete order information.  
+**AC-1:** Given authenticated, When requesting order by ID, Then order details including items, status, dates, and totals returned.  
+**AC-2:** Given order belongs to user (customer, partner, or agent), When requesting, Then full details shown.  
+**AC-3:** Given order does not belong to user, When requesting, Then 403 Forbidden returned.
+
+---
+
 ## Service: Partner Service
 
 **Size:** M  
@@ -197,6 +231,19 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 
 ---
 
+**Size:** S
+**Priority:** High
+**US-35:** Partner Login
+**As an** existing partner,
+**I want** to log in to my account,
+**So that** I can manage my menu and receive customer orders.
+**AC-1:** Given valid credentials, When submitting the login form, Then I am logged in successfully.
+**AC-2:** Given invalid credentials, When submitting the login form, Then I see an error and I am not logged in.  
+**AC-3:** Given missing or malformed credentials, When submitting the login form, Then I receive a 400 validation error.  
+**AC-4:** Given a stored hashed password and a provided password, When logging in, Then the system verifies the password using the hash (no plain-text password comparison or storage).
+
+---
+
 ## Service: Agent Service
 
 **Size:** M  
@@ -206,6 +253,8 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 **I want** to register account,  
 **So that** I can pick deliveries.  
 **AC-1:** Given valid details, When submitting, Then account created.
+**AC-2:** Given details and menu items, When submitting, Then account created.
+**AC-3:** Given empty menu, When registering, Then 400 error.
 
 ---
 
@@ -238,6 +287,19 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 **I want** to view bonus history,  
 **So that** I see extra earnings.  
 **AC-1:** Given authenticated, When viewing, Then bonus history displayed.
+
+---
+
+**Size:** S  
+**Priority:** High
+**US-36:** Agent Login
+**As an** existing agent,
+**I want** to log in to my account,
+**So that** I can access and pick deliveries.
+**AC-1:** Given valid credentials, When submitting the login form, Then I am logged in successfully.
+**AC-2:** Given invalid credentials, When submitting the login form, Then I see an error and I am not logged in.  
+**AC-3:** Given missing credentials, When submitting the login form, Then I receive a 400 validation error.  
+**AC-4:** Given a valid session, When I am already logged in and revisit the app, Then I stay logged in (no need to log in again).
 
 ---
 
@@ -299,6 +361,16 @@ Dette dokument indeholder user stories for MToGo platformen, opdelt efter servic
 **I want** notifications for new orders,  
 **So that** I respond quickly.  
 **AC-1:** Given connected to WebSocket, When OrderCreated or AgentAssigned, Then partner is notified.
+
+---
+
+**Size:** S  
+**Priority:** Medium  
+**US-31:** Partner Notified When Order Picked Up  
+**As a** partner,  
+**I want** to be notified when an agent picks up an order,  
+**So that** the order is removed from my active orders view.  
+**AC-1:** Given connected to WebSocket, When OrderPickedUp event occurs, Then order is removed from accepted orders list.
 
 ---
 

@@ -1,0 +1,26 @@
+.delivery-card {
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s;
+}
+
+.delivery-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.delivery-card.border-success {
+    border-width: 2px;
+    background-color: #f8fff8;
+}
+
+.delivery-card.border-info {
+    border-width: 2px;
+    background-color: #f0f8ff;
+}
+
+.deliveries-container {
+    min-height: 200px;
+}
+
+.delivery-actions {
+    min-width: 120px;
+}

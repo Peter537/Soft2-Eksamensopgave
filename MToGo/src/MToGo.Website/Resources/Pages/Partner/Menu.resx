@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Menu Management - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Menu Management</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>You must be logged in to manage your menu.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="NoItems" xml:space="preserve">
+    <value>No menu items found. Add your first item to get started!</value>
+  </data>
+  <data name="AddItem" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="AddItemTitle" xml:space="preserve">
+    <value>Add New Menu Item</value>
+  </data>
+  <data name="EditItemTitle" xml:space="preserve">
+    <value>Edit Menu Item</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Item Name</value>
+  </data>
+  <data name="ItemPrice" xml:space="preserve">
+    <value>Price (DKK)</value>
+  </data>
+  <data name="AddButton" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="SaveButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="EditButton" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="DeleteButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteConfirmTitle" xml:space="preserve">
+    <value>Confirm Delete</value>
+  </data>
+  <data name="DeleteConfirmMessage" xml:space="preserve">
+    <value>Are you sure you want to delete "{0}"? This action cannot be undone.</value>
+  </data>
+  <data name="ItemAdded" xml:space="preserve">
+    <value>Menu item added successfully!</value>
+  </data>
+  <data name="ItemUpdated" xml:space="preserve">
+    <value>Menu item updated successfully!</value>
+  </data>
+  <data name="ItemDeleted" xml:space="preserve">
+    <value>Menu item deleted successfully!</value>
+  </data>
+  <data name="AddFailed" xml:space="preserve">
+    <value>Failed to add menu item.</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>Failed to update menu item.</value>
+  </data>
+  <data name="DeleteFailed" xml:space="preserve">
+    <value>Failed to delete menu item.</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Failed to load menu items.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>An error occurred: {0}</value>
+  </data>
+</root>

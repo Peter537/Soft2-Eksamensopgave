@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Partner Log ind - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Partner Log ind</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>Indtast din email</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Adgangskode</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Indtast din adgangskode</value>
+  </data>
+  <data name="LoginButton" xml:space="preserve">
+    <value>Log ind</value>
+  </data>
+  <data name="LoggingIn" xml:space="preserve">
+    <value>Logger ind...</value>
+  </data>
+  <data name="NoAccount" xml:space="preserve">
+    <value>Har du ikke en konto?</value>
+  </data>
+  <data name="RegisterHere" xml:space="preserve">
+    <value>Registrer her</value>
+  </data>
+  <data name="CustomerQuestion" xml:space="preserve">
+    <value>Er du en kunde?</value>
+  </data>
+  <data name="CustomerLogin" xml:space="preserve">
+    <value>Kunde Log ind</value>
+  </data>
+  <data name="LoginSuccessful" xml:space="preserve">
+    <value>Login lykkedes!</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Ugyldig email eller adgangskode.</value>
+  </data>
+  <data name="LoginFailed" xml:space="preserve">
+    <value>Login mislykkedes. Prøv igen.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+</root>

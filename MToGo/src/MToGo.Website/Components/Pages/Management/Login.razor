@@ -1,0 +1,50 @@
+@page "/management/login"
+@using MToGo.Website.Components.Shared
+@inject NavigationManager Navigation
+@inject AuthService Auth
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Management.Login.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <LoginForm 
+                IdentifierLabel="@L["Pages.Management.Login.Username"]"
+                IdentifierPlaceholder="@L["Pages.Management.Login.UsernamePlaceholder"]"
+                IdentifierFieldName="Username"
+                ValidateAsEmail="false"
+                PasswordLabel="@L["Pages.Management.Login.Password"]"
+                PasswordPlaceholder="@L["Pages.Management.Login.PasswordPlaceholder"]"
+                ApiEndpoint="/api/v1/management/login"
+                RedirectUrl="/management"
+                CardTitle="@L["Pages.Management.Login.Title"]"
+                CardHeaderClass="bg-dark text-white"
+                ButtonClass="btn-dark"
+                ButtonText="@L["Pages.Management.Login.LoginButton"]"
+                LoadingText="@L["Pages.Management.Login.LoggingIn"]"
+                RedirectDelayMs="1000"
+                FormName="ManagementLoginForm" />
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+}

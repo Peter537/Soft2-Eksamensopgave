@@ -1,0 +1,67 @@
+@page "/agent/login"
+@using MToGo.Website.Components.Shared
+@inject NavigationManager Navigation
+@inject AuthService Auth
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Agent.Login.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <LoginForm 
+                IdentifierLabel="@L["Pages.Agent.Login.Email"]"
+                IdentifierPlaceholder="@L["Pages.Agent.Login.EmailPlaceholder"]"
+                PasswordLabel="@L["Pages.Agent.Login.Password"]"
+                PasswordPlaceholder="@L["Pages.Agent.Login.PasswordPlaceholder"]"
+                ApiEndpoint="/api/v1/agents/login"
+                RedirectUrl="/agent/orders"
+                CardTitle="@L["Pages.Agent.Login.Title"]"
+                CardHeaderClass=""
+                ButtonClass="btn-primary"
+                ButtonText="@L["Pages.Agent.Login.LoginButton"]"
+                LoadingText="@L["Pages.Agent.Login.LoggingIn"]"
+                FormName="AgentLoginForm">
+                <AdditionalLinks>
+                    <div class="mt-3 text-center">
+                        <p class="mb-0">@L["Pages.Agent.Login.NoAccount"] <a href="/agent/register">@L["Pages.Agent.Login.RegisterHere"]</a></p>
+                    </div>
+                </AdditionalLinks>
+            </LoginForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize auth then check if already logged in
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsLoggedIn && Auth.IsAgent)
+            {
+                Navigation.NavigateTo("/agent/orders");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+}

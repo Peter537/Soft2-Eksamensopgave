@@ -1,0 +1,382 @@
+@page "/customer/active-orders"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@inject IConfiguration Configuration
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+@rendermode InteractiveServer
+
+<PageTitle>Active Orders</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="bi bi-bag-check me-2"></i>Your Active Orders
+                </h2>
+                @if (IsConnected)
+                {
+                    <span class="badge bg-success">
+                        <i class="bi bi-wifi me-1"></i>Live Updates
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-wifi-off me-1"></i>Connecting...
+                    </span>
+                }
+            </div>
+
+            @if (!Auth.IsCustomer)
+            {
+                <div class="alert alert-warning">
+                    <p class="mb-0">Please <a href="/login">log in</a> to view your active orders.</p>
+                </div>
+            }
+            else if (isLoading)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading your orders...</p>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                </div>
+            }
+            else if (orders == null || !orders.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <h4 class="mt-3 text-muted">No Active Orders</h4>
+                    <p class="text-muted">You don't have any ongoing orders at the moment.</p>
+                    <a href="/customer/orders" class="btn btn-outline-primary mt-2">
+                        <i class="bi bi-clock-history me-1"></i>View Order History
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    @foreach (var order in orders)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm order-card" @onclick="() => ViewOrderDetail(order.Id)" style="cursor: pointer;">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold">Order #@order.Id</span>
+                                    <span class="badge @GetStatusBadgeClass(order.Status)">
+                                        @GetStatusIcon(order.Status) @order.Status
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <i class="bi bi-shop me-2 text-muted"></i>
+                                        <span class="text-muted">Partner #@order.PartnerId</span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <i class="bi bi-geo-alt me-2 text-muted"></i>
+                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@order.DeliveryAddress">
+                                            @order.DeliveryAddress
+                                        </span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <i class="bi bi-clock me-2 text-muted"></i>
+                                        <span class="text-muted">@FormatDate(order.OrderCreatedTime)</span>
+                                    </div>
+                                    
+                                    <hr />
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="text-muted">@order.Items.Count item(s)</span>
+                                        <span class="fw-bold fs-5">@CalculateTotal(order).ToString("C")</span>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <small class="text-muted">
+                                        <i class="bi bi-arrow-right-circle me-1"></i>Tap to view details
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="/customer/orders" class="btn btn-outline-secondary">
+                        <i class="bi bi-clock-history me-1"></i>View Order History
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .order-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .order-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+</style>
+
+@code {
+    private List<CustomerOrderResponse>? orders;
+    private string? errorMessage;
+    private bool isLoading = true;
+    private bool isInitialized = false;
+    
+    // WebSocket state
+    private bool IsConnected { get; set; }
+    private DotNetObjectReference<ActiveOrders>? _dotNetRef;
+    private int _listenerId;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            isInitialized = true;
+            
+            if (Auth.IsCustomer)
+            {
+                await LoadActiveOrders();
+                await ConnectWebSocket();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task ConnectWebSocket()
+    {
+        if (!Auth.IsCustomer || !Auth.Id.HasValue) return;
+
+        try
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:5000";
+            var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
+            wsUrl = $"{wsUrl}/api/v1/ws/customers/{Auth.Id}";
+            
+            // Connect returns a listener ID for cleanup
+            _listenerId = await JS.InvokeAsync<int>("customerWebSocket.connect", wsUrl, _dotNetRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to connect WebSocket: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public void OnConnected()
+    {
+        IsConnected = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnDisconnected(string reason)
+    {
+        IsConnected = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnOrderAccepted(int orderId, string partnerName, int estimatedMinutes, string timestamp)
+    {
+        await UpdateOrderStatus(orderId, "Accepted");
+    }
+
+    [JSInvokable]
+    public async Task OnOrderRejected(int orderId, string reason, string timestamp)
+    {
+        // Remove rejected order from active list
+        if (orders != null)
+        {
+            orders.RemoveAll(o => o.Id == orderId);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnOrderReady(int orderId, string partnerName, string timestamp)
+    {
+        await UpdateOrderStatus(orderId, "Ready");
+    }
+
+    [JSInvokable]
+    public async Task OnOrderPickedUp(int orderId, string agentName, string timestamp)
+    {
+        await UpdateOrderStatus(orderId, "PickedUp");
+    }
+
+    [JSInvokable]
+    public async Task OnOrderDelivered(int orderId, string timestamp)
+    {
+        // Remove delivered order from active list
+        if (orders != null)
+        {
+            orders.RemoveAll(o => o.Id == orderId);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task UpdateOrderStatus(int orderId, string newStatus)
+    {
+        if (orders != null)
+        {
+            var order = orders.FirstOrDefault(o => o.Id == orderId);
+            if (order != null)
+            {
+                order.Status = newStatus;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private async Task LoadActiveOrders()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var url = $"/api/v1/orders/customer/{Auth.Id}/active";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                orders = await response.Content.ReadFromJsonAsync<List<CustomerOrderResponse>>();
+            }
+            else
+            {
+                errorMessage = "Failed to load your active orders. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ViewOrderDetail(int orderId)
+    {
+        Navigation.NavigateTo($"/customer/orders/{orderId}");
+    }
+
+    private string FormatDate(string isoDate)
+    {
+        if (DateTime.TryParse(isoDate, out var date))
+        {
+            return date.ToLocalTime().ToString("g");
+        }
+        return isoDate;
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Placed" => "bg-secondary",
+            "Accepted" => "bg-info",
+            "Ready" => "bg-primary",
+            "PickedUp" => "bg-warning text-dark",
+            "Delivered" => "bg-success",
+            "Rejected" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetStatusIcon(string status)
+    {
+        return status switch
+        {
+            "Placed" => "⏳",
+            "Accepted" => "✅",
+            "Ready" => "🍽️",
+            "PickedUp" => "🚗",
+            "Delivered" => "📦",
+            "Rejected" => "❌",
+            _ => "•"
+        };
+    }
+
+    private decimal CalculateTotal(CustomerOrderResponse order)
+    {
+        var itemsTotal = order.Items.Sum(i => i.Quantity * i.UnitPrice);
+        return itemsTotal + order.ServiceFee + order.DeliveryFee;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+        
+        try
+        {
+            // Remove this component's listener, don't disconnect the whole socket
+            if (_listenerId > 0)
+            {
+                await JS.InvokeVoidAsync("customerWebSocket.removeListener", _listenerId);
+            }
+        }
+        catch { }
+        
+        _dotNetRef?.Dispose();
+    }
+
+    public class CustomerOrderResponse
+    {
+        public int Id { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public decimal ServiceFee { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string OrderCreatedTime { get; set; } = string.Empty;
+        public List<CustomerOrderItemResponse> Items { get; set; } = new();
+    }
+
+    public class CustomerOrderItemResponse
+    {
+        public int FoodItemId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+}

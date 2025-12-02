@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Administration Dashboard - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Administration Dashboard</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind som administrator for at se denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="WelcomeUser" xml:space="preserve">
+    <value>Velkommen, {0}</value>
+  </data>
+  <data name="CreateAgentTitle" xml:space="preserve">
+    <value>Opret Agent</value>
+  </data>
+  <data name="CreateAgentDescription" xml:space="preserve">
+    <value>Opret en ny agentkonto til MToGo-platformen.</value>
+  </data>
+  <data name="CreateAgentButton" xml:space="preserve">
+    <value>Opret Agent</value>
+  </data>
+  <data name="CreatePartnerTitle" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="CreatePartnerDescription" xml:space="preserve">
+    <value>Opret en ny partnerkonto til MToGo-platformen.</value>
+  </data>
+  <data name="CreatePartnerButton" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="MetricsTitle" xml:space="preserve">
+    <value>Platform Metrics</value>
+  </data>
+  <data name="MetricsDescription" xml:space="preserve">
+    <value>Oversigt over nøglepræstationsindikatorer for MToGo-platformen.</value>
+  </data>
+  <data name="ViewMetricsButton" xml:space="preserve">
+    <value>Se Metrics</value>
+  </data>
+</root>

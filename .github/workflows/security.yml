@@ -82,6 +82,7 @@ jobs:
       websocketagent: ${{ steps.parse.outputs.websocketagent }}
       websocketcustomer: ${{ steps.parse.outputs.websocketcustomer }}
       websocketpartner: ${{ steps.parse.outputs.websocketpartner }}
+      management: ${{ steps.parse.outputs.management }}
       legacy: ${{ steps.parse.outputs.legacy }}
 
     steps:
@@ -110,12 +111,13 @@ jobs:
           echo "websocketagent=$(jq -r '.websocketagent' build-outputs.json)" >> "$GITHUB_OUTPUT"
           echo "websocketcustomer=$(jq -r '.websocketcustomer' build-outputs.json)" >> "$GITHUB_OUTPUT"
           echo "websocketpartner=$(jq -r '.websocketpartner' build-outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "management=$(jq -r '.management' build-outputs.json)" >> "$GITHUB_OUTPUT"
           echo "legacy=$(jq -r '.legacy' build-outputs.json)" >> "$GITHUB_OUTPUT"
 
   codeql:
     name: CodeQL - repo-wide analysis
     needs: detect_changed_services
-    if: ${{ needs.detect_changed_services.outputs.agentbonus == 'true' || needs.detect_changed_services.outputs.agentservice == 'true' || needs.detect_changed_services.outputs.customerservice == 'true' || needs.detect_changed_services.outputs.feedbackhub == 'true' || needs.detect_changed_services.outputs.gateway == 'true' || needs.detect_changed_services.outputs.notification == 'true' || needs.detect_changed_services.outputs.order == 'true' || needs.detect_changed_services.outputs.partner == 'true' || needs.detect_changed_services.outputs.website == 'true' || needs.detect_changed_services.outputs.websocketagent == 'true' || needs.detect_changed_services.outputs.websocketcustomer == 'true' || needs.detect_changed_services.outputs.websocketpartner == 'true' || needs.detect_changed_services.outputs.legacy == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    if: ${{ needs.detect_changed_services.outputs.agentbonus == 'true' || needs.detect_changed_services.outputs.agentservice == 'true' || needs.detect_changed_services.outputs.customerservice == 'true' || needs.detect_changed_services.outputs.feedbackhub == 'true' || needs.detect_changed_services.outputs.gateway == 'true' || needs.detect_changed_services.outputs.notification == 'true' || needs.detect_changed_services.outputs.order == 'true' || needs.detect_changed_services.outputs.partner == 'true' || needs.detect_changed_services.outputs.website == 'true' || needs.detect_changed_services.outputs.websocketagent == 'true' || needs.detect_changed_services.outputs.websocketcustomer == 'true' || needs.detect_changed_services.outputs.websocketpartner == 'true' || needs.detect_changed_services.outputs.management == 'true' || needs.detect_changed_services.outputs.legacy == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -209,6 +211,12 @@ jobs:
             dotnet build MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj -c Release --no-restore
           fi
 
+          if [[ "${{ needs.detect_changed_services.outputs.management }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Building Management for CodeQL"
+            dotnet restore MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj
+            dotnet build MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj -c Release --no-restore
+          fi
+
           if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
             echo "Building LegacyMToGo for CodeQL"
             dotnet restore LegacyMToGo/LegacyMToGo.csproj
@@ -256,6 +264,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.CustomerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (CustomerService, HIGH/CRITICAL fail)
@@ -285,13 +294,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (CustomerService)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-customerservice-fs.sarif
           category: trivy-customerservice-fs
 
       - name: Upload Trivy image SARIF (CustomerService)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-customerservice-image.sarif
           category: trivy-customerservice-image
@@ -340,6 +349,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.OrderService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Order & Delivery, HIGH/CRITICAL fail)
@@ -369,13 +379,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (Order & Delivery)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-order-fs.sarif
           category: trivy-order-fs
 
       - name: Upload Trivy image SARIF (Order & Delivery)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-order-image.sarif
           category: trivy-order-image
@@ -424,6 +434,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.AgentBonusService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (AgentBonus, HIGH/CRITICAL fail)
@@ -453,13 +464,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (AgentBonus)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-agentbonus-fs.sarif
           category: trivy-agentbonus-fs
 
       - name: Upload Trivy image SARIF (AgentBonus)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-agentbonus-image.sarif
           category: trivy-agentbonus-image
@@ -508,6 +519,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.AgentService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (AgentService, HIGH/CRITICAL fail)
@@ -537,13 +549,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (AgentService)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-agentservice-fs.sarif
           category: trivy-agentservice-fs
 
       - name: Upload Trivy image SARIF (AgentService)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-agentservice-image.sarif
           category: trivy-agentservice-image
@@ -592,6 +604,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.FeedbackHubService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (FeedbackHub, HIGH/CRITICAL fail)
@@ -621,13 +634,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (FeedbackHub)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-feedbackhub-fs.sarif
           category: trivy-feedbackhub-fs
 
       - name: Upload Trivy image SARIF (FeedbackHub)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-feedbackhub-image.sarif
           category: trivy-feedbackhub-image
@@ -676,6 +689,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.Gateway \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Gateway, HIGH/CRITICAL fail)
@@ -705,13 +719,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (Gateway)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-gateway-fs.sarif
           category: trivy-gateway-fs
 
       - name: Upload Trivy image SARIF (Gateway)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-gateway-image.sarif
           category: trivy-gateway-image
@@ -760,6 +774,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.NotificationService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Notification, HIGH/CRITICAL fail)
@@ -789,13 +804,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (Notification)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-notification-fs.sarif
           category: trivy-notification-fs
 
       - name: Upload Trivy image SARIF (Notification)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-notification-image.sarif
           category: trivy-notification-image
@@ -844,6 +859,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.PartnerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Partner, HIGH/CRITICAL fail)
@@ -873,13 +889,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (Partner)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-partner-fs.sarif
           category: trivy-partner-fs
 
       - name: Upload Trivy image SARIF (Partner)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-partner-image.sarif
           category: trivy-partner-image
@@ -928,6 +944,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.Website \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (Website, HIGH/CRITICAL fail)
@@ -957,13 +974,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (Website)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-website-fs.sarif
           category: trivy-website-fs
 
       - name: Upload Trivy image SARIF (Website)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-website-image.sarif
           category: trivy-website-image
@@ -1012,6 +1029,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.WebSocketAgentService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (WebSocketAgent, HIGH/CRITICAL fail)
@@ -1041,13 +1059,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (WebSocketAgent)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-websocketagent-fs.sarif
           category: trivy-websocketagent-fs
 
       - name: Upload Trivy image SARIF (WebSocketAgent)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-websocketagent-image.sarif
           category: trivy-websocketagent-image
@@ -1096,6 +1114,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.WebSocketCustomerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (WebSocketCustomer, HIGH/CRITICAL fail)
@@ -1125,13 +1144,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (WebSocketCustomer)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-websocketcustomer-fs.sarif
           category: trivy-websocketcustomer-fs
 
       - name: Upload Trivy image SARIF (WebSocketCustomer)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-websocketcustomer-image.sarif
           category: trivy-websocketcustomer-image
@@ -1180,6 +1199,7 @@ jobs:
           gitleaks detect \
             --source MToGo/src/MToGo.WebSocketPartnerService \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (WebSocketPartner, HIGH/CRITICAL fail)
@@ -1209,16 +1229,101 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (WebSocketPartner)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-websocketpartner-fs.sarif
           category: trivy-websocketpartner-fs
 
       - name: Upload Trivy image SARIF (WebSocketPartner)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-websocketpartner-image.sarif
           category: trivy-websocketpartner-image
+
+      - name: Check Trivy scan results
+        if: steps.trivy_fs.outcome == 'failure' || steps.trivy_image.outcome == 'failure'
+        run: |
+          echo "Trivy found HIGH/CRITICAL vulnerabilities"
+          exit 1
+
+  security_management:
+    name: Management - security gates
+    needs: detect_changed_services
+    if: ${{ needs.detect_changed_services.outputs.management == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.IMAGE_TAG }}
+          fetch-depth: 0
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
+        env:
+          OWNER: ${{ github.repository_owner }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Management image from GHCR
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
+
+      - name: Install gitleaks
+        run: |
+          VERSION=8.29.1
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz \
+          | tar xz -C /usr/local/bin gitleaks
+
+      - name: Gitleaks scan (Management)
+        run: |
+          gitleaks detect \
+            --source MToGo/src/MToGo.ManagementService \
+            --config .gitleaks.toml \
+            --no-git \
+            -v
+
+      - name: Trivy FS scan (Management, HIGH/CRITICAL fail)
+        id: trivy_fs
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: MToGo/src/MToGo.ManagementService
+          format: sarif
+          output: trivy-management-fs.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Trivy image scan (Management, HIGH/CRITICAL fail)
+        id: trivy_image
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
+          format: sarif
+          output: trivy-management-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Upload Trivy FS SARIF (Management)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-management-fs.sarif
+          category: trivy-management-fs
+
+      - name: Upload Trivy image SARIF (Management)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-management-image.sarif
+          category: trivy-management-image
 
       - name: Check Trivy scan results
         if: steps.trivy_fs.outcome == 'failure' || steps.trivy_image.outcome == 'failure'
@@ -1264,6 +1369,7 @@ jobs:
           gitleaks detect \
             --source LegacyMToGo \
             --config .gitleaks.toml \
+            --no-git \
             -v
 
       - name: Trivy FS scan (LegacyMToGo, HIGH/CRITICAL fail)
@@ -1293,13 +1399,13 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy FS SARIF (LegacyMToGo)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-legacy-fs.sarif
           category: trivy-legacy-fs
 
       - name: Upload Trivy image SARIF (LegacyMToGo)
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-legacy-image.sarif
           category: trivy-legacy-image
@@ -1329,6 +1435,7 @@ jobs:
       - security_websocketagent
       - security_websocketcustomer
       - security_websocketpartner
+      - security_management
       - security_legacy
     # Always run so we can explicitly fail even if others failed
     if: always()
@@ -1351,6 +1458,7 @@ jobs:
           echo "security_websocketagent: ${{ needs.security_websocketagent.result }}"
           echo "security_websocketcustomer: ${{ needs.security_websocketcustomer.result }}"
           echo "security_websocketpartner: ${{ needs.security_websocketpartner.result }}"
+          echo "security_management:    ${{ needs.security_management.result }}"
           echo "security_legacy:        ${{ needs.security_legacy.result }}"
 
           failed=false
@@ -1371,6 +1479,7 @@ jobs:
             "${{ needs.security_websocketagent.result }}" \
             "${{ needs.security_websocketcustomer.result }}" \
             "${{ needs.security_websocketpartner.result }}" \
+            "${{ needs.security_management.result }}" \
             "${{ needs.security_legacy.result }}"; do
 
             if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then

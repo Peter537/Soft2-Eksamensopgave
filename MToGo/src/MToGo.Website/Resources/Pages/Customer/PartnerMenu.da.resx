@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Partner Menu - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Partner Menu</value>
+  </data>
+  <data name="BackToPartners" xml:space="preserve">
+    <value>Tilbage til partnere</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>Partner ikke fundet.</value>
+  </data>
+  <data name="InactivePartner" xml:space="preserve">
+    <value>Denne partner accepterer ikke ordrer i øjeblikket.</value>
+  </data>
+  <data name="NoItems" xml:space="preserve">
+    <value>Ingen menupunkter tilgængelige.</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Vare</value>
+  </data>
+  <data name="ItemPrice" xml:space="preserve">
+    <value>Pris</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Handlinger</value>
+  </data>
+  <data name="AddToOrder" xml:space="preserve">
+    <value>Tilføj</value>
+  </data>
+  <data name="CannotOrderInactive" xml:space="preserve">
+    <value>Bestilling er deaktiveret for inaktive partnere.</value>
+  </data>
+  <data name="LoginToOrder" xml:space="preserve">
+    <value>Du skal være logget ind for at afgive en ordre.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse menu.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+</root>

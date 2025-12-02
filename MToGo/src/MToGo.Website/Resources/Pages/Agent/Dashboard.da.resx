@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Agentpanel - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Agentpanel</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind som agent for at se denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="AgentInfo" xml:space="preserve">
+    <value>Agentoplysninger</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Navn</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="AvailabilityStatus" xml:space="preserve">
+    <value>Tilgængelighedsstatus</value>
+  </data>
+  <data name="Available" xml:space="preserve">
+    <value>Tilgængelig</value>
+  </data>
+  <data name="Unavailable" xml:space="preserve">
+    <value>Utilgængelig</value>
+  </data>
+  <data name="GoUnavailable" xml:space="preserve">
+    <value>Gå utilgængelig</value>
+  </data>
+  <data name="GoAvailable" xml:space="preserve">
+    <value>Gå tilgængelig</value>
+  </data>
+  <data name="AvailableInfo" xml:space="preserve">
+    <value>Du modtager i øjeblikket leveringstilbud.</value>
+  </data>
+  <data name="UnavailableInfo" xml:space="preserve">
+    <value>Du modtager ikke leveringstilbud.</value>
+  </data>
+  <data name="ViewAvailableJobs" xml:space="preserve">
+    <value>Se tilgængelige jobs</value>
+  </data>
+  <data name="ViewMyDeliveries" xml:space="preserve">
+    <value>Se mine leveringer</value>
+  </data>
+  <data name="OrderHistory" xml:space="preserve">
+    <value>Ordrehistorik</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse agentprofil.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl</value>
+  </data>
+  <data name="NowAvailable" xml:space="preserve">
+    <value>Du er nu tilgængelig for leveringer!</value>
+  </data>
+  <data name="NowUnavailable" xml:space="preserve">
+    <value>Du er nu utilgængelig.</value>
+  </data>
+  <data name="ToggleFailed" xml:space="preserve">
+    <value>Kunne ikke opdatere tilgængelighedsstatus.</value>
+  </data>
+  <data name="QuickNavigation" xml:space="preserve">
+    <value>Hurtig navigation</value>
+  </data>
+</root>
