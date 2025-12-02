@@ -39,4 +39,7 @@
   <data name="AgentOrders" xml:space="preserve">
     <value>Agent Ordrer</value>
   </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
 </root>
