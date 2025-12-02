@@ -67,4 +67,19 @@ public class PartnerRepository : IPartnerRepository
         _context.MenuItems.Update(menuItem);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<Partner>> GetAllActivePartnersAsync()
+    {
+        return await _context.Partners
+            .Where(p => !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.Name)
+            .ToListAsync();
+    }
+
+    public async Task<Partner?> GetPartnerWithMenuAsync(int partnerId)
+    {
+        return await _context.Partners
+            .Include(p => p.MenuItems.Where(m => m.IsActive))
+            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
+    }
 }
