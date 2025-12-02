@@ -32,6 +32,7 @@ jobs:
       websocketagent: ${{ steps.filter.outputs.websocketagent }}
       websocketcustomer: ${{ steps.filter.outputs.websocketcustomer }}
       websocketpartner: ${{ steps.filter.outputs.websocketpartner }}
+      management: ${{ steps.filter.outputs.management }}
       legacy: ${{ steps.filter.outputs.legacy }}
 
     steps:
@@ -97,6 +98,10 @@ jobs:
             websocketpartner:
               - 'MToGo/src/MToGo.WebSocketPartnerService/**'
               - 'MToGo/tests/MToGo.WebSocketPartnerService.Tests/**'
+
+            management:
+              - 'MToGo/src/MToGo.ManagementService/**'
+              - 'MToGo/tests/MToGo.ManagementService.Tests/**'
 
             legacy:
               - 'LegacyMToGo/**'
@@ -602,6 +607,48 @@ jobs:
 
           docker push "$IMAGE"
 
+  management_ci:
+    name: Management - build, test & docker
+    needs: detect_changes
+    if: ${{ needs.detect_changes.outputs.management == 'true' || needs.detect_changes.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj
+
+      - name: Build
+        run: dotnet build MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj -c Release --no-restore
+
+      - name: Test
+        run: dotnet test MToGo/tests/MToGo.ManagementService.Tests/MToGo.ManagementService.Tests.csproj -c Release
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push Docker image
+        run: |
+          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
+          IMAGE_NAME="mtogo-management"
+          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+
+          docker build \
+            -f MToGo/src/MToGo.ManagementService/Dockerfile \
+            -t "$IMAGE" \
+            MToGo/
+
+          docker push "$IMAGE"
+
   legacy_ci:
     name: LegacyMToGo - build & docker
     needs: detect_changes
@@ -658,6 +705,7 @@ jobs:
       - websocketagent_ci
       - websocketcustomer_ci
       - websocketpartner_ci
+      - management_ci
       - legacy_ci
     if: always()
     runs-on: ubuntu-latest
@@ -680,6 +728,7 @@ jobs:
             "websocketagent": "${{ needs.detect_changes.outputs.websocketagent }}",
             "websocketcustomer": "${{ needs.detect_changes.outputs.websocketcustomer }}",
             "websocketpartner": "${{ needs.detect_changes.outputs.websocketpartner }}",
+            "management": "${{ needs.detect_changes.outputs.management }}",
             "legacy": "${{ needs.detect_changes.outputs.legacy }}"
           }
           EOF
