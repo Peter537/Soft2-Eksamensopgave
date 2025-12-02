@@ -381,7 +381,7 @@ public class MenuItemIntegrationTests : IAsyncLifetime
 
     #region Helper Methods
 
-    private async Task<int> CreateTestPartnerAsync(string name = "Test Partner", string email = "test@example.com")
+    private async Task<int> CreateTestPartnerAsync(string name = "Test Partner", string email = "test@example.com", bool isActive = true)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<PartnerDbContext>();
@@ -392,7 +392,7 @@ public class MenuItemIntegrationTests : IAsyncLifetime
             Address = "123 Test Street",
             Email = email,
             Password = "$2a$12$hashedpassword",
-            IsActive = true,
+            IsActive = isActive,
             MenuItems = new List<MenuItem>
             {
                 new MenuItem { Name = "Default Item", Price = 10.00m, IsActive = true }
