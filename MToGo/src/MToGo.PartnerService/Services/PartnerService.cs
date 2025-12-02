@@ -202,4 +202,77 @@ public class PartnerService : IPartnerService
 
         _logger.MenuItemDeleted(partnerId, menuItemId);
     }
+
+    public async Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync()
+    {
+        _logger.GettingAllActivePartners();
+
+        var partners = await _partnerRepository.GetAllActivePartnersAsync();
+
+        var result = partners.Select(p => new PublicPartnerResponse
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Address = p.Address
+        });
+
+        _logger.ActivePartnersRetrieved(partners.Count());
+
+        return result;
+    }
+
+    public async Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId)
+    {
+        _logger.GettingPartnerMenu(partnerId);
+
+        var partner = await _partnerRepository.GetPartnerWithMenuAsync(partnerId);
+        if (partner == null)
+        {
+            _logger.PartnerNotFound(partnerId);
+            return null;
+        }
+
+        _logger.PartnerMenuRetrieved(partnerId, partner.MenuItems.Count);
+
+        return new PublicMenuResponse
+        {
+            PartnerId = partner.Id,
+            PartnerName = partner.Name,
+            IsActive = partner.IsActive,
+            Items = partner.MenuItems.Select(m => new PublicMenuItemResponse
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Price = m.Price
+            }).ToList()
+        };
+    }
+
+    public async Task<PublicMenuItemResponse?> GetMenuItemAsync(int partnerId, int menuItemId)
+    {
+        _logger.GettingMenuItem(partnerId, menuItemId);
+
+        var partner = await _partnerRepository.GetPartnerWithMenuAsync(partnerId);
+        if (partner == null)
+        {
+            _logger.PartnerNotFound(partnerId);
+            return null;
+        }
+
+        var menuItem = partner.MenuItems.FirstOrDefault(m => m.Id == menuItemId);
+        if (menuItem == null)
+        {
+            _logger.MenuItemNotFound(menuItemId);
+            return null;
+        }
+
+        _logger.MenuItemRetrieved(partnerId, menuItemId);
+
+        return new PublicMenuItemResponse
+        {
+            Id = menuItem.Id,
+            Name = menuItem.Name,
+            Price = menuItem.Price
+        };
+    }
 }
