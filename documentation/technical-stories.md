@@ -73,16 +73,6 @@ Dette dokument indeholder technical stories (TS) for implementering af forskelli
 ---
 
 **Size:** M  
-**Priority:** Medium  
-**TS-7:** Implement DORA Metrics Workflow  
-**As a** DevOps  
-**I want** to implement a DORA metrics workflow so that deployment frequency, lead time, and change failure rate are tracked to improve CI/CD maturity.  
-**AC-1:** Use GitHub Actions to collect DORA data.  
-**AC-2:** Generate reports using workflow.
-
----
-
-**Size:** M  
 **Priority:** Low  
 **TS-8:** Set Up SonarQube for Static Code Analysis  
 **As an** Udvikler  
@@ -101,17 +91,6 @@ Dette dokument indeholder technical stories (TS) for implementering af forskelli
 **AC-1:** Write Terraform modules for databases, networks, and services.  
 **AC-2:** Integrate with GitHub Actions for plan/apply on merges.  
 **AC-3:** Documentation state definitions.
-
----
-
-**Size:** L  
-**Priority:** High  
-**TS-10:** Configure Kubernetes for Container Orchestration  
-**As a** DevOps  
-**I want** to configure Kubernetes for container orchestration so that microservices are deployed scalably with auto-scaling.  
-**AC-1:** Define YAML manifests for deployments, services, and ingresses.  
-**AC-2:** Set resource limits/requests.  
-**AC-3:** Enable rolling updates and health checks.
 
 ---
 
