@@ -99,6 +99,7 @@ public class PartnerService : IPartnerService
             Id = partner.Id,
             Name = partner.Name,
             Address = partner.Address,
+            IsActive = partner.IsActive,
             MenuItems = partner.MenuItems.Select(m => new MenuItemResponse
             {
                 Id = m.Id,
@@ -274,5 +275,46 @@ public class PartnerService : IPartnerService
             Name = menuItem.Name,
             Price = menuItem.Price
         };
+    }
+
+    public async Task<PartnerDetailsResponse?> GetPartnerByIdIncludeInactiveAsync(int partnerId)
+    {
+        var partner = await _partnerRepository.GetByIdIncludeInactiveAsync(partnerId);
+        if (partner == null)
+        {
+            return null;
+        }
+
+        return new PartnerDetailsResponse
+        {
+            Id = partner.Id,
+            Name = partner.Name,
+            Address = partner.Address,
+            IsActive = partner.IsActive,
+            MenuItems = partner.MenuItems.Select(m => new MenuItemResponse
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Price = m.Price
+            }).ToList()
+        };
+    }
+
+    public async Task<bool> SetPartnerActiveStatusAsync(int partnerId, bool isActive)
+    {
+        _logger.SettingPartnerActiveStatus(partnerId, isActive);
+
+        var partner = await _partnerRepository.GetByIdIncludeInactiveAsync(partnerId);
+        if (partner == null)
+        {
+            _logger.PartnerNotFound(partnerId);
+            return false;
+        }
+
+        await _partnerRepository.UpdatePartnerActiveStatusAsync(partnerId, isActive);
+
+        _logger.PartnerActiveStatusUpdated(partnerId, isActive);
+
+        return true;
     }
 }
