@@ -10,4 +10,7 @@ public interface IPartnerService
     Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request);
     Task UpdateMenuItemAsync(int partnerId, int menuItemId, UpdateMenuItemRequest request);
     Task DeleteMenuItemAsync(int partnerId, int menuItemId);
+    Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync();
+    Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId);
+    Task<PublicMenuItemResponse?> GetMenuItemAsync(int partnerId, int menuItemId);
 }

@@ -1,0 +1,214 @@
+@page "/customer/partners/{PartnerId:int}/menu"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Customer.PartnerMenu.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="mb-3">
+                <a href="/customer/partners" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> @L["Pages.Customer.PartnerMenu.BackToPartners"]
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    @if (menu != null)
+                    {
+                        <h3 class="mb-0">@menu.PartnerName</h3>
+                    }
+                    else
+                    {
+                        <h3 class="mb-0">@L["Pages.Customer.PartnerMenu.Title"]</h3>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">@L["Pages.Customer.PartnerMenu.Loading"]</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                @errorMessage
+                            </div>
+                        }
+
+                        @if (menu == null)
+                        {
+                            <div class="alert alert-warning">
+                                @L["Pages.Customer.PartnerMenu.NotFound"]
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!menu.IsActive)
+                            {
+                                <div class="alert alert-warning mb-4">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    @L["Pages.Customer.PartnerMenu.InactivePartner"]
+                                </div>
+                            }
+
+                            @if (menu.Items == null || !menu.Items.Any())
+                            {
+                                <div class="alert alert-info">
+                                    @L["Pages.Customer.PartnerMenu.NoItems"]
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>@L["Pages.Customer.PartnerMenu.ItemName"]</th>
+                                                <th class="text-end">@L["Pages.Customer.PartnerMenu.ItemPrice"]</th>
+                                                @if (menu.IsActive && Auth.IsCustomer)
+                                                {
+                                                    <th class="text-center">@L["Pages.Customer.PartnerMenu.Actions"]</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in menu.Items)
+                                            {
+                                                <tr>
+                                                    <td>@item.Name</td>
+                                                    <td class="text-end">@item.Price.ToString("C")</td>
+                                                    @if (menu.IsActive && Auth.IsCustomer)
+                                                    {
+                                                        <td class="text-center">
+                                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => AddToOrder(item)">
+                                                                <i class="bi bi-plus-circle"></i>
+                                                                @L["Pages.Customer.PartnerMenu.AddToOrder"]
+                                                            </button>
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                @if (!menu.IsActive)
+                                {
+                                    <div class="text-muted text-center mt-3">
+                                        <small>@L["Pages.Customer.PartnerMenu.CannotOrderInactive"]</small>
+                                    </div>
+                                }
+                                else if (!Auth.IsCustomer)
+                                {
+                                    <div class="alert alert-info mt-3">
+                                        @L["Pages.Customer.PartnerMenu.LoginToOrder"]
+                                        <a href="/login">@L["Pages.Customer.PartnerMenu.LoginLink"]</a>
+                                    </div>
+                                }
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int PartnerId { get; set; }
+
+    private MenuResponse? menu;
+    private string? errorMessage;
+    private bool isLoading = true;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            await LoadMenu();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMenu()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await Http.GetAsync($"/api/v1/partners/{PartnerId}/menu");
+
+            if (response.IsSuccessStatusCode)
+            {
+                menu = await response.Content.ReadFromJsonAsync<MenuResponse>();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage = L["Pages.Customer.PartnerMenu.NotFound"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Customer.PartnerMenu.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Customer.PartnerMenu.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void AddToOrder(MenuItemResponse item)
+    {
+        // Navigate to order page with the selected item
+        Navigation.NavigateTo($"/order/create?partnerId={PartnerId}&itemId={item.Id}");
+    }
+
+    public class MenuResponse
+    {
+        public int PartnerId { get; set; }
+        public string PartnerName { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public List<MenuItemResponse> Items { get; set; } = new();
+    }
+
+    public class MenuItemResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+}

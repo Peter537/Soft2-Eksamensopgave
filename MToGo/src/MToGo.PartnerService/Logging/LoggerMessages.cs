@@ -64,4 +64,48 @@ public static partial class LoggerMessages
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Menu item does not belong to partner: MenuItemId={MenuItemId}, PartnerId={PartnerId}")]
     public static partial void MenuItemNotOwnedByPartner(this ILogger logger, int menuItemId, int partnerId);
+
+    // Public browsing - Service logs
+    [LoggerMessage(Level = LogLevel.Information, Message = "Getting all active partners")]
+    public static partial void GettingAllActivePartners(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Active partners retrieved: Count={Count}")]
+    public static partial void ActivePartnersRetrieved(this ILogger logger, int count);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Getting partner menu: PartnerId={PartnerId}")]
+    public static partial void GettingPartnerMenu(this ILogger logger, int partnerId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Partner menu retrieved: PartnerId={PartnerId}, ItemCount={ItemCount}")]
+    public static partial void PartnerMenuRetrieved(this ILogger logger, int partnerId, int itemCount);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Getting menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}")]
+    public static partial void GettingMenuItem(this ILogger logger, int partnerId, int menuItemId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Menu item retrieved: PartnerId={PartnerId}, MenuItemId={MenuItemId}")]
+    public static partial void MenuItemRetrieved(this ILogger logger, int partnerId, int menuItemId);
+
+    // Public browsing - Controller logs
+    [LoggerMessage(Level = LogLevel.Information, Message = "Received GetAllPartners request")]
+    public static partial void ReceivedGetAllPartnersRequest(this ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "GetAllPartners completed: Count={Count}")]
+    public static partial void GetAllPartnersCompleted(this ILogger logger, int count);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Received GetPartnerMenu request: PartnerId={PartnerId}")]
+    public static partial void ReceivedGetPartnerMenuRequest(this ILogger logger, int partnerId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "GetPartnerMenu completed: PartnerId={PartnerId}")]
+    public static partial void GetPartnerMenuCompleted(this ILogger logger, int partnerId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "GetPartnerMenu failed: PartnerId={PartnerId}, Reason={Reason}")]
+    public static partial void GetPartnerMenuFailed(this ILogger logger, int partnerId, string reason);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Received GetMenuItem request: PartnerId={PartnerId}, MenuItemId={MenuItemId}")]
+    public static partial void ReceivedGetMenuItemRequest(this ILogger logger, int partnerId, int menuItemId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "GetMenuItem completed: PartnerId={PartnerId}, MenuItemId={MenuItemId}")]
+    public static partial void GetMenuItemCompleted(this ILogger logger, int partnerId, int menuItemId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "GetMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}")]
+    public static partial void GetMenuItemFailed(this ILogger logger, int partnerId, int menuItemId, string reason);
 }

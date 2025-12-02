@@ -1,0 +1,403 @@
+@page "/order/create"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Order.Create.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">@L["Pages.Order.Create.Title"]</h3>
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="NavigateBack">
+                        <i class="bi bi-arrow-left"></i> @L["Pages.Order.Create.BackButton"]
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (!Auth.IsCustomer)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.Order.Create.LoginRequired"] <a href="/login">@L["Pages.Order.Create.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else if (isLoading)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">@L["Pages.Order.Create.Loading"]</span>
+                            </div>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @errorMessage
+                        </div>
+                    }
+                    else if (partner == null)
+                    {
+                        <div class="alert alert-warning">
+                            @L["Pages.Order.Create.PartnerNotFound"]
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Partner Info -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">@partner.PartnerName</h5>
+                                <p class="card-text text-muted mb-0">@L["Pages.Order.Create.OrderingFrom"]</p>
+                            </div>
+                        </div>
+
+                        <!-- Order Items -->
+                        <h5>@L["Pages.Order.Create.YourOrder"]</h5>
+                        <div class="table-responsive mb-4">
+                            <table class="table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>@L["Pages.Order.Create.ItemName"]</th>
+                                        <th class="text-center">@L["Pages.Order.Create.Quantity"]</th>
+                                        <th class="text-end">@L["Pages.Order.Create.UnitPrice"]</th>
+                                        <th class="text-end">@L["Pages.Order.Create.Subtotal"]</th>
+                                        <th class="text-center">@L["Pages.Order.Create.Actions"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in orderItems)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td class="text-center">
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <button class="btn btn-outline-secondary" @onclick="() => DecreaseQuantity(item)">
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                    <span class="btn btn-outline-secondary disabled">@item.Quantity</span>
+                                                    <button class="btn btn-outline-secondary" @onclick="() => IncreaseQuantity(item)">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                            <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                                            <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItem(item)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Add More Items -->
+                        <div class="mb-4">
+                            <button class="btn btn-outline-primary" @onclick="AddMoreItems">
+                                <i class="bi bi-plus-circle"></i> @L["Pages.Order.Create.AddMoreItems"]
+                            </button>
+                        </div>
+
+                        <!-- Delivery Address -->
+                        <div class="mb-4">
+                            <label class="form-label">@L["Pages.Order.Create.DeliveryAddress"]</label>
+                            <input type="text" class="form-control" @bind="deliveryAddress" 
+                                   placeholder="@L["Pages.Order.Create.DeliveryAddressPlaceholder"]" />
+                        </div>
+
+                        <!-- Order Summary -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">@L["Pages.Order.Create.OrderSummary"]</h5>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>@L["Pages.Order.Create.ItemsSubtotal"]</span>
+                                    <span>@CalculateItemsSubtotal().ToString("C")</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>@L["Pages.Order.Create.DeliveryFee"]</span>
+                                    <span>@deliveryFee.ToString("C")</span>
+                                </div>
+                                <hr />
+                                <div class="d-flex justify-content-between">
+                                    <strong>@L["Pages.Order.Create.Total"]</strong>
+                                    <strong>@CalculateTotal().ToString("C")</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Place Order Button -->
+                        <div class="d-grid">
+                            <button class="btn btn-success btn-lg" @onclick="PlaceOrder" disabled="@(isSubmitting || !CanPlaceOrder())">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                <i class="bi bi-check-circle"></i> @L["Pages.Order.Create.PlaceOrder"]
+                            </button>
+                        </div>
+
+                        @if (!CanPlaceOrder())
+                        {
+                            <div class="alert alert-info mt-3">
+                                <small>@L["Pages.Order.Create.RequiredFields"]</small>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public int PartnerId { get; set; }
+
+    [SupplyParameterFromQuery]
+    public int ItemId { get; set; }
+
+    private MenuResponse? partner;
+    private List<OrderItemModel> orderItems = new();
+    private string deliveryAddress = string.Empty;
+    private decimal deliveryFee = 29.00m; // Default delivery fee
+    private string? errorMessage;
+    private bool isLoading = true;
+    private bool isSubmitting;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsCustomer)
+            {
+                await LoadPartnerAndItem();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPartnerAndItem()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            // Load partner menu
+            var response = await Http.GetAsync($"/api/v1/partners/{PartnerId}/menu");
+
+            if (response.IsSuccessStatusCode)
+            {
+                partner = await response.Content.ReadFromJsonAsync<MenuResponse>();
+
+                // Find the selected item and add to order
+                if (partner != null && ItemId > 0)
+                {
+                    var item = partner.Items.FirstOrDefault(i => i.Id == ItemId);
+                    if (item != null)
+                    {
+                        orderItems.Add(new OrderItemModel
+                        {
+                            FoodItemId = item.Id,
+                            Name = item.Name,
+                            Quantity = 1,
+                            UnitPrice = item.Price
+                        });
+                    }
+                }
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                errorMessage = L["Pages.Order.Create.PartnerNotFound"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Order.Create.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Order.Create.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void IncreaseQuantity(OrderItemModel item)
+    {
+        item.Quantity++;
+    }
+
+    private void DecreaseQuantity(OrderItemModel item)
+    {
+        if (item.Quantity > 1)
+        {
+            item.Quantity--;
+        }
+    }
+
+    private void RemoveItem(OrderItemModel item)
+    {
+        orderItems.Remove(item);
+    }
+
+    private void AddMoreItems()
+    {
+        Navigation.NavigateTo($"/customer/partners/{PartnerId}/menu");
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo($"/customer/partners/{PartnerId}/menu");
+    }
+
+    private decimal CalculateItemsSubtotal()
+    {
+        return orderItems.Sum(i => i.Quantity * i.UnitPrice);
+    }
+
+    private decimal CalculateTotal()
+    {
+        return CalculateItemsSubtotal() + deliveryFee;
+    }
+
+    private bool CanPlaceOrder()
+    {
+        return orderItems.Count > 0 && !string.IsNullOrWhiteSpace(deliveryAddress);
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (!CanPlaceOrder()) return;
+
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var request = new OrderCreateRequest
+            {
+                CustomerId = Auth.Id ?? 0,
+                PartnerId = PartnerId,
+                DeliveryAddress = deliveryAddress,
+                DeliveryFee = deliveryFee,
+                Distance = "5 km", // Placeholder - would be calculated in real app
+                Items = orderItems.Select(i => new OrderCreateItemRequest
+                {
+                    FoodItemId = i.FoodItemId,
+                    Name = i.Name,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList()
+            };
+
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/orders/order");
+            httpRequest.Content = JsonContent.Create(request);
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(httpRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var orderResponse = await response.Content.ReadFromJsonAsync<OrderCreateResponse>();
+                if (orderResponse != null)
+                {
+                    Navigation.NavigateTo($"/order/{orderResponse.Id}");
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = L.GetString("Pages.Order.Create.OrderFailed", response.StatusCode.ToString());
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Order.Create.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    public class MenuResponse
+    {
+        public int PartnerId { get; set; }
+        public string PartnerName { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public List<MenuItemResponse> Items { get; set; } = new();
+    }
+
+    public class MenuItemResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class OrderItemModel
+    {
+        public int FoodItemId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    public class OrderCreateRequest
+    {
+        public int CustomerId { get; set; }
+        public int PartnerId { get; set; }
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public decimal DeliveryFee { get; set; }
+        public string Distance { get; set; } = string.Empty;
+        public List<OrderCreateItemRequest> Items { get; set; } = new();
+    }
+
+    public class OrderCreateItemRequest
+    {
+        public int FoodItemId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+    }
+
+    public class OrderCreateResponse
+    {
+        public int Id { get; set; }
+    }
+}

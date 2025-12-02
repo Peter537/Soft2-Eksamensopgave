@@ -29,6 +29,16 @@
         @if (Auth.IsCustomer)
         {
             <div class="nav-item px-3">
+            <NavLink class="nav-link" href="customer/partners">
+            <span class="bi bi-shop-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.BrowsePartners"]
+            </NavLink>
+            </div>
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="customer/orders">
+            <span class="bi bi-bag-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.MyOrders"]
+            </NavLink>
+            </div>
+            <div class="nav-item px-3">
             <NavLink class="nav-link" href="profile">
             <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Profile"]
             </NavLink>
@@ -48,7 +58,13 @@
             </div>
 
             <div class="nav-item px-3">
-            <button class="nav-link" @onclick="HandleSignOutCustomer">
+            <NavLink class="nav-link" href="@($"/partner/{Auth.Id}/menu")">
+            <span class="bi bi-menu-button-wide-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.MyMenu"]
+            </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+            <button class="nav-link" @onclick="HandleSignOutPartner">
             <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.SignOut"]
             </button>
             </div>

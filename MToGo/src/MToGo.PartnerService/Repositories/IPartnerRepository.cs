@@ -12,4 +12,6 @@ public interface IPartnerRepository
     Task<MenuItem> AddMenuItemAsync(MenuItem menuItem);
     Task<MenuItem> UpdateMenuItemAsync(MenuItem menuItem);
     Task DeleteMenuItemAsync(MenuItem menuItem);
+    Task<IEnumerable<Partner>> GetAllActivePartnersAsync();
+    Task<Partner?> GetPartnerWithMenuAsync(int partnerId);
 }

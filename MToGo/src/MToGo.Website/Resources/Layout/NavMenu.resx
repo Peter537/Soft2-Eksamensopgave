@@ -42,4 +42,13 @@
   <data name="Dashboard" xml:space="preserve">
     <value>Dashboard</value>
   </data>
+  <data name="BrowsePartners" xml:space="preserve">
+    <value>Browse Partners</value>
+  </data>
+  <data name="MyMenu" xml:space="preserve">
+    <value>My Menu</value>
+  </data>
+  <data name="MyOrders" xml:space="preserve">
+    <value>My Orders</value>
+  </data>
 </root>

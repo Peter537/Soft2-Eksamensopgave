@@ -230,4 +230,67 @@ public class PartnersController : ControllerBase
             return Forbid();
         }
     }
+
+    /// <summary>
+    /// Get all active partners (public endpoint for customers)
+    /// </summary>
+    [HttpGet]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IEnumerable<PublicPartnerResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllPartners()
+    {
+        _logger.ReceivedGetAllPartnersRequest();
+
+        var result = await _partnerService.GetAllActivePartnersAsync();
+        
+        _logger.GetAllPartnersCompleted(result.Count());
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Get a partner's menu (public endpoint for customers)
+    /// </summary>
+    [HttpGet("{id}/menu")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PublicMenuResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPartnerMenu(int id)
+    {
+        _logger.ReceivedGetPartnerMenuRequest(id);
+
+        var result = await _partnerService.GetPartnerMenuAsync(id);
+        if (result == null)
+        {
+            _logger.GetPartnerMenuFailed(id, "Partner not found");
+            return NotFound(new { error = $"Partner with ID {id} not found." });
+        }
+
+        _logger.GetPartnerMenuCompleted(id);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Get a specific menu item (public endpoint for customers)
+    /// </summary>
+    [HttpGet("{id}/menu/items/{foodItemId}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PublicMenuItemResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMenuItem(int id, int foodItemId)
+    {
+        _logger.ReceivedGetMenuItemRequest(id, foodItemId);
+
+        var result = await _partnerService.GetMenuItemAsync(id, foodItemId);
+        if (result == null)
+        {
+            _logger.GetMenuItemFailed(id, foodItemId, "Partner or menu item not found");
+            return NotFound(new { error = $"Menu item with ID {foodItemId} not found for partner {id}." });
+        }
+
+        _logger.GetMenuItemCompleted(id, foodItemId);
+
+        return Ok(result);
+    }
 }
