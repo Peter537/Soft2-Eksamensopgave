@@ -364,7 +364,7 @@ public class MenuItemIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetPartnerDetails_NonExistent_Returns404NotFound()
+    public async Task GetPartnerDetails_OtherPartner_Returns403Forbidden()
     {
         // Arrange
         var partnerId = await CreateTestPartnerAsync();
@@ -374,7 +374,7 @@ public class MenuItemIntegrationTests : IAsyncLifetime
         var response = await _client.GetAsync("/api/v1/partners/999");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     #endregion
