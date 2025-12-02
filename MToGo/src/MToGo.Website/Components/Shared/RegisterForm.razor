@@ -1,0 +1,181 @@
+@using System.ComponentModel.DataAnnotations
+@using MToGo.Website.Services
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+
+<div class="card shadow @CardClass">
+    <div class="card-header text-center @CardHeaderClass">
+        <h2>@L[CardTitle]</h2>
+    </div>
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        @if (showSuccess)
+        {
+            <div class="alert alert-success" role="alert">
+                @L["Registration successful! Redirecting..."]
+            </div>
+        }
+
+        <EditForm Model="@FormModel" OnValidSubmit="HandleRegister" FormName="@FormName">
+            <DataAnnotationsValidator />
+
+            @* Render custom fields provided by the parent component *@
+            @ChildContent
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn @ButtonClass" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        @L["Processing..."]
+                    }
+                    else
+                    {
+                        @L[ButtonText]
+                    }
+                </button>
+            </div>
+
+            @if (AdditionalLinks != null)
+            {
+                @AdditionalLinks
+            }
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The form model object containing all the registration data.
+    /// This should be provided by the parent component.
+    /// </summary>
+    [Parameter]
+    public object FormModel { get; set; } = default!;
+
+    /// <summary>
+    /// The child content containing the form fields.
+    /// This allows each registration page to define its own specific fields.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional links to show below the form (e.g., "Already have an account? Login").
+    /// </summary>
+    [Parameter]
+    public RenderFragment? AdditionalLinks { get; set; }
+
+    [Parameter]
+    public string ApiEndpoint { get; set; } = "/api/v1/customers/register";
+
+    [Parameter]
+    public string RedirectUrl { get; set; } = "/login";
+
+    [Parameter]
+    public string CardTitle { get; set; } = "Register";
+
+    [Parameter]
+    public string CardClass { get; set; } = "";
+
+    [Parameter]
+    public string CardHeaderClass { get; set; } = "bg-primary text-white";
+
+    [Parameter]
+    public string ButtonClass { get; set; } = "btn-primary";
+
+    [Parameter]
+    public string ButtonText { get; set; } = "Register";
+
+    [Parameter]
+    public string FormName { get; set; } = "registerForm";
+
+    /// <summary>
+    /// A function to transform the form model before sending to the API.
+    /// This allows parent components to customize the request payload.
+    /// </summary>
+    [Parameter]
+    public Func<object, object>? TransformRequest { get; set; }
+
+    /// <summary>
+    /// Callback invoked after successful registration.
+    /// Receives the response content as a string.
+    /// If not provided, the default behavior is to redirect to RedirectUrl.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnRegisterSuccess { get; set; }
+
+    /// <summary>
+    /// Callback to perform custom validation before submitting.
+    /// Should return null if valid, or an error message if invalid.
+    /// </summary>
+    [Parameter]
+    public Func<string?>? CustomValidation { get; set; }
+
+    private string? errorMessage;
+    private bool showSuccess = false;
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        errorMessage = null;
+        isLoading = true;
+
+        try
+        {
+            // Run custom validation if provided
+            if (CustomValidation != null)
+            {
+                var validationError = CustomValidation.Invoke();
+                if (!string.IsNullOrEmpty(validationError))
+                {
+                    errorMessage = validationError;
+                    isLoading = false;
+                    return;
+                }
+            }
+
+            // Transform the request payload if needed
+            var requestPayload = TransformRequest != null 
+                ? TransformRequest(FormModel) 
+                : FormModel;
+
+            var response = await Http.PostAsJsonAsync(ApiEndpoint, requestPayload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                showSuccess = true;
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                // Invoke callback if provided
+                if (OnRegisterSuccess.HasDelegate)
+                {
+                    await OnRegisterSuccess.InvokeAsync(responseContent);
+                }
+                
+                // Wait briefly to show success message, then redirect
+                await Task.Delay(1500);
+                Navigation.NavigateTo(RedirectUrl);
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                errorMessage = !string.IsNullOrEmpty(error) ? error : L.GetString("Registration failed. Please try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("An error occurred: {0}", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

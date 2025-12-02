@@ -30,4 +30,31 @@
   <data name="WelcomeUser" xml:space="preserve">
     <value>Velkommen, {0}</value>
   </data>
+  <data name="CreateAgentTitle" xml:space="preserve">
+    <value>Opret Agent</value>
+  </data>
+  <data name="CreateAgentDescription" xml:space="preserve">
+    <value>Opret en ny agentkonto til MToGo-platformen.</value>
+  </data>
+  <data name="CreateAgentButton" xml:space="preserve">
+    <value>Opret Agent</value>
+  </data>
+  <data name="CreatePartnerTitle" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="CreatePartnerDescription" xml:space="preserve">
+    <value>Opret en ny partnerkonto til MToGo-platformen.</value>
+  </data>
+  <data name="CreatePartnerButton" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="MetricsTitle" xml:space="preserve">
+    <value>Platform Metrics</value>
+  </data>
+  <data name="MetricsDescription" xml:space="preserve">
+    <value>Oversigt over nøglepræstationsindikatorer for MToGo-platformen.</value>
+  </data>
+  <data name="ViewMetricsButton" xml:space="preserve">
+    <value>Se Metrics</value>
+  </data>
 </root>
