@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using MToGo.PartnerService.Controllers;
 using MToGo.PartnerService.Exceptions;
@@ -10,12 +11,14 @@ namespace MToGo.PartnerService.Tests.Controllers;
 public class PartnersControllerTests
 {
     private readonly Mock<IPartnerService> _mockPartnerService;
+    private readonly Mock<ILogger<PartnersController>> _mockLogger;
     private readonly PartnersController _sut;
 
     public PartnersControllerTests()
     {
         _mockPartnerService = new Mock<IPartnerService>();
-        _sut = new PartnersController(_mockPartnerService.Object);
+        _mockLogger = new Mock<ILogger<PartnersController>>();
+        _sut = new PartnersController(_mockPartnerService.Object, _mockLogger.Object);
     }
 
     #region Register Tests
