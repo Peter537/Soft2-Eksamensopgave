@@ -1,0 +1,494 @@
+@page "/partner/menu"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Partner.Menu.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">@L["Pages.Partner.Menu.Title"]</h3>
+                    @if (Auth.IsPartner && !isLoading)
+                    {
+                        <button type="button" class="btn btn-success" @onclick="ShowAddForm">
+                            <i class="bi bi-plus-lg"></i> @L["Pages.Partner.Menu.AddItem"]
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (!Auth.IsPartner)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.Partner.Menu.LoginRequired"] <a href="/partner/login">@L["Pages.Partner.Menu.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">@L["Pages.Partner.Menu.Loading"]</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    @errorMessage
+                                    <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(successMessage))
+                            {
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    @successMessage
+                                    <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                                </div>
+                            }
+
+                            <!-- Add/Edit Form -->
+                            @if (showForm)
+                            {
+                                <div class="card mb-4 bg-light">
+                                    <div class="card-body">
+                                        <h5 class="card-title">@(editingItem == null ? L["Pages.Partner.Menu.AddItemTitle"] : L["Pages.Partner.Menu.EditItemTitle"])</h5>
+                                        <EditForm Model="formModel" OnValidSubmit="HandleFormSubmit">
+                                            <DataAnnotationsValidator />
+                                            <div class="row">
+                                                <div class="col-md-5">
+                                                    <div class="mb-3">
+                                                        <label for="itemName" class="form-label">@L["Pages.Partner.Menu.ItemName"]</label>
+                                                        <InputText id="itemName" class="form-control" @bind-Value="formModel.Name" />
+                                                        <ValidationMessage For="@(() => formModel.Name)" class="text-danger" />
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label for="itemPrice" class="form-label">@L["Pages.Partner.Menu.ItemPrice"]</label>
+                                                        <InputNumber id="itemPrice" class="form-control" @bind-Value="formModel.Price" />
+                                                        <ValidationMessage For="@(() => formModel.Price)" class="text-danger" />
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 d-flex align-items-end">
+                                                    <div class="mb-3 w-100">
+                                                        <button type="submit" class="btn btn-primary me-2" disabled="@isSubmitting">
+                                                            @if (isSubmitting)
+                                                            {
+                                                                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                                            }
+                                                            @(editingItem == null ? L["Pages.Partner.Menu.AddButton"] : L["Pages.Partner.Menu.SaveButton"])
+                                                        </button>
+                                                        <button type="button" class="btn btn-secondary" @onclick="CancelForm">
+                                                            @L["Pages.Partner.Menu.CancelButton"]
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </EditForm>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (menuItems == null || !menuItems.Any())
+                            {
+                                <div class="alert alert-info">
+                                    @L["Pages.Partner.Menu.NoItems"]
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>@L["Pages.Partner.Menu.Id"]</th>
+                                                <th>@L["Pages.Partner.Menu.Name"]</th>
+                                                <th class="text-end">@L["Pages.Partner.Menu.Price"]</th>
+                                                <th class="text-center">@L["Pages.Partner.Menu.Actions"]</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in menuItems)
+                                            {
+                                                <tr>
+                                                    <td>@item.Id</td>
+                                                    <td>@item.Name</td>
+                                                    <td class="text-end">@item.Price.ToString("C")</td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary me-1" @onclick="() => ShowEditForm(item)">
+                                                            <i class="bi bi-pencil"></i> @L["Pages.Partner.Menu.EditButton"]
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => ConfirmDelete(item)">
+                                                            <i class="bi bi-trash"></i> @L["Pages.Partner.Menu.DeleteButton"]
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+
+                            <!-- Delete Confirmation Modal -->
+                            @if (showDeleteConfirm && itemToDelete != null)
+                            {
+                                <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">@L["Pages.Partner.Menu.DeleteConfirmTitle"]</h5>
+                                                <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>@L.GetString("Pages.Partner.Menu.DeleteConfirmMessage", itemToDelete.Name)</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" @onclick="CancelDelete">@L["Pages.Partner.Menu.CancelButton"]</button>
+                                                <button type="button" class="btn btn-danger" @onclick="DeleteItem" disabled="@isSubmitting">
+                                                    @if (isSubmitting)
+                                                    {
+                                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                                    }
+                                                    @L["Pages.Partner.Menu.DeleteButton"]
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<MenuItemViewModel>? menuItems;
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool showForm = false;
+    private bool showDeleteConfirm = false;
+    private MenuItemViewModel? editingItem;
+    private MenuItemViewModel? itemToDelete;
+    private MenuItemFormModel formModel = new();
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsPartner)
+            {
+                await LoadMenuItems();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadMenuItems()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var url = $"/api/v1/partners/{Auth.Id}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var partner = await response.Content.ReadFromJsonAsync<PartnerResponse>();
+                menuItems = partner?.MenuItems?.Select(m => new MenuItemViewModel
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Price = m.Price
+                }).ToList() ?? new List<MenuItemViewModel>();
+            }
+            else
+            {
+                errorMessage = L["Pages.Partner.Menu.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Partner.Menu.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ShowAddForm()
+    {
+        editingItem = null;
+        formModel = new MenuItemFormModel();
+        showForm = true;
+        ClearMessages();
+    }
+
+    private void ShowEditForm(MenuItemViewModel item)
+    {
+        editingItem = item;
+        formModel = new MenuItemFormModel
+        {
+            Name = item.Name,
+            Price = item.Price
+        };
+        showForm = true;
+        ClearMessages();
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        editingItem = null;
+        formModel = new MenuItemFormModel();
+    }
+
+    private async Task HandleFormSubmit()
+    {
+        if (editingItem == null)
+        {
+            await AddItem();
+        }
+        else
+        {
+            await UpdateItem();
+        }
+    }
+
+    private async Task AddItem()
+    {
+        isSubmitting = true;
+        ClearMessages();
+
+        try
+        {
+            var url = $"/api/v1/partners/{Auth.Id}/menu/items";
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = JsonContent.Create(new { name = formModel.Name, price = formModel.Price });
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = L["Pages.Partner.Menu.ItemAdded"];
+                showForm = false;
+                formModel = new MenuItemFormModel();
+                await LoadMenuItems();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                errorMessage = error?.Error ?? L["Pages.Partner.Menu.AddFailed"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Partner.Menu.AddFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Partner.Menu.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task UpdateItem()
+    {
+        if (editingItem == null) return;
+
+        isSubmitting = true;
+        ClearMessages();
+
+        try
+        {
+            var url = $"/api/v1/partners/{Auth.Id}/menu/items/{editingItem.Id}";
+            var request = new HttpRequestMessage(HttpMethod.Patch, url);
+            request.Content = JsonContent.Create(new { name = formModel.Name, price = formModel.Price });
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = L["Pages.Partner.Menu.ItemUpdated"];
+                showForm = false;
+                editingItem = null;
+                formModel = new MenuItemFormModel();
+                await LoadMenuItems();
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                errorMessage = error?.Error ?? L["Pages.Partner.Menu.UpdateFailed"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Partner.Menu.UpdateFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Partner.Menu.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ConfirmDelete(MenuItemViewModel item)
+    {
+        itemToDelete = item;
+        showDeleteConfirm = true;
+        ClearMessages();
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirm = false;
+        itemToDelete = null;
+    }
+
+    private async Task DeleteItem()
+    {
+        if (itemToDelete == null) return;
+
+        isSubmitting = true;
+        ClearMessages();
+
+        try
+        {
+            var url = $"/api/v1/partners/{Auth.Id}/menu/items/{itemToDelete.Id}";
+            var request = new HttpRequestMessage(HttpMethod.Delete, url);
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = L["Pages.Partner.Menu.ItemDeleted"];
+                showDeleteConfirm = false;
+                itemToDelete = null;
+                await LoadMenuItems();
+            }
+            else
+            {
+                errorMessage = L["Pages.Partner.Menu.DeleteFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Partner.Menu.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ClearMessages()
+    {
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    public class MenuItemViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class MenuItemFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Name is required")]
+        [System.ComponentModel.DataAnnotations.MinLength(1, ErrorMessage = "Name cannot be empty")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Price is required")]
+        [System.ComponentModel.DataAnnotations.Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0")]
+        public decimal Price { get; set; }
+    }
+
+    public class PartnerResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public List<MenuItemDto>? MenuItems { get; set; }
+    }
+
+    public class MenuItemDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class ErrorResponse
+    {
+        public string? Error { get; set; }
+    }
+}
