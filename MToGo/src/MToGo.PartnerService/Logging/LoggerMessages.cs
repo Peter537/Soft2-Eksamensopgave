@@ -108,4 +108,21 @@ public static partial class LoggerMessages
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "GetMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}")]
     public static partial void GetMenuItemFailed(this ILogger logger, int partnerId, int menuItemId, string reason);
+
+    // Toggle Availability - Controller logs
+    [LoggerMessage(Level = LogLevel.Information, Message = "Received SetActiveStatus request for PartnerId: {PartnerId}, Active: {Active}")]
+    public static partial void ReceivedSetActiveStatusRequest(this ILogger logger, int partnerId, bool active);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "SetActiveStatus completed: PartnerId={PartnerId}, Active={Active}")]
+    public static partial void SetActiveStatusCompleted(this ILogger logger, int partnerId, bool active);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "SetActiveStatus failed: PartnerId={PartnerId}, Reason={Reason}")]
+    public static partial void SetActiveStatusFailed(this ILogger logger, int partnerId, string reason);
+
+    // Toggle Availability - Service logs
+    [LoggerMessage(Level = LogLevel.Information, Message = "Setting partner active status: PartnerId={PartnerId}, Active={Active}")]
+    public static partial void SettingPartnerActiveStatus(this ILogger logger, int partnerId, bool active);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Partner active status updated: PartnerId={PartnerId}, Active={Active}")]
+    public static partial void PartnerActiveStatusUpdated(this ILogger logger, int partnerId, bool active);
 }

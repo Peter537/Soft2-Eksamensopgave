@@ -1,0 +1,292 @@
+@page "/partner/dashboard"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Partner.Dashboard.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">@L["Pages.Partner.Dashboard.Title"]</h3>
+                </div>
+                <div class="card-body">
+                    @if (!Auth.IsPartner)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.Partner.Dashboard.LoginRequired"] <a href="/partner/login">@L["Pages.Partner.Dashboard.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">@L["Pages.Partner.Dashboard.Loading"]</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    @errorMessage
+                                    <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(successMessage))
+                            {
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    @successMessage
+                                    <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                                </div>
+                            }
+
+                            @if (partner != null)
+                            {
+                                <!-- Partner Information Section -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h5 class="card-title">@L["Pages.Partner.Dashboard.PartnerInfo"]</h5>
+                                                <p class="mb-1"><strong>@L["Pages.Partner.Dashboard.Name"]:</strong> @partner.Name</p>
+                                                <p class="mb-1"><strong>@L["Pages.Partner.Dashboard.Address"]:</strong> @partner.Address</p>
+                                                <p class="mb-0"><strong>@L["Pages.Partner.Dashboard.MenuItems"]:</strong> @partner.MenuItems.Count @L["Pages.Partner.Dashboard.Items"]</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card @(partner.IsActive ? "bg-success" : "bg-secondary") text-white">
+                                            <div class="card-body">
+                                                <h5 class="card-title">@L["Pages.Partner.Dashboard.AvailabilityStatus"]</h5>
+                                                <p class="mb-3">
+                                                    @if (partner.IsActive)
+                                                    {
+                                                        <span class="badge bg-light text-success fs-5">
+                                                            <i class="bi bi-check-circle-fill"></i> @L["Pages.Partner.Dashboard.Active"]
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-light text-secondary fs-5">
+                                                            <i class="bi bi-x-circle-fill"></i> @L["Pages.Partner.Dashboard.Inactive"]
+                                                        </span>
+                                                    }
+                                                </p>
+                                                <button type="button" 
+                                                        class="btn @(partner.IsActive ? "btn-light" : "btn-success")" 
+                                                        @onclick="ToggleAvailability"
+                                                        disabled="@isToggling">
+                                                    @if (isToggling)
+                                                    {
+                                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                                    }
+                                                    @if (partner.IsActive)
+                                                    {
+                                                        <i class="bi bi-pause-circle"></i>
+                                                        <span>@L["Pages.Partner.Dashboard.GoInactive"]</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-play-circle"></i>
+                                                        <span>@L["Pages.Partner.Dashboard.GoActive"]</span>
+                                                    }
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Availability Info -->
+                                <div class="alert @(partner.IsActive ? "alert-success" : "alert-warning")">
+                                    @if (partner.IsActive)
+                                    {
+                                        <i class="bi bi-info-circle"></i>
+                                        <span>@L["Pages.Partner.Dashboard.ActiveInfo"]</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <span>@L["Pages.Partner.Dashboard.InactiveInfo"]</span>
+                                    }
+                                </div>
+
+                                <!-- Quick Links -->
+                                <div class="row mt-4">
+                                    <div class="col-md-4 mb-3">
+                                        <a href="/partner/@Auth.Id/incoming-orders" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-inbox"></i> @L["Pages.Partner.Dashboard.ViewIncomingOrders"]
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <a href="/partner/menu" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-menu-button-wide"></i> @L["Pages.Partner.Dashboard.ManageMenu"]
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <a href="/partner/orders" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-clock-history"></i> @L["Pages.Partner.Dashboard.OrderHistory"]
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private PartnerResponse? partner;
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = true;
+    private bool isToggling = false;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsPartner)
+            {
+                await LoadPartnerInfo();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPartnerInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var url = $"/api/v1/partners/{Auth.Id}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                partner = await response.Content.ReadFromJsonAsync<PartnerResponse>();
+            }
+            else
+            {
+                errorMessage = L["Pages.Partner.Dashboard.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Partner.Dashboard.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleAvailability()
+    {
+        if (partner == null) return;
+
+        isToggling = true;
+        ClearMessages();
+
+        try
+        {
+            var newActiveStatus = !partner.IsActive;
+            var url = $"/api/v1/partners/{Auth.Id}/active";
+            
+            var request = new HttpRequestMessage(HttpMethod.Patch, url);
+            request.Content = JsonContent.Create(new { active = newActiveStatus });
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                partner.IsActive = newActiveStatus;
+                successMessage = newActiveStatus 
+                    ? L["Pages.Partner.Dashboard.NowActive"] 
+                    : L["Pages.Partner.Dashboard.NowInactive"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Partner.Dashboard.ToggleFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Partner.Dashboard.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isToggling = false;
+        }
+    }
+
+    private void ClearMessages()
+    {
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    public class PartnerResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public List<MenuItemDto> MenuItems { get; set; } = new();
+    }
+
+    public class MenuItemDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+}

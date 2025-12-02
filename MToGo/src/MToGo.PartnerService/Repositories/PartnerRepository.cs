@@ -82,4 +82,22 @@ public class PartnerRepository : IPartnerRepository
             .Include(p => p.MenuItems.Where(m => m.IsActive))
             .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
     }
+
+    public async Task<Partner?> GetByIdIncludeInactiveAsync(int partnerId)
+    {
+        return await _context.Partners
+            .Include(p => p.MenuItems.Where(m => m.IsActive))
+            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
+    }
+
+    public async Task UpdatePartnerActiveStatusAsync(int partnerId, bool isActive)
+    {
+        var partner = await _context.Partners.FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
+        if (partner != null)
+        {
+            partner.IsActive = isActive;
+            partner.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+    }
 }
