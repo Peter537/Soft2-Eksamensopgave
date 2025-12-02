@@ -87,4 +87,17 @@ public class AgentService : IAgentService
 
         await _agentRepository.DeleteAsync(id);
     }
+
+    public async Task<bool> SetActiveStatusAsync(int id, bool isActive)
+    {
+        var agent = await _agentRepository.GetByIdAsync(id);
+
+        if (agent == null)
+        {
+            return false;
+        }
+
+        await _agentRepository.UpdateActiveStatusAsync(id, isActive);
+        return true;
+    }
 }
