@@ -1,0 +1,283 @@
+@page "/agent/dashboard"
+@inject HttpClient Http
+@inject CultureService CultureService
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Agent.Dashboard.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">@L["Pages.Agent.Dashboard.Title"]</h3>
+                </div>
+                <div class="card-body">
+                    @if (!Auth.IsAgent)
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">@L["Pages.Agent.Dashboard.LoginRequired"] <a href="/agent/login">@L["Pages.Agent.Dashboard.LoginLink"]</a></p>
+                        </div>
+                    }
+                    else
+                    {
+                        @if (isLoading)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">@L["Pages.Agent.Dashboard.Loading"]</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    @errorMessage
+                                    <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(successMessage))
+                            {
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    @successMessage
+                                    <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+                                </div>
+                            }
+
+                            @if (agent != null)
+                            {
+                                <!-- Agent Information Section -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <h5 class="card-title">@L["Pages.Agent.Dashboard.AgentInfo"]</h5>
+                                                <p class="mb-1"><strong>@L["Pages.Agent.Dashboard.Name"]:</strong> @agent.Name</p>
+                                                <p class="mb-0"><strong>@L["Pages.Agent.Dashboard.Email"]:</strong> @agent.Email</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card @(agent.IsActive ? "bg-success" : "bg-secondary") text-white">
+                                            <div class="card-body">
+                                                <h5 class="card-title">@L["Pages.Agent.Dashboard.AvailabilityStatus"]</h5>
+                                                <p class="mb-3">
+                                                    @if (agent.IsActive)
+                                                    {
+                                                        <span class="badge bg-light text-success fs-5">
+                                                            <i class="bi bi-check-circle-fill"></i> @L["Pages.Agent.Dashboard.Available"]
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-light text-secondary fs-5">
+                                                            <i class="bi bi-x-circle-fill"></i> @L["Pages.Agent.Dashboard.Unavailable"]
+                                                        </span>
+                                                    }
+                                                </p>
+                                                <button type="button" 
+                                                        class="btn @(agent.IsActive ? "btn-light" : "btn-success")" 
+                                                        @onclick="ToggleAvailability"
+                                                        disabled="@isToggling">
+                                                    @if (isToggling)
+                                                    {
+                                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                                    }
+                                                    @if (agent.IsActive)
+                                                    {
+                                                        <i class="bi bi-pause-circle"></i>
+                                                        <span>@L["Pages.Agent.Dashboard.GoUnavailable"]</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-play-circle"></i>
+                                                        <span>@L["Pages.Agent.Dashboard.GoAvailable"]</span>
+                                                    }
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Availability Info -->
+                                <div class="alert @(agent.IsActive ? "alert-success" : "alert-warning")">
+                                    @if (agent.IsActive)
+                                    {
+                                        <i class="bi bi-info-circle"></i>
+                                        <span>@L["Pages.Agent.Dashboard.AvailableInfo"]</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                        <span>@L["Pages.Agent.Dashboard.UnavailableInfo"]</span>
+                                    }
+                                </div>
+
+                                <!-- Quick Links -->
+                                <div class="row mt-4">
+                                    <div class="col-md-4 mb-3">
+                                        <a href="/agent/available-jobs" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-list-task"></i> @L["Pages.Agent.Dashboard.ViewAvailableJobs"]
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <a href="/agent/my-deliveries" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-truck"></i> @L["Pages.Agent.Dashboard.ViewMyDeliveries"]
+                                        </a>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <a href="/agent/orders" class="btn btn-outline-primary w-100">
+                                            <i class="bi bi-clock-history"></i> @L["Pages.Agent.Dashboard.OrderHistory"]
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private AgentResponse? agent;
+    private string? errorMessage;
+    private string? successMessage;
+    private bool isLoading = true;
+    private bool isToggling = false;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            
+            if (Auth.IsAgent)
+            {
+                await LoadAgentInfo();
+            }
+            else
+            {
+                isLoading = false;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAgentInfo()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var url = $"/api/v1/agents/{Auth.Id}";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                agent = await response.Content.ReadFromJsonAsync<AgentResponse>();
+            }
+            else
+            {
+                errorMessage = L["Pages.Agent.Dashboard.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Agent.Dashboard.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task ToggleAvailability()
+    {
+        if (agent == null) return;
+
+        isToggling = true;
+        ClearMessages();
+
+        try
+        {
+            var newActiveStatus = !agent.IsActive;
+            var url = $"/api/v1/agents/{Auth.Id}/active";
+            
+            var request = new HttpRequestMessage(HttpMethod.Patch, url);
+            request.Content = JsonContent.Create(new { active = newActiveStatus });
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                agent.IsActive = newActiveStatus;
+                successMessage = newActiveStatus 
+                    ? L["Pages.Agent.Dashboard.NowAvailable"] 
+                    : L["Pages.Agent.Dashboard.NowUnavailable"];
+            }
+            else
+            {
+                errorMessage = L["Pages.Agent.Dashboard.ToggleFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Agent.Dashboard.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isToggling = false;
+        }
+    }
+
+    private void ClearMessages()
+    {
+        errorMessage = null;
+        successMessage = null;
+    }
+
+    public class AgentResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
+}
