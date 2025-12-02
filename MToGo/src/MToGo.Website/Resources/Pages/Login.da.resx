@@ -42,12 +42,6 @@
   <data name="RegisterHere" xml:space="preserve">
     <value>Registrer her</value>
   </data>
-  <data name="RestaurantQuestion" xml:space="preserve">
-    <value>Er du en restaurant?</value>
-  </data>
-  <data name="RestaurantLogin" xml:space="preserve">
-    <value>Restaurant Log ind</value>
-  </data>
   <data name="AgentQuestion" xml:space="preserve">
     <value>Er du en agent?</value>
   </data>
