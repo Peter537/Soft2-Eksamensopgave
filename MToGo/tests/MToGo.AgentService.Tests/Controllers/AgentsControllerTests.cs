@@ -427,4 +427,138 @@ public class AgentsControllerTests
     }
 
     #endregion
+
+    #region UpdateActiveStatus Tests
+
+    [Fact]
+    public async Task SetActiveStatus_AgentUpdatingOwnStatus_Returns204NoContent()
+    {
+        // Arrange
+        var agentId = 1;
+        var request = new UpdateActiveStatusRequest { Active = true };
+
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
+
+        _mockAgentService
+            .Setup(x => x.SetActiveStatusAsync(agentId, true))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _sut.SetActiveStatus(agentId, request);
+
+        // Assert
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(204, noContentResult.StatusCode);
+        _mockAgentService.Verify(x => x.SetActiveStatusAsync(agentId, true), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetActiveStatus_AgentUpdatingOtherAgentStatus_Returns403Forbid()
+    {
+        // Arrange
+        var agentId = 1;
+        var otherAgentId = 2;
+        var request = new UpdateActiveStatusRequest { Active = true };
+
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
+
+        // Act
+        var result = await _sut.SetActiveStatus(otherAgentId, request);
+
+        // Assert
+        Assert.IsType<ForbidResult>(result);
+        _mockAgentService.Verify(x => x.SetActiveStatusAsync(It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetActiveStatus_ManagementUpdatingAnyAgentStatus_Returns204NoContent()
+    {
+        // Arrange
+        var agentId = 5;
+        var request = new UpdateActiveStatusRequest { Active = false };
+
+        _mockUserContext.Setup(x => x.Id).Returns(999);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
+
+        _mockAgentService
+            .Setup(x => x.SetActiveStatusAsync(agentId, false))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _sut.SetActiveStatus(agentId, request);
+
+        // Assert
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(204, noContentResult.StatusCode);
+        _mockAgentService.Verify(x => x.SetActiveStatusAsync(agentId, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetActiveStatus_WithNonExistentId_Returns404NotFound()
+    {
+        // Arrange
+        var agentId = 999;
+        var request = new UpdateActiveStatusRequest { Active = true };
+
+        // Set up as Management so authorization passes
+        _mockUserContext.Setup(x => x.Id).Returns(1);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Management);
+
+        _mockAgentService
+            .Setup(x => x.SetActiveStatusAsync(agentId, true))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _sut.SetActiveStatus(agentId, request);
+
+        // Assert
+        var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
+        Assert.Equal(404, notFoundResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task SetActiveStatus_ActivatesAgent_PassesCorrectValue()
+    {
+        // Arrange
+        var agentId = 1;
+        var request = new UpdateActiveStatusRequest { Active = true };
+
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
+
+        _mockAgentService
+            .Setup(x => x.SetActiveStatusAsync(agentId, true))
+            .ReturnsAsync(true);
+
+        // Act
+        await _sut.SetActiveStatus(agentId, request);
+
+        // Assert
+        _mockAgentService.Verify(x => x.SetActiveStatusAsync(agentId, true), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetActiveStatus_DeactivatesAgent_PassesCorrectValue()
+    {
+        // Arrange
+        var agentId = 1;
+        var request = new UpdateActiveStatusRequest { Active = false };
+
+        _mockUserContext.Setup(x => x.Id).Returns(agentId);
+        _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
+
+        _mockAgentService
+            .Setup(x => x.SetActiveStatusAsync(agentId, false))
+            .ReturnsAsync(true);
+
+        // Act
+        await _sut.SetActiveStatus(agentId, request);
+
+        // Assert
+        _mockAgentService.Verify(x => x.SetActiveStatusAsync(agentId, false), Times.Once);
+    }
+
+    #endregion
 }

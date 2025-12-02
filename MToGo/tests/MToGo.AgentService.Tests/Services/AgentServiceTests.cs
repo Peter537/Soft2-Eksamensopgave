@@ -538,4 +538,148 @@ public class AgentServiceTests
     }
 
     #endregion
+
+    #region SetActiveStatusAsync Tests
+
+    [Fact]
+    public async Task SetActiveStatusAsync_WithValidId_ReturnsTrue()
+    {
+        // Arrange
+        var agentId = 1;
+        var agent = new Agent
+        {
+            Id = agentId,
+            Name = "John Agent",
+            Email = "john.agent@example.com",
+            Password = "hashed",
+            IsActive = false
+        };
+
+        _mockAgentRepository
+            .Setup(x => x.GetByIdAsync(agentId))
+            .ReturnsAsync(agent);
+
+        _mockAgentRepository
+            .Setup(x => x.UpdateActiveStatusAsync(agentId, true))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _sut.SetActiveStatusAsync(agentId, true);
+
+        // Assert
+        Assert.True(result);
+        _mockAgentRepository.Verify(x => x.UpdateActiveStatusAsync(agentId, true), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetActiveStatusAsync_WithNonExistentId_ReturnsFalse()
+    {
+        // Arrange
+        var agentId = 999;
+
+        _mockAgentRepository
+            .Setup(x => x.GetByIdAsync(agentId))
+            .ReturnsAsync((Agent?)null);
+
+        // Act
+        var result = await _sut.SetActiveStatusAsync(agentId, true);
+
+        // Assert
+        Assert.False(result);
+        _mockAgentRepository.Verify(x => x.UpdateActiveStatusAsync(It.IsAny<int>(), It.IsAny<bool>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SetActiveStatusAsync_ActivatesAgent_UpdatesStatus()
+    {
+        // Arrange
+        var agentId = 1;
+        var agent = new Agent
+        {
+            Id = agentId,
+            Name = "John Agent",
+            Email = "john.agent@example.com",
+            Password = "hashed",
+            IsActive = false
+        };
+
+        _mockAgentRepository
+            .Setup(x => x.GetByIdAsync(agentId))
+            .ReturnsAsync(agent);
+
+        _mockAgentRepository
+            .Setup(x => x.UpdateActiveStatusAsync(agentId, true))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _sut.SetActiveStatusAsync(agentId, true);
+
+        // Assert
+        _mockAgentRepository.Verify(x => x.UpdateActiveStatusAsync(agentId, true), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetActiveStatusAsync_DeactivatesAgent_UpdatesStatus()
+    {
+        // Arrange
+        var agentId = 1;
+        var agent = new Agent
+        {
+            Id = agentId,
+            Name = "John Agent",
+            Email = "john.agent@example.com",
+            Password = "hashed",
+            IsActive = true
+        };
+
+        _mockAgentRepository
+            .Setup(x => x.GetByIdAsync(agentId))
+            .ReturnsAsync(agent);
+
+        _mockAgentRepository
+            .Setup(x => x.UpdateActiveStatusAsync(agentId, false))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _sut.SetActiveStatusAsync(agentId, false);
+
+        // Assert
+        _mockAgentRepository.Verify(x => x.UpdateActiveStatusAsync(agentId, false), Times.Once);
+    }
+
+    [Fact]
+    public async Task SetActiveStatusAsync_VerifiesAgentExistsBeforeUpdating()
+    {
+        // Arrange
+        var agentId = 1;
+        var agent = new Agent
+        {
+            Id = agentId,
+            Name = "John Agent",
+            Email = "john.agent@example.com",
+            Password = "hashed",
+            IsActive = false
+        };
+
+        var getByIdCalled = false;
+        var updateCalledAfterGet = false;
+
+        _mockAgentRepository
+            .Setup(x => x.GetByIdAsync(agentId))
+            .Callback(() => getByIdCalled = true)
+            .ReturnsAsync(agent);
+
+        _mockAgentRepository
+            .Setup(x => x.UpdateActiveStatusAsync(agentId, It.IsAny<bool>()))
+            .Callback(() => updateCalledAfterGet = getByIdCalled)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _sut.SetActiveStatusAsync(agentId, true);
+
+        // Assert
+        Assert.True(updateCalledAfterGet, "UpdateActiveStatusAsync should be called after verifying agent exists");
+    }
+
+    #endregion
 }

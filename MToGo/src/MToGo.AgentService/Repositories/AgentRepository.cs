@@ -55,4 +55,15 @@ public class AgentRepository : IAgentRepository
     {
         return await _context.Agents.AnyAsync(a => a.Email == email && !a.IsDeleted);
     }
+
+    public async Task UpdateActiveStatusAsync(int id, bool isActive)
+    {
+        var agent = await GetByIdAsync(id);
+        if (agent != null)
+        {
+            agent.IsActive = isActive;
+            agent.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+    }
 }

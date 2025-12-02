@@ -8,4 +8,5 @@ public interface IAgentService
     Task<AgentLoginResponse> LoginAsync(AgentLoginRequest request);
     Task<AgentProfileResponse> GetAgentAsync(int id);
     Task DeleteAgentAsync(int id);
+    Task<bool> SetActiveStatusAsync(int id, bool isActive);
 }

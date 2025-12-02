@@ -118,4 +118,31 @@ public class AgentsController : ControllerBase
             return NotFound(new { error = "Agent not found." });
         }
     }
+
+    /// <summary>
+    /// Set agent availability status
+    /// </summary>
+    [HttpPatch("{id:int}/active")]
+    [Authorize(Policy = AuthorizationPolicies.AgentOrManagement)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetActiveStatus(int id, [FromBody] UpdateActiveStatusRequest request)
+    {
+        var userContext = _userContextAccessor.UserContext;
+
+        // Agents can only update their own status, Management can update any
+        if (userContext.Role != UserRoles.Management && userContext.Id != id)
+        {
+            return Forbid();
+        }
+
+        var success = await _agentService.SetActiveStatusAsync(id, request.Active);
+        if (!success)
+        {
+            return NotFound(new { error = "Agent not found." });
+        }
+
+        return NoContent();
+    }
 }

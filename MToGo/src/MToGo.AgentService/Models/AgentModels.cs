@@ -30,3 +30,8 @@ public class AgentProfileResponse
     public required string Email { get; set; }
     public bool IsActive { get; set; }
 }
+
+public class UpdateActiveStatusRequest
+{
+    public bool Active { get; set; }
+}
