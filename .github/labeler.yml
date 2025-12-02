@@ -54,6 +54,11 @@ websocketpartnerservice-backend:
       - any-glob-to-any-file:
           - MToGo/src/MToGo.WebSocketPartnerService/**
 
+managementservice-backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - MToGo/src/MToGo.ManagementService/**
+
 # Gateway
 gateway:
   - changed-files:
