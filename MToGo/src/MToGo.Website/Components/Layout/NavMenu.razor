@@ -34,6 +34,11 @@
             </NavLink>
             </div>
             <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/customer/active-orders">
+            <span class="bi bi-clock-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.ActiveOrders"]
+            </NavLink>
+            </div>
+            <div class="nav-item px-3">
             <NavLink class="nav-link" href="customer/orders">
             <span class="bi bi-bag-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.MyOrders"]
             </NavLink>
@@ -52,19 +57,19 @@
         else if (Auth.IsPartner)
         {
             <div class="nav-item px-3">
-            <NavLink class="nav-link" href="partner/dashboard">
+            <NavLink class="nav-link" href="/partner/dashboard">
             <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Dashboard"]
             </NavLink>
             </div>
 
             <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@($"/partner/{Auth.Id}/incoming-orders")">
+            <NavLink class="nav-link" href="/partner/incoming-orders">
             <span class="bi bi-inbox-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.IncomingOrders"]
             </NavLink>
             </div>
 
             <div class="nav-item px-3">
-            <NavLink class="nav-link" href="@($"/partner/{Auth.Id}/menu")">
+            <NavLink class="nav-link" href="/partner/menu">
             <span class="bi bi-menu-button-wide-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.MyMenu"]
             </NavLink>
             </div>
@@ -78,20 +83,26 @@
         else if (Auth.IsAgent)
         {
             <div class="nav-item px-3">
-            <NavLink class="nav-link" href="agent/dashboard">
+            <NavLink class="nav-link" href="/agent/dashboard">
             <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.Dashboard"]
             </NavLink>
             </div>
 
             <div class="nav-item px-3">
-            <NavLink class="nav-link" href="agent/available-jobs">
-            <span class="bi bi-briefcase-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.AvailableJobs"]
+            <NavLink class="nav-link" href="/agent/available-jobs">
+            <span class="bi bi-briefcase-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.JobOffers"]
             </NavLink>
             </div>
 
             <div class="nav-item px-3">
-            <NavLink class="nav-link" href="agent/orders">
-            <span class="bi bi-truck-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.AgentOrders"]
+            <NavLink class="nav-link" href="/agent/my-deliveries">
+            <span class="bi bi-truck-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.MyDeliveries"]
+            </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/agent/orders">
+            <span class="bi bi-clock-history-nav-menu" aria-hidden="true"></span> @L["Layout.NavMenu.DeliveryHistory"]
             </NavLink>
             </div>
 

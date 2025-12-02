@@ -1,5 +1,6 @@
-@page "/agent/my-deliveries/{AgentId:int}"
+@page "/agent/my-deliveries"
 @using Microsoft.AspNetCore.Components
+@using System.Text.Json
 @rendermode InteractiveServer
 @inject IConfiguration Configuration
 @inject IJSRuntime JS
@@ -10,7 +11,7 @@
 @inject ILocalizerService L
 @implements IAsyncDisposable
 
-<PageTitle>@L.GetString("Pages.Agent.MyDeliveries.PageTitle", AgentId)</PageTitle>
+<PageTitle>@L.GetString("Pages.Agent.MyDeliveries.PageTitle", Auth.Id)</PageTitle>
 
 <div class="container mt-4">
     @if (!isInitialized)
@@ -21,7 +22,7 @@
             </div>
         </div>
     }
-    else if (!Auth.IsAgent || Auth.Id != AgentId)
+    else if (!Auth.IsAgent)
     {
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -30,6 +31,15 @@
                     <p class="mb-0">@L["Pages.Agent.MyDeliveries.LoginRequired"] <a href="/agent/login">@L["Pages.Agent.MyDeliveries.LoginLink"]</a></p>
                 </div>
             </div>
+        </div>
+    }
+    else if (isLoading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading your deliveries...</p>
         </div>
     }
     else
@@ -42,7 +52,7 @@
                 <span class="badge @(IsConnected ? "bg-success" : "bg-danger")">
                     @(IsConnected ? "● Connected" : "○ Disconnected")
                 </span>
-                <a href="/agent/@AgentId/available-jobs" class="btn btn-outline-primary btn-sm">
+                <a href="/agent/available-jobs" class="btn btn-outline-primary btn-sm">
                     @L["Pages.Agent.MyDeliveries.BackToJobs"]
                 </a>
             </div>
@@ -62,7 +72,7 @@
         {
             <div class="text-center text-muted py-5">
                 <h4>📭 @L["Pages.Agent.MyDeliveries.NoDeliveries"]</h4>
-                <p>@L["Pages.Agent.MyDeliveries.AcceptOrdersHint"] <a href="/agent/@AgentId/available-jobs">@L["Pages.Agent.MyDeliveries.AvailableJobsLink"]</a></p>
+                <p>@L["Pages.Agent.MyDeliveries.AcceptOrdersHint"] <a href="/agent/available-jobs">@L["Pages.Agent.MyDeliveries.AvailableJobsLink"]</a></p>
             </div>
         }
         else
@@ -148,13 +158,11 @@
 </div>
 
 @code {
-    [Parameter]
-    public int AgentId { get; set; }
-
     private List<MyDelivery> Deliveries { get; set; } = new();
     private bool IsConnected { get; set; }
     private string StatusMessage { get; set; } = "Connecting...";
     private bool isInitialized;
+    private bool isLoading;
 
     private DotNetObjectReference<MyDeliveries>? _dotNetRef;
 
@@ -175,18 +183,80 @@
             await Auth.InitializeAsync();
             isInitialized = true;
             
-            if (Auth.IsAgent && Auth.Id == AgentId)
+            if (Auth.IsAgent)
             {
+                isLoading = true;
+                StateHasChanged();
+                
+                // Load active deliveries from API
+                await LoadMyDeliveries();
+                
+                isLoading = false;
+                
                 _dotNetRef = DotNetObjectReference.Create(this);
                 
                 // Connect to personal agent room for OrderReady notifications
                 var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:8080";
                 var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
-                wsUrl = $"{wsUrl}/api/v1/ws/agents/{AgentId}";
+                wsUrl = $"{wsUrl}/api/v1/ws/agents/{Auth.Id}";
 
                 await JS.InvokeVoidAsync("agentDeliveriesWebSocket.connect", wsUrl, _dotNetRef);
             }
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadMyDeliveries()
+    {
+        var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{gatewayUrl}/api/v1/orders/agent/{Auth.Id}/active");
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            var response = await Http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var orders = JsonSerializer.Deserialize<List<AgentOrderResponse>>(json, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+                
+                if (orders != null)
+                {
+                    foreach (var order in orders)
+                    {
+                        if (!Deliveries.Any(d => d.OrderId == order.Id))
+                        {
+                            Deliveries.Add(new MyDelivery
+                            {
+                                OrderId = order.Id,
+                                PartnerName = order.PartnerName ?? "Unknown Partner",
+                                PartnerAddress = order.PartnerAddress ?? "",
+                                DeliveryAddress = order.DeliveryAddress ?? "",
+                                DeliveryFee = order.DeliveryFee,
+                                Items = order.Items?.Select(i => new OrderItemDto 
+                                { 
+                                    Name = i.Name ?? "Item", 
+                                    Quantity = i.Quantity 
+                                }).ToList() ?? new List<OrderItemDto>(),
+                                AcceptedAt = order.AssignedAt ?? DateTime.Now,
+                                IsReady = order.Status == "Ready" || order.Status == "PickedUp" || order.Status == "OutForDelivery",
+                                IsPickedUp = order.Status == "PickedUp" || order.Status == "OutForDelivery"
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading deliveries: {ex.Message}";
         }
     }
 
@@ -258,7 +328,14 @@
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
         try
         {
-            await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{delivery.OrderId}/pickup", null);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{gatewayUrl}/api/v1/orders/order/{delivery.OrderId}/pickup");
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            await Http.SendAsync(request);
         }
         catch
         {
@@ -278,7 +355,14 @@
         var gatewayUrl = Configuration["GatewayUrl"] ?? "http://localhost:8080";
         try
         {
-            await Http.PostAsync($"{gatewayUrl}/api/v1/orders/order/{delivery.OrderId}/complete-delivery", null);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{gatewayUrl}/api/v1/orders/order/{delivery.OrderId}/complete-delivery");
+            
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            await Http.SendAsync(request);
         }
         catch
         {
@@ -315,6 +399,24 @@
     public class OrderItemDto
     {
         public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
+
+    public class AgentOrderResponse
+    {
+        public int Id { get; set; }
+        public string Status { get; set; } = "";
+        public string? PartnerName { get; set; }
+        public string? PartnerAddress { get; set; }
+        public string? DeliveryAddress { get; set; }
+        public decimal DeliveryFee { get; set; }
+        public DateTime? AssignedAt { get; set; }
+        public List<AgentOrderItemResponse>? Items { get; set; }
+    }
+
+    public class AgentOrderItemResponse
+    {
+        public string? Name { get; set; }
         public int Quantity { get; set; }
     }
 }
