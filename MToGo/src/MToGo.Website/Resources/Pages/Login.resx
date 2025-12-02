@@ -66,4 +66,10 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred: {0}</value>
   </data>
+  <data name="PartnerQuestion" xml:space="preserve">
+    <value>Are you a partner?</value>
+  </data>
+  <data name="PartnerLogin" xml:space="preserve">
+    <value>Partner Login</value>
+  </data>
 </root>

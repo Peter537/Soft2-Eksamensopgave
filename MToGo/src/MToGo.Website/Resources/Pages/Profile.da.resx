@@ -114,4 +114,10 @@
   <data name="AccountNotFound" xml:space="preserve">
     <value>Konto ikke fundet.</value>
   </data>
+  <data name="PartnerQuestion" xml:space="preserve">
+    <value>Er du en partner?</value>
+  </data>
+  <data name="PartnerLogin" xml:space="preserve">
+    <value>Partner Log ind</value>
+  </data>
 </root>
