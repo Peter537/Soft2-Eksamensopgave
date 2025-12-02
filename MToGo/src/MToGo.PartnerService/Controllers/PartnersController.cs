@@ -40,4 +40,25 @@ public class PartnersController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+
+    /// <summary>
+    /// Log in an existing partner
+    /// </summary>
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PartnerLoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Login([FromBody] PartnerLoginRequest request)
+    {
+        try
+        {
+            var result = await _partnerService.LoginAsync(request);
+            return Ok(result);
+        }
+        catch (InvalidCredentialsException)
+        {
+            return Unauthorized(new { error = "Invalid email or password." });
+        }
+    }
 }

@@ -24,4 +24,10 @@ public class PartnerRepository : IPartnerRepository
     {
         return await _context.Partners.AnyAsync(p => p.Email == email && !p.IsDeleted);
     }
+
+    public async Task<Partner?> GetByEmailAsync(string email)
+    {
+        return await _context.Partners
+            .FirstOrDefaultAsync(p => p.Email == email && !p.IsDeleted && p.IsActive);
+    }
 }
