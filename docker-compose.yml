@@ -184,6 +184,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Gateway__BaseUrl: http://gateway:8080
+    depends_on:
+      - gateway
     networks:
       - mtogo-network
 

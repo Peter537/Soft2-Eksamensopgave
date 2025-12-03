@@ -220,7 +220,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpGet("agent/{id}")]
-        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [Authorize(Policy = AuthorizationPolicies.AgentOrManagement)]
         [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
         public async Task<IActionResult> GetAgentDeliveries(
             int id, 
@@ -237,7 +237,7 @@ namespace MToGo.OrderService.Controllers
         }
 
         [HttpGet("agent/{id}/active")]
-        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [Authorize(Policy = AuthorizationPolicies.AgentOrManagement)]
         [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
         public async Task<IActionResult> GetActiveAgentOrders(int id)
         {
