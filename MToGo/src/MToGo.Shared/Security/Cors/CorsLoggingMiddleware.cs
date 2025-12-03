@@ -20,8 +20,11 @@ public class CorsLoggingMiddleware
     {
         if (string.IsNullOrEmpty(value)) return value ?? "";
                  
-        string sanitized = Regex.Replace(value, @"[\p{C}\u2028\u2029]+", "");
-        sanitized = sanitized.Replace("\r", "").Replace("\n", "").Replace("|", "");
+            string sanitized = Regex.Replace(
+                value,
+                @"[\p{C}\u2028\u2029\u000B\u000C\u0085\t\r\n|]+",
+                ""
+            );
         return $"[USERINPUT:{sanitized}]";
     }
 
