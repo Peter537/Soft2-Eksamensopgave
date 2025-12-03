@@ -13,28 +13,43 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PageTitle" xml:space="preserve">
-    <value>Agent Registration - MToGo</value>
+    <value>Create Agent - MToGo</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Agent Registration</value>
+    <value>Create Agent</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Access Denied</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>You must be logged in as management to access this page.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Login here</value>
+  </data>
+  <data name="BreadcrumbDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="BreadcrumbCreateAgent" xml:space="preserve">
+    <value>Create Agent</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Full Name</value>
+    <value>Name</value>
   </data>
   <data name="NamePlaceholder" xml:space="preserve">
-    <value>Enter your full name</value>
+    <value>Enter agent name</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>Email</value>
   </data>
   <data name="EmailPlaceholder" xml:space="preserve">
-    <value>Enter your email</value>
+    <value>Enter email address</value>
   </data>
   <data name="Password" xml:space="preserve">
     <value>Password</value>
   </data>
   <data name="PasswordPlaceholder" xml:space="preserve">
-    <value>Enter your password</value>
+    <value>Enter password</value>
   </data>
   <data name="ConfirmPassword" xml:space="preserve">
     <value>Confirm Password</value>
@@ -42,34 +57,22 @@
   <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
     <value>Confirm your password</value>
   </data>
-  <data name="RegisterButton" xml:space="preserve">
-    <value>Register as Agent</value>
+  <data name="CreateButton" xml:space="preserve">
+    <value>Create Agent</value>
   </data>
-  <data name="CreatingAccount" xml:space="preserve">
-    <value>Creating account...</value>
+  <data name="Processing" xml:space="preserve">
+    <value>Creating...</value>
   </data>
-  <data name="HasAccount" xml:space="preserve">
-    <value>Already have an account?</value>
-  </data>
-  <data name="LoginHere" xml:space="preserve">
-    <value>Login here</value>
-  </data>
-  <data name="RegistrationSuccessful" xml:space="preserve">
-    <value>Registration successful! Your agent ID is {0}</value>
-  </data>
-  <data name="RegistrationFailed" xml:space="preserve">
-    <value>Registration failed. Please try again.</value>
-  </data>
-  <data name="ErrorOccurred" xml:space="preserve">
-    <value>An error occurred: {0}</value>
+  <data name="SuccessMessage" xml:space="preserve">
+    <value>Agent created successfully!</value>
   </data>
   <data name="PasswordMismatch" xml:space="preserve">
-    <value>Passwords do not match.</value>
+    <value>Passwords do not match</value>
   </data>
-  <data name="ManagedRegistrationTitle" xml:space="preserve">
-    <value>Registration Managed by Administration</value>
+  <data name="CreateFailed" xml:space="preserve">
+    <value>Failed to create agent. Please try again.</value>
   </data>
-  <data name="ManagedRegistrationDescription" xml:space="preserve">
-    <value>Agent accounts are created by platform administrators. If you would like to become an agent, please contact MToGo administration.</value>
+  <data name="Error" xml:space="preserve">
+    <value>An error occurred: {0}</value>
   </data>
 </root>

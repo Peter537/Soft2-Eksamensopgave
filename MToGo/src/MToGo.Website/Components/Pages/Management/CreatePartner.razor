@@ -1,0 +1,319 @@
+@page "/management/partners/create"
+@inject HttpClient Http
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Management.CreatePartner.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    @if (!isInitialized)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!Auth.IsManagement)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">@L["Pages.Management.CreatePartner.AccessDeniedTitle"]</h5>
+                    <p class="mb-0">@L["Pages.Management.CreatePartner.LoginRequired"] <a href="/management/login">@L["Pages.Management.CreatePartner.LoginLink"]</a></p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/management">@L["Pages.Management.CreatePartner.BreadcrumbDashboard"]</a></li>
+                <li class="breadcrumb-item active">@L["Pages.Management.CreatePartner.BreadcrumbCreatePartner"]</li>
+            </ol>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header text-center bg-primary text-white">
+                        <h4 class="mb-0">@L["Pages.Management.CreatePartner.Title"]</h4>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+                            </div>
+                        }
+
+                        @if (showSuccess)
+                        {
+                            <div class="alert alert-success" role="alert">
+                                <i class="bi bi-check-circle me-2"></i>@L["Pages.Management.CreatePartner.SuccessMessage"]
+                            </div>
+                        }
+
+                        <EditForm Model="@model" OnValidSubmit="HandleSubmit" FormName="CreatePartnerForm">
+                            <DataAnnotationsValidator />
+
+                            <h5 class="mb-3">@L["Pages.Management.CreatePartner.RestaurantInfo"]</h5>
+
+                            <div class="mb-3">
+                                <label for="name" class="form-label">@L["Pages.Management.CreatePartner.Name"]</label>
+                                <InputText id="name" class="form-control" @bind-Value="model.Name" placeholder="@L["Pages.Management.CreatePartner.NamePlaceholder"]" />
+                                <ValidationMessage For="@(() => model.Name)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="address" class="form-label">@L["Pages.Management.CreatePartner.Address"]</label>
+                                <InputText id="address" class="form-control" @bind-Value="model.Address" placeholder="@L["Pages.Management.CreatePartner.AddressPlaceholder"]" />
+                                <ValidationMessage For="@(() => model.Address)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">@L["Pages.Management.CreatePartner.Email"]</label>
+                                <InputText id="email" class="form-control" @bind-Value="model.Email" placeholder="@L["Pages.Management.CreatePartner.EmailPlaceholder"]" />
+                                <ValidationMessage For="@(() => model.Email)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">@L["Pages.Management.CreatePartner.Password"]</label>
+                                <InputText id="password" type="password" class="form-control" @bind-Value="model.Password" placeholder="@L["Pages.Management.CreatePartner.PasswordPlaceholder"]" />
+                                <ValidationMessage For="@(() => model.Password)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">@L["Pages.Management.CreatePartner.ConfirmPassword"]</label>
+                                <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="model.ConfirmPassword" placeholder="@L["Pages.Management.CreatePartner.ConfirmPasswordPlaceholder"]" />
+                                <ValidationMessage For="@(() => model.ConfirmPassword)" />
+                            </div>
+
+                            <hr class="my-4" />
+
+                            <h5 class="mb-3">@L["Pages.Management.CreatePartner.MenuSection"]</h5>
+                            <p class="text-muted small">@L["Pages.Management.CreatePartner.MenuDescription"]</p>
+
+                            @for (int i = 0; i < model.Menu.Count; i++)
+                            {
+                                var index = i;
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="mb-0">@L["Pages.Management.CreatePartner.MenuItem"] @(index + 1)</h6>
+                                            @if (model.Menu.Count > 1)
+                                            {
+                                                <button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoveMenuItem(index)">
+                                                    <i class="bi bi-trash"></i> @L["Pages.Management.CreatePartner.RemoveItem"]
+                                                </button>
+                                            }
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-8 mb-2">
+                                                <label class="form-label">@L["Pages.Management.CreatePartner.ItemName"]</label>
+                                                <InputText class="form-control" @bind-Value="model.Menu[index].Name" placeholder="@L["Pages.Management.CreatePartner.ItemNamePlaceholder"]" />
+                                            </div>
+                                            <div class="col-md-4 mb-2">
+                                                <label class="form-label">@L["Pages.Management.CreatePartner.ItemPrice"]</label>
+                                                <InputNumber class="form-control" @bind-Value="model.Menu[index].Price" placeholder="@L["Pages.Management.CreatePartner.ItemPricePlaceholder"]" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <button type="button" class="btn btn-outline-primary mb-4" @onclick="AddMenuItem">
+                                <i class="bi bi-plus-circle"></i> @L["Pages.Management.CreatePartner.AddMenuItem"]
+                            </button>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                                    @if (isLoading)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        @L["Pages.Management.CreatePartner.Processing"]
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-shop me-2"></i>@L["Pages.Management.CreatePartner.CreateButton"]
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isInitialized;
+    private bool isLoading;
+    private bool showSuccess;
+    private string? errorMessage;
+    private PartnerCreateModel model = new();
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+        // Ensure at least one menu item exists
+        if (model.Menu.Count == 0)
+        {
+            model.Menu.Add(new MenuItemModel());
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            isInitialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void AddMenuItem()
+    {
+        model.Menu.Add(new MenuItemModel());
+    }
+
+    private void RemoveMenuItem(int index)
+    {
+        if (model.Menu.Count > 1)
+        {
+            model.Menu.RemoveAt(index);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        errorMessage = null;
+        showSuccess = false;
+        isLoading = true;
+
+        try
+        {
+            // Validate passwords match
+            if (model.Password != model.ConfirmPassword)
+            {
+                errorMessage = L["Pages.Management.CreatePartner.PasswordMismatch"];
+                isLoading = false;
+                return;
+            }
+
+            // Validate menu items
+            var validMenuItems = model.Menu.Where(m => !string.IsNullOrWhiteSpace(m.Name) && m.Price > 0).ToList();
+            if (validMenuItems.Count == 0)
+            {
+                errorMessage = L["Pages.Management.CreatePartner.EmptyMenuError"];
+                isLoading = false;
+                return;
+            }
+
+            var request = new PartnerCreateRequest
+            {
+                Name = model.Name,
+                Address = model.Address,
+                Email = model.Email,
+                Password = model.Password,
+                Menu = validMenuItems.Select(item => new MenuItemRequest
+                {
+                    Name = item.Name,
+                    Price = item.Price
+                }).ToList()
+            };
+
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/partners");
+            httpRequest.Content = JsonContent.Create(request);
+
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(httpRequest);
+
+            if (response.IsSuccessStatusCode)
+            {
+                showSuccess = true;
+                model = new PartnerCreateModel();
+                model.Menu.Add(new MenuItemModel()); // Reset form with one menu item
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                errorMessage = !string.IsNullOrEmpty(error) ? error : L.GetString("Pages.Management.CreatePartner.CreateFailed");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Management.CreatePartner.Error", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    public class PartnerCreateModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Restaurant name is required")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Address is required")]
+        public string Address { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email is required")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Password is required")]
+        [System.ComponentModel.DataAnnotations.MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+        public string Password { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please confirm your password")]
+        [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        public List<MenuItemModel> Menu { get; set; } = new();
+    }
+
+    public class MenuItemModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+
+    public class PartnerCreateRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public List<MenuItemRequest> Menu { get; set; } = new();
+    }
+
+    public class MenuItemRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+    }
+}
