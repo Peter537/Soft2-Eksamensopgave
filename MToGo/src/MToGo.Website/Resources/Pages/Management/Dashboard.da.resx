@@ -57,4 +57,13 @@
   <data name="ViewMetricsButton" xml:space="preserve">
     <value>Se Metrics</value>
   </data>
+  <data name="ViewReviewsTitle" xml:space="preserve">
+    <value>Kundeanmeldelser</value>
+  </data>
+  <data name="ViewReviewsDescription" xml:space="preserve">
+    <value>Se og filtrer kundeanmeldelser for ordrer, agenter og partnere.</value>
+  </data>
+  <data name="ViewReviewsButton" xml:space="preserve">
+    <value>Se anmeldelser</value>
+  </data>
 </root>

@@ -153,4 +153,7 @@
   <data name="FailedToSubmitReview" xml:space="preserve">
     <value>Kunne ikke indsende anmeldelse. Prøv venligst igen.</value>
   </data>
+  <data name="ReviewSubmittedOn" xml:space="preserve">
+    <value>Anmeldelse indsendt den</value>
+  </data>
 </root>
