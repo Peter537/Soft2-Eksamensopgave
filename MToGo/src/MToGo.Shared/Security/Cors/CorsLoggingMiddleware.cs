@@ -19,12 +19,14 @@ public class CorsLoggingMiddleware
     private static string SanitizeForLog(string? value)
     {
         if (string.IsNullOrEmpty(value)) return value ?? "";
-                 
-            string sanitized = Regex.Replace(
-                value,
-                @"[\p{C}\u2028\u2029\u000B\u000C\u0085\t\r\n|]+",
-                ""
-            );
+
+        string sanitized = Regex.Replace(
+            value,
+            @"[\p{C}\u2028\u2029\u000B\u000C\u0085|]+", 
+            ""
+        );
+
+        sanitized = sanitized.Replace("\r", "").Replace("\n", "");
         return $"[USERINPUT:{sanitized}]";
     }
 
