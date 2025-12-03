@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using MToGo.PartnerService.Data;
+using MToGo.PartnerService.Metrics;
 using MToGo.PartnerService.Repositories;
 using MToGo.PartnerService.Services;
+using MToGo.Shared.Metrics;
 using MToGo.Shared.Security;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,10 @@ builder.Services.AddHttpContextAccessor();
 
 // Add MToGo Security (JWT Authentication & Authorization)
 builder.Services.AddMToGoSecurity(builder.Configuration);
+
+// Add Prometheus metrics
+builder.Services.AddMToGoMetrics();
+builder.Services.AddHostedService<PartnerMetricsCollector>();
 
 // Add DbContext
 builder.Services.AddDbContext<PartnerDbContext>(options =>
@@ -41,12 +47,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Add HTTP metrics middleware
+app.UseMToGoHttpMetrics();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map Prometheus metrics endpoint at /metrics
+app.MapMToGoMetrics();
 
 app.Run();
 
