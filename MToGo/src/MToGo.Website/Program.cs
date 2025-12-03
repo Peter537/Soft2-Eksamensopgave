@@ -1,5 +1,6 @@
 using MToGo.Website.Components;
 using MToGo.Website.Services;
+using MToGo.Website.Services.Payment;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,14 @@ builder.Services.AddLocalization(options => options.ResourcesPath = "Resources")
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CultureService>();
 builder.Services.AddScoped<ILocalizerService, LocalizerService>();
+
+// Register Payment Strategies (Strategy Pattern)
+builder.Services.AddScoped<IPaymentStrategy, CreditCardPaymentStrategy>();
+builder.Services.AddScoped<IPaymentStrategy, PayPalPaymentStrategy>();
+builder.Services.AddScoped<IPaymentStrategy, MobilePayPaymentStrategy>();
+builder.Services.AddScoped<IPaymentStrategy, ApplePayPaymentStrategy>();
+builder.Services.AddScoped<IPaymentStrategy, GooglePayPaymentStrategy>();
+builder.Services.AddScoped<PaymentContext>();
 
 var gatewayUrl = builder.Configuration["GatewayUrl"] ?? "http://localhost:8080";
 builder.Services.AddHttpClient("Gateway", client =>
