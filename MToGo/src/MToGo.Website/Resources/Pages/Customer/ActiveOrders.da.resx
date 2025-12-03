@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Aktive ordrer - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Dine aktive ordrer</value>
+  </data>
+  <data name="LiveUpdates" xml:space="preserve">
+    <value>Live opdateringer</value>
+  </data>
+  <data name="Connecting" xml:space="preserve">
+    <value>Forbinder...</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Log venligst ind for at se dine aktive ordrer.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>log ind</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser dine ordrer...</value>
+  </data>
+  <data name="NoActiveOrders" xml:space="preserve">
+    <value>Ingen aktive ordrer</value>
+  </data>
+  <data name="NoActiveOrdersDesc" xml:space="preserve">
+    <value>Du har ingen igangværende ordrer i øjeblikket.</value>
+  </data>
+  <data name="ViewOrderHistory" xml:space="preserve">
+    <value>Se ordrehistorik</value>
+  </data>
+  <data name="OrderId" xml:space="preserve">
+    <value>Ordre #{0}</value>
+  </data>
+  <data name="Partner" xml:space="preserve">
+    <value>Partner #{0}</value>
+  </data>
+  <data name="ItemCount" xml:space="preserve">
+    <value>{0} vare(r)</value>
+  </data>
+  <data name="TapToViewDetails" xml:space="preserve">
+    <value>Tryk for at se detaljer</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="FailedToLoad" xml:space="preserve">
+    <value>Kunne ikke indlæse dine aktive ordrer. Prøv venligst igen.</value>
+  </data>
+  <data name="StatusPlaced" xml:space="preserve">
+    <value>Afgivet</value>
+  </data>
+  <data name="StatusAccepted" xml:space="preserve">
+    <value>Accepteret</value>
+  </data>
+  <data name="StatusReady" xml:space="preserve">
+    <value>Klar</value>
+  </data>
+  <data name="StatusPickedUp" xml:space="preserve">
+    <value>Afhentet</value>
+  </data>
+  <data name="StatusDelivered" xml:space="preserve">
+    <value>Leveret</value>
+  </data>
+  <data name="StatusRejected" xml:space="preserve">
+    <value>Afvist</value>
+  </data>
+</root>

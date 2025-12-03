@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Order #{0} - MToGo</value>
+  </data>
+  <data name="BreadcrumbActiveOrders" xml:space="preserve">
+    <value>Active Orders</value>
+  </data>
+  <data name="BreadcrumbOrder" xml:space="preserve">
+    <value>Order #{0}</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Please log in to view order details.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>log in</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading order details...</value>
+  </data>
+  <data name="LiveStatus" xml:space="preserve">
+    <value>Live</value>
+  </data>
+  <data name="OfflineStatus" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="Partner" xml:space="preserve">
+    <value>Partner:</value>
+  </data>
+  <data name="Delivery" xml:space="preserve">
+    <value>Delivery:</value>
+  </data>
+  <data name="OrderStatus" xml:space="preserve">
+    <value>Order Status</value>
+  </data>
+  <data name="OrderRejected" xml:space="preserve">
+    <value>Order Rejected</value>
+  </data>
+  <data name="RejectionReason" xml:space="preserve">
+    <value>Reason:</value>
+  </data>
+  <data name="InProgress" xml:space="preserve">
+    <value>In progress...</value>
+  </data>
+  <data name="StepOrderPlaced" xml:space="preserve">
+    <value>Order Placed</value>
+  </data>
+  <data name="StepOrderPlacedDesc" xml:space="preserve">
+    <value>Your order has been received</value>
+  </data>
+  <data name="StepAccepted" xml:space="preserve">
+    <value>Accepted</value>
+  </data>
+  <data name="StepAcceptedDesc" xml:space="preserve">
+    <value>Restaurant is preparing your food</value>
+  </data>
+  <data name="StepReady" xml:space="preserve">
+    <value>Ready for Pickup</value>
+  </data>
+  <data name="StepReadyDesc" xml:space="preserve">
+    <value>Food is ready, waiting for delivery agent</value>
+  </data>
+  <data name="StepPickedUp" xml:space="preserve">
+    <value>Picked Up</value>
+  </data>
+  <data name="StepPickedUpDesc" xml:space="preserve">
+    <value>Delivery agent is on the way</value>
+  </data>
+  <data name="StepDelivered" xml:space="preserve">
+    <value>Delivered</value>
+  </data>
+  <data name="StepDeliveredDesc" xml:space="preserve">
+    <value>Order has been delivered</value>
+  </data>
+  <data name="OrderItems" xml:space="preserve">
+    <value>Order Items</value>
+  </data>
+  <data name="Item" xml:space="preserve">
+    <value>Item</value>
+  </data>
+  <data name="Qty" xml:space="preserve">
+    <value>Qty</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Subtotal</value>
+  </data>
+  <data name="ItemsSubtotal" xml:space="preserve">
+    <value>Items Subtotal</value>
+  </data>
+  <data name="DeliveryFee" xml:space="preserve">
+    <value>Delivery Fee</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="RateYourOrder" xml:space="preserve">
+    <value>Rate Your Order</value>
+  </data>
+  <data name="ThankYouFeedback" xml:space="preserve">
+    <value>Thank you for your feedback!</value>
+  </data>
+  <data name="Submitting" xml:space="preserve">
+    <value>Submitting your review...</value>
+  </data>
+  <data name="FoodQuality" xml:space="preserve">
+    <value>Food Quality</value>
+  </data>
+  <data name="DeliveryAgent" xml:space="preserve">
+    <value>Delivery Agent</value>
+  </data>
+  <data name="OverallExperience" xml:space="preserve">
+    <value>Overall Experience</value>
+  </data>
+  <data name="FoodCommentPlaceholder" xml:space="preserve">
+    <value>Comment on food (optional)</value>
+  </data>
+  <data name="AgentCommentPlaceholder" xml:space="preserve">
+    <value>Comment on delivery (optional)</value>
+  </data>
+  <data name="OrderCommentPlaceholder" xml:space="preserve">
+    <value>Overall comment (optional)</value>
+  </data>
+  <data name="SubmitReview" xml:space="preserve">
+    <value>Submit Review</value>
+  </data>
+  <data name="BackToActiveOrders" xml:space="preserve">
+    <value>Back to Active Orders</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>An error occurred: {0}</value>
+  </data>
+  <data name="FailedToLoadOrder" xml:space="preserve">
+    <value>Failed to load order details. Please try again.</value>
+  </data>
+  <data name="OrderNotFound" xml:space="preserve">
+    <value>Order not found.</value>
+  </data>
+  <data name="FailedToSubmitReview" xml:space="preserve">
+    <value>Failed to submit review. Please try again.</value>
+  </data>
+</root>
