@@ -27,4 +27,58 @@
   <data name="LoginLink" xml:space="preserve">
     <value>Login here</value>
   </data>
+  <data name="NewOrders" xml:space="preserve">
+    <value>New Orders</value>
+  </data>
+  <data name="WaitingForOrders" xml:space="preserve">
+    <value>Waiting for new orders...</value>
+  </data>
+  <data name="OrderNumber" xml:space="preserve">
+    <value>Order #{0}</value>
+  </data>
+  <data name="Distance" xml:space="preserve">
+    <value>📍 Distance: {0}</value>
+  </data>
+  <data name="EstimatedPrepTime" xml:space="preserve">
+    <value>Estimated prep time (minutes)*</value>
+  </data>
+  <data name="EstimatedPrepPlaceholder" xml:space="preserve">
+    <value>e.g. 15</value>
+  </data>
+  <data name="Accept" xml:space="preserve">
+    <value>Accept</value>
+  </data>
+  <data name="Reject" xml:space="preserve">
+    <value>Reject</value>
+  </data>
+  <data name="AcceptedOrders" xml:space="preserve">
+    <value>Accepted Orders</value>
+  </data>
+  <data name="NoAcceptedOrders" xml:space="preserve">
+    <value>No accepted orders yet</value>
+  </data>
+  <data name="AgentAssigned" xml:space="preserve">
+    <value>Agent #{0}</value>
+  </data>
+  <data name="AwaitingAgent" xml:space="preserve">
+    <value>Awaiting agent</value>
+  </data>
+  <data name="AcceptedAt" xml:space="preserve">
+    <value>Accepted at {0}</value>
+  </data>
+  <data name="FoodReady" xml:space="preserve">
+    <value>Food Ready</value>
+  </data>
+  <data name="ReadyForPickup" xml:space="preserve">
+    <value>Ready for pickup</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Disconnected</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
 </root>

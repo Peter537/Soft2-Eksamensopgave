@@ -39,4 +39,46 @@
   <data name="AvailableJobsLink" xml:space="preserve">
     <value>Available Jobs</value>
   </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="LoadingDeliveries" xml:space="preserve">
+    <value>Loading your deliveries...</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>● Connected</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>○ Disconnected</value>
+  </data>
+  <data name="EnRoute" xml:space="preserve">
+    <value>🚗 EN ROUTE TO CUSTOMER</value>
+  </data>
+  <data name="ReadyForPickup" xml:space="preserve">
+    <value>🍔 READY FOR PICKUP!</value>
+  </data>
+  <data name="Preparing" xml:space="preserve">
+    <value>⏳ Preparing...</value>
+  </data>
+  <data name="Pickup" xml:space="preserve">
+    <value>📍 Pickup:</value>
+  </data>
+  <data name="DeliverTo" xml:space="preserve">
+    <value>🏠 Deliver to:</value>
+  </data>
+  <data name="OrderNumber" xml:space="preserve">
+    <value>Order #{0}</value>
+  </data>
+  <data name="ItemsCount" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="MarkDelivered" xml:space="preserve">
+    <value>📦 Mark Delivered</value>
+  </data>
+  <data name="PickedUp" xml:space="preserve">
+    <value>✓ Picked Up</value>
+  </data>
+  <data name="WaitingForFood" xml:space="preserve">
+    <value>Waiting for food...</value>
+  </data>
 </root>

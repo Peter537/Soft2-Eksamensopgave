@@ -16,7 +16,7 @@
     {
         <div class="text-center">
             <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">@L["Pages.Partner.IncomingOrders.Loading"]</span>
             </div>
         </div>
     }
@@ -42,7 +42,7 @@
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">
                     <span class="oi oi-bell me-2"></span>
-                    New Orders (@NewOrders.Count)
+                    @L["Pages.Partner.IncomingOrders.NewOrders"] (@NewOrders.Count)
                 </h5>
             </div>
             <div class="card-body" style="min-height: 400px; max-height: 600px; overflow-y: auto;">
@@ -50,7 +50,7 @@
                 {
                     <p class="text-muted text-center mt-4">
                         <span class="oi oi-inbox" style="font-size: 2rem;"></span><br />
-                        Waiting for new orders...
+                        @L["Pages.Partner.IncomingOrders.WaitingForOrders"]
                     </p>
                 }
                 else
@@ -60,12 +60,12 @@
                         <div class="card mb-3 border-warning">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
-                                    <h6 class="card-title">Order #@order.OrderId</h6>
+                                    <h6 class="card-title">@string.Format(L["Pages.Partner.IncomingOrders.OrderNumber"], order.OrderId)</h6>
                                     <small class="text-muted">@order.ReceivedAt.ToString("HH:mm:ss")</small>
                                 </div>
                                 @if (!string.IsNullOrEmpty(order.Distance))
                                 {
-                                    <p class="text-info mb-1"><small>📍 Distance: @order.Distance</small></p>
+                                    <p class="text-info mb-1"><small>@string.Format(L["Pages.Partner.IncomingOrders.Distance"], order.Distance)</small></p>
                                 }
                                 <ul class="list-unstyled mb-2">
                                     @foreach (var item in order.Items)
@@ -74,22 +74,22 @@
                                     }
                                 </ul>
                                 <div class="mb-2">
-                                    <label class="form-label small mb-1">Estimated prep time (minutes)*</label>
+                                    <label class="form-label small mb-1">@L["Pages.Partner.IncomingOrders.EstimatedPrepTime"]</label>
                                     <input type="number" 
                                            class="form-control form-control-sm" 
                                            min="1" 
                                            max="120"
-                                           placeholder="e.g. 15"
+                                           placeholder="@L["Pages.Partner.IncomingOrders.EstimatedPrepPlaceholder"]"
                                            @bind="order.EstimatedMinutes" />
                                 </div>
                                 <div class="d-flex gap-2">
                                     <button class="btn btn-success btn-sm" 
                                             disabled="@(!order.EstimatedMinutes.HasValue || order.EstimatedMinutes < 1)"
                                             @onclick="() => AcceptOrder(order)">
-                                        Accept
+                                        @L["Pages.Partner.IncomingOrders.Accept"]
                                     </button>
                                     <button class="btn btn-danger btn-sm" @onclick="() => RejectOrder(order)">
-                                        Reject
+                                        @L["Pages.Partner.IncomingOrders.Reject"]
                                     </button>
                                 </div>
                             </div>
@@ -106,7 +106,7 @@
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">
                     <span class="oi oi-check me-2"></span>
-                    Accepted Orders (@AcceptedOrders.Count)
+                    @L["Pages.Partner.IncomingOrders.AcceptedOrders"] (@AcceptedOrders.Count)
                 </h5>
             </div>
             <div class="card-body" style="min-height: 400px; max-height: 600px; overflow-y: auto;">
@@ -114,7 +114,7 @@
                 {
                     <p class="text-muted text-center mt-4">
                         <span class="oi oi-list" style="font-size: 2rem;"></span><br />
-                        No accepted orders yet
+                        @L["Pages.Partner.IncomingOrders.NoAcceptedOrders"]
                     </p>
                 }
                 else
@@ -124,9 +124,9 @@
                         <div class="card mb-3 border-success">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between">
-                                    <h6 class="card-title">Order #@order.OrderId</h6>
+                                    <h6 class="card-title">@string.Format(L["Pages.Partner.IncomingOrders.OrderNumber"], order.OrderId)</h6>
                                     <span class="badge @(order.AgentId.HasValue ? "bg-info" : "bg-secondary")">
-                                        @(order.AgentId.HasValue ? $"Agent #{order.AgentId}" : "Awaiting agent")
+                                        @(order.AgentId.HasValue ? string.Format(L["Pages.Partner.IncomingOrders.AgentAssigned"], order.AgentId) : L["Pages.Partner.IncomingOrders.AwaitingAgent"])
                                     </span>
                                 </div>
                                 <ul class="list-unstyled mb-2">
@@ -136,16 +136,16 @@
                                     }
                                 </ul>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">Accepted at @order.AcceptedAt?.ToString("HH:mm:ss")</small>
+                                    <small class="text-muted">@string.Format(L["Pages.Partner.IncomingOrders.AcceptedAt"], order.AcceptedAt?.ToString("HH:mm:ss"))</small>
                                     @if (!order.IsReady)
                                     {
                                         <button class="btn btn-primary btn-sm" @onclick="() => MarkFoodReady(order)">
-                                            Food Ready
+                                            @L["Pages.Partner.IncomingOrders.FoodReady"]
                                         </button>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-success">Ready for pickup</span>
+                                        <span class="badge bg-success">@L["Pages.Partner.IncomingOrders.ReadyForPickup"]</span>
                                     }
                                 </div>
                             </div>
@@ -160,7 +160,7 @@
 @* Connection Status *@
 <div class="mt-3">
     <span class="badge @(IsConnected ? "bg-success" : "bg-danger")">
-        @(IsConnected ? "Connected" : "Disconnected")
+        @(IsConnected ? L["Pages.Partner.IncomingOrders.Connected"] : L["Pages.Partner.IncomingOrders.Disconnected"])
     </span>
     @if (!string.IsNullOrEmpty(StatusMessage))
     {

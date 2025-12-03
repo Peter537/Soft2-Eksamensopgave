@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Ordre #{0} - MToGo</value>
+  </data>
+  <data name="BreadcrumbActiveOrders" xml:space="preserve">
+    <value>Aktive ordrer</value>
+  </data>
+  <data name="BreadcrumbOrder" xml:space="preserve">
+    <value>Ordre #{0}</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Log venligst ind for at se ordredetaljer.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>log ind</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser ordredetaljer...</value>
+  </data>
+  <data name="LiveStatus" xml:space="preserve">
+    <value>Live</value>
+  </data>
+  <data name="OfflineStatus" xml:space="preserve">
+    <value>Offline</value>
+  </data>
+  <data name="Partner" xml:space="preserve">
+    <value>Partner:</value>
+  </data>
+  <data name="Delivery" xml:space="preserve">
+    <value>Levering:</value>
+  </data>
+  <data name="OrderStatus" xml:space="preserve">
+    <value>Ordrestatus</value>
+  </data>
+  <data name="OrderRejected" xml:space="preserve">
+    <value>Ordre afvist</value>
+  </data>
+  <data name="RejectionReason" xml:space="preserve">
+    <value>Årsag:</value>
+  </data>
+  <data name="InProgress" xml:space="preserve">
+    <value>I gang...</value>
+  </data>
+  <data name="StepOrderPlaced" xml:space="preserve">
+    <value>Ordre modtaget</value>
+  </data>
+  <data name="StepOrderPlacedDesc" xml:space="preserve">
+    <value>Din ordre er blevet modtaget</value>
+  </data>
+  <data name="StepAccepted" xml:space="preserve">
+    <value>Accepteret</value>
+  </data>
+  <data name="StepAcceptedDesc" xml:space="preserve">
+    <value>Restauranten forbereder din mad</value>
+  </data>
+  <data name="StepReady" xml:space="preserve">
+    <value>Klar til afhentning</value>
+  </data>
+  <data name="StepReadyDesc" xml:space="preserve">
+    <value>Maden er klar, venter på leveringsagent</value>
+  </data>
+  <data name="StepPickedUp" xml:space="preserve">
+    <value>Afhentet</value>
+  </data>
+  <data name="StepPickedUpDesc" xml:space="preserve">
+    <value>Leveringsagenten er på vej</value>
+  </data>
+  <data name="StepDelivered" xml:space="preserve">
+    <value>Leveret</value>
+  </data>
+  <data name="StepDeliveredDesc" xml:space="preserve">
+    <value>Ordren er blevet leveret</value>
+  </data>
+  <data name="OrderItems" xml:space="preserve">
+    <value>Ordrevarer</value>
+  </data>
+  <data name="Item" xml:space="preserve">
+    <value>Vare</value>
+  </data>
+  <data name="Qty" xml:space="preserve">
+    <value>Antal</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Pris</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Subtotal</value>
+  </data>
+  <data name="ItemsSubtotal" xml:space="preserve">
+    <value>Varer subtotal</value>
+  </data>
+  <data name="DeliveryFee" xml:space="preserve">
+    <value>Leveringsgebyr</value>
+  </data>
+  <data name="Total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="RateYourOrder" xml:space="preserve">
+    <value>Bedøm din ordre</value>
+  </data>
+  <data name="ThankYouFeedback" xml:space="preserve">
+    <value>Tak for din feedback!</value>
+  </data>
+  <data name="Submitting" xml:space="preserve">
+    <value>Indsender din anmeldelse...</value>
+  </data>
+  <data name="FoodQuality" xml:space="preserve">
+    <value>Madkvalitet</value>
+  </data>
+  <data name="DeliveryAgent" xml:space="preserve">
+    <value>Leveringsagent</value>
+  </data>
+  <data name="OverallExperience" xml:space="preserve">
+    <value>Samlet oplevelse</value>
+  </data>
+  <data name="FoodCommentPlaceholder" xml:space="preserve">
+    <value>Kommentar til maden (valgfrit)</value>
+  </data>
+  <data name="AgentCommentPlaceholder" xml:space="preserve">
+    <value>Kommentar til leveringen (valgfrit)</value>
+  </data>
+  <data name="OrderCommentPlaceholder" xml:space="preserve">
+    <value>Generel kommentar (valgfrit)</value>
+  </data>
+  <data name="SubmitReview" xml:space="preserve">
+    <value>Indsend anmeldelse</value>
+  </data>
+  <data name="BackToActiveOrders" xml:space="preserve">
+    <value>Tilbage til aktive ordrer</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="FailedToLoadOrder" xml:space="preserve">
+    <value>Kunne ikke indlæse ordredetaljer. Prøv venligst igen.</value>
+  </data>
+  <data name="OrderNotFound" xml:space="preserve">
+    <value>Ordre ikke fundet.</value>
+  </data>
+  <data name="FailedToSubmitReview" xml:space="preserve">
+    <value>Kunne ikke indsende anmeldelse. Prøv venligst igen.</value>
+  </data>
+</root>
