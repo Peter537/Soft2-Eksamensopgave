@@ -1,0 +1,16 @@
+# Grafana Dashboard Provisioning
+# This file configures where Grafana should look for dashboard JSON files
+
+apiVersion: 1
+
+providers:
+  - name: 'MToGo Dashboards'
+    orgId: 1
+    folder: 'MToGo'
+    folderUid: mtogo
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
