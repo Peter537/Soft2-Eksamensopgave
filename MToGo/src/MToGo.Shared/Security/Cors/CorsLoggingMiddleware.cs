@@ -21,6 +21,7 @@ public class CorsLoggingMiddleware
         if (string.IsNullOrEmpty(value)) return value ?? "";
                  
         string sanitized = Regex.Replace(value, @"[\p{C}\u2028\u2029]+", "");
+        sanitized = sanitized.Replace("\r", "").Replace("\n", "").Replace("|", "");
         return $"[USERINPUT:{sanitized}]";
     }
 
@@ -38,7 +39,7 @@ public class CorsLoggingMiddleware
 
         string trimmed = method.Trim();
         if (allowedMethods.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
-        {
+        {            
             string sanitized = trimmed.ToUpperInvariant().Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace("|", "");
             return sanitized;
         }
