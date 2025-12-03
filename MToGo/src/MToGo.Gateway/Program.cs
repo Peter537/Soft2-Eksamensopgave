@@ -27,13 +27,7 @@ builder.Services.AddMToGoSecurityWithWebSockets(builder.Configuration);
 
 var app = builder.Build();
 
-// Get CORS settings for logging middleware
-var corsSettings = app.Services.GetRequiredService<CorsSettings>();
-
 // Configure the HTTP request pipeline.
-// Add CORS logging before CORS middleware to log blocked requests
-app.UseCorsLogging(corsSettings);
-
 // Use the trusted origins policy for all requests
 app.UseCors(CorsPolicies.TrustedOrigins);
 
