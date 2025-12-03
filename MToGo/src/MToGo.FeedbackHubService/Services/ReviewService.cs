@@ -73,6 +73,30 @@ public partial class ReviewService : IReviewService
         return await _repository.ExistsForOrderAsync(orderId);
     }
 
+    public async Task<IEnumerable<OrderReviewResponse>> GetAllReviewsAsync(DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
+    {
+        var reviews = await _repository.GetAllAsync(startDate, endDate, amount);
+        return reviews.Select(MapToOrderReviewResponse);
+    }
+
+    public async Task<IEnumerable<AgentReviewResponse>> GetReviewsByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
+    {
+        var reviews = await _repository.GetByAgentIdAsync(agentId, startDate, endDate, amount);
+        return reviews.Select(MapToAgentReviewResponse);
+    }
+
+    public async Task<IEnumerable<CustomerReviewResponse>> GetReviewsByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
+    {
+        var reviews = await _repository.GetByCustomerIdAsync(customerId, startDate, endDate, amount);
+        return reviews.Select(MapToCustomerReviewResponse);
+    }
+
+    public async Task<IEnumerable<PartnerReviewResponse>> GetReviewsByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
+    {
+        var reviews = await _repository.GetByPartnerIdAsync(partnerId, startDate, endDate, amount);
+        return reviews.Select(MapToPartnerReviewResponse);
+    }
+
     private static void ValidateOptionalRating(string ratingType, int value)
     {
         // 0 means not rated (allowed), 1-5 are valid ratings
@@ -129,6 +153,98 @@ public partial class ReviewService : IReviewService
             FoodComment = review.FoodComment,
             AgentComment = review.AgentComment,
             OrderComment = review.OrderComment
+        };
+    }
+
+    private static OrderReviewResponse MapToOrderReviewResponse(Review review)
+    {
+        return new OrderReviewResponse
+        {
+            AgentId = review.AgentId,
+            PartnerId = review.PartnerId,
+            CustomerId = review.CustomerId,
+            Timestamp = review.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            Ratings = new RatingsDto
+            {
+                Food = review.FoodRating,
+                Agent = review.AgentRating,
+                Order = review.OrderRating
+            },
+            Comments = new CommentsDto
+            {
+                Food = review.FoodComment,
+                Agent = review.AgentComment,
+                Order = review.OrderComment
+            }
+        };
+    }
+
+    private static AgentReviewResponse MapToAgentReviewResponse(Review review)
+    {
+        return new AgentReviewResponse
+        {
+            OrderId = review.OrderId,
+            PartnerId = review.PartnerId,
+            CustomerId = review.CustomerId,
+            Timestamp = review.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            Ratings = new RatingsDto
+            {
+                Food = review.FoodRating,
+                Agent = review.AgentRating,
+                Order = review.OrderRating
+            },
+            Comments = new CommentsDto
+            {
+                Food = review.FoodComment,
+                Agent = review.AgentComment,
+                Order = review.OrderComment
+            }
+        };
+    }
+
+    private static CustomerReviewResponse MapToCustomerReviewResponse(Review review)
+    {
+        return new CustomerReviewResponse
+        {
+            OrderId = review.OrderId,
+            AgentId = review.AgentId,
+            PartnerId = review.PartnerId,
+            Timestamp = review.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            Ratings = new RatingsDto
+            {
+                Food = review.FoodRating,
+                Agent = review.AgentRating,
+                Order = review.OrderRating
+            },
+            Comments = new CommentsDto
+            {
+                Food = review.FoodComment,
+                Agent = review.AgentComment,
+                Order = review.OrderComment
+            }
+        };
+    }
+
+    private static PartnerReviewResponse MapToPartnerReviewResponse(Review review)
+    {
+        return new PartnerReviewResponse
+        {
+            OrderId = review.OrderId,
+            AgentId = review.AgentId,
+            CustomerId = review.CustomerId,
+            Timestamp = review.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            Ratings = new RatingsDto
+            {
+                Food = review.FoodRating,
+                Agent = review.AgentRating,
+                Order = review.OrderRating
+            },
+            Comments = new CommentsDto
+            {
+                Food = review.FoodComment,
+                Agent = review.AgentComment,
+                Order = review.OrderComment
+            }
         };
     }
 

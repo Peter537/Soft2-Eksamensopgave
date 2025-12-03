@@ -49,3 +49,66 @@ public class ReviewResponse
     public string? AgentComment { get; set; }
     public string? OrderComment { get; set; }
 }
+
+// Query parameters for filtering reviews
+public class ReviewFilterRequest
+{
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public int? Amount { get; set; }
+}
+
+// Response models matching the API specification
+public class OrderReviewResponse
+{
+    public int? AgentId { get; set; }
+    public int PartnerId { get; set; }
+    public int CustomerId { get; set; }
+    public string Timestamp { get; set; } = string.Empty;
+    public RatingsDto Ratings { get; set; } = new();
+    public CommentsDto Comments { get; set; } = new();
+}
+
+public class AgentReviewResponse
+{
+    public int OrderId { get; set; }
+    public int PartnerId { get; set; }
+    public int CustomerId { get; set; }
+    public string Timestamp { get; set; } = string.Empty;
+    public RatingsDto Ratings { get; set; } = new();
+    public CommentsDto Comments { get; set; } = new();
+}
+
+public class CustomerReviewResponse
+{
+    public int OrderId { get; set; }
+    public int? AgentId { get; set; }
+    public int PartnerId { get; set; }
+    public string Timestamp { get; set; } = string.Empty;
+    public RatingsDto Ratings { get; set; } = new();
+    public CommentsDto Comments { get; set; } = new();
+}
+
+public class PartnerReviewResponse
+{
+    public int OrderId { get; set; }
+    public int? AgentId { get; set; }
+    public int CustomerId { get; set; }
+    public string Timestamp { get; set; } = string.Empty;
+    public RatingsDto Ratings { get; set; } = new();
+    public CommentsDto Comments { get; set; } = new();
+}
+
+public class RatingsDto
+{
+    public int Food { get; set; }
+    public int Agent { get; set; }
+    public int Order { get; set; }
+}
+
+public class CommentsDto
+{
+    public string? Food { get; set; }
+    public string? Agent { get; set; }
+    public string? Order { get; set; }
+}

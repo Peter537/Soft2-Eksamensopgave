@@ -68,4 +68,63 @@ public class ReviewsController : ControllerBase
         var exists = await _reviewService.HasReviewForOrderAsync(orderId);
         return Ok(new { exists });
     }
+
+    /// <summary>
+    /// GET /reviews/orders - Get all reviews with optional date filtering
+    /// </summary>
+    [HttpGet("orders")]
+    [Authorize]
+    public async Task<IActionResult> GetAllReviews([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] int? amount)
+    {
+        var reviews = await _reviewService.GetAllReviewsAsync(startDate, endDate, amount);
+        return Ok(reviews);
+    }
+
+    /// <summary>
+    /// GET /reviews/orders/{id} - Get review for specific order (same as order/{orderId})
+    /// </summary>
+    [HttpGet("orders/{orderId:int}")]
+    [Authorize]
+    public async Task<IActionResult> GetReviewForOrder(int orderId)
+    {
+        var review = await _reviewService.GetReviewByOrderIdAsync(orderId);
+        if (review == null)
+        {
+            return NotFound(new { message = $"No review found for order {orderId}" });
+        }
+        return Ok(review);
+    }
+
+    /// <summary>
+    /// GET /reviews/agents/{id} - Get all reviews for a specific agent
+    /// </summary>
+    [HttpGet("agents/{agentId:int}")]
+    [Authorize]
+    public async Task<IActionResult> GetReviewsByAgent(int agentId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] int? amount)
+    {
+        var reviews = await _reviewService.GetReviewsByAgentIdAsync(agentId, startDate, endDate, amount);
+        return Ok(reviews);
+    }
+
+    /// <summary>
+    /// GET /reviews/customers/{id} - Get all reviews by a specific customer
+    /// </summary>
+    [HttpGet("customers/{customerId:int}")]
+    [Authorize]
+    public async Task<IActionResult> GetReviewsByCustomer(int customerId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] int? amount)
+    {
+        var reviews = await _reviewService.GetReviewsByCustomerIdAsync(customerId, startDate, endDate, amount);
+        return Ok(reviews);
+    }
+
+    /// <summary>
+    /// GET /reviews/partners/{id} - Get all reviews for a specific partner
+    /// </summary>
+    [HttpGet("partners/{partnerId:int}")]
+    [Authorize]
+    public async Task<IActionResult> GetReviewsByPartner(int partnerId, [FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] int? amount)
+    {
+        var reviews = await _reviewService.GetReviewsByPartnerIdAsync(partnerId, startDate, endDate, amount);
+        return Ok(reviews);
+    }
 }
