@@ -15,6 +15,12 @@ public class CorsLoggingMiddleware
     private readonly HashSet<string> _allowedOrigins;
     private readonly bool _logBlockedRequests;
 
+    private static string SanitizeForLog(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return value ?? "";
+        return value.Replace("\r", "").Replace("\n", "");
+    }
+
     public CorsLoggingMiddleware(
         RequestDelegate next,
         ILogger<CorsLoggingMiddleware> logger,
@@ -40,18 +46,18 @@ public class CorsLoggingMiddleware
             {
                 _logger.LogWarning(
                     "CORS: Blocked request from non-compliant origin. Origin: {Origin}, Path: {Path}, Method: {Method}, UserAgent: {UserAgent}, IP: {IP}",
-                    origin,
-                    context.Request.Path,
-                    context.Request.Method,
-                    context.Request.Headers.UserAgent.FirstOrDefault() ?? "Unknown",
-                    context.Connection.RemoteIpAddress?.ToString() ?? "Unknown");
+                    SanitizeForLog(origin),
+                    SanitizeForLog(context.Request.Path.ToString()),
+                    SanitizeForLog(context.Request.Method),
+                    SanitizeForLog(context.Request.Headers.UserAgent.FirstOrDefault() ?? "Unknown"),
+                    SanitizeForLog(context.Connection.RemoteIpAddress?.ToString() ?? "Unknown"));
             }
             else if (isAllowed)
             {
                 _logger.LogDebug(
                     "CORS: Allowed request from origin {Origin} to {Path}",
-                    origin,
-                    context.Request.Path);
+                    SanitizeForLog(origin),
+                    SanitizeForLog(context.Request.Path.ToString()));
             }
         }
 
