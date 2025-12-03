@@ -57,4 +57,13 @@
   <data name="ViewMetricsButton" xml:space="preserve">
     <value>View Metrics</value>
   </data>
+  <data name="ViewReviewsTitle" xml:space="preserve">
+    <value>Customer Reviews</value>
+  </data>
+  <data name="ViewReviewsDescription" xml:space="preserve">
+    <value>View and filter customer reviews for orders, agents, and partners.</value>
+  </data>
+  <data name="ViewReviewsButton" xml:space="preserve">
+    <value>View Reviews</value>
+  </data>
 </root>

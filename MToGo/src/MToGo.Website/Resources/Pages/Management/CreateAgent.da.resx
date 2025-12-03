@@ -13,28 +13,43 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PageTitle" xml:space="preserve">
-    <value>Agent Registrering - MToGo</value>
+    <value>Opret Agent - MToGo</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Agent Registrering</value>
+    <value>Opret Agent</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind som administrator for at tilgå denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="BreadcrumbDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="BreadcrumbCreateAgent" xml:space="preserve">
+    <value>Opret Agent</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Fulde Navn</value>
+    <value>Navn</value>
   </data>
   <data name="NamePlaceholder" xml:space="preserve">
-    <value>Indtast dit fulde navn</value>
+    <value>Indtast agentens navn</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>Email</value>
   </data>
   <data name="EmailPlaceholder" xml:space="preserve">
-    <value>Indtast din email</value>
+    <value>Indtast emailadresse</value>
   </data>
   <data name="Password" xml:space="preserve">
     <value>Adgangskode</value>
   </data>
   <data name="PasswordPlaceholder" xml:space="preserve">
-    <value>Indtast din adgangskode</value>
+    <value>Indtast adgangskode</value>
   </data>
   <data name="ConfirmPassword" xml:space="preserve">
     <value>Bekræft Adgangskode</value>
@@ -42,34 +57,22 @@
   <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
     <value>Bekræft din adgangskode</value>
   </data>
-  <data name="RegisterButton" xml:space="preserve">
-    <value>Registrer som Agent</value>
+  <data name="CreateButton" xml:space="preserve">
+    <value>Opret Agent</value>
   </data>
-  <data name="CreatingAccount" xml:space="preserve">
-    <value>Opretter konto...</value>
+  <data name="Processing" xml:space="preserve">
+    <value>Opretter...</value>
   </data>
-  <data name="HasAccount" xml:space="preserve">
-    <value>Har du allerede en konto?</value>
-  </data>
-  <data name="LoginHere" xml:space="preserve">
-    <value>Log ind her</value>
-  </data>
-  <data name="RegistrationSuccessful" xml:space="preserve">
-    <value>Registrering lykkedes! Dit agent-ID er {0}</value>
-  </data>
-  <data name="RegistrationFailed" xml:space="preserve">
-    <value>Registrering mislykkedes. Prøv igen.</value>
-  </data>
-  <data name="ErrorOccurred" xml:space="preserve">
-    <value>Der opstod en fejl: {0}</value>
+  <data name="SuccessMessage" xml:space="preserve">
+    <value>Agent oprettet!</value>
   </data>
   <data name="PasswordMismatch" xml:space="preserve">
-    <value>Adgangskoderne matcher ikke.</value>
+    <value>Adgangskoder matcher ikke</value>
   </data>
-  <data name="ManagedRegistrationTitle" xml:space="preserve">
-    <value>Registrering administreres af administrationen</value>
+  <data name="CreateFailed" xml:space="preserve">
+    <value>Kunne ikke oprette agent. Prøv venligst igen.</value>
   </data>
-  <data name="ManagedRegistrationDescription" xml:space="preserve">
-    <value>Agentkonti oprettes af platformens administratorer. Hvis du ønsker at blive agent, kontakt venligst MToGo administrationen.</value>
+  <data name="Error" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
   </data>
 </root>

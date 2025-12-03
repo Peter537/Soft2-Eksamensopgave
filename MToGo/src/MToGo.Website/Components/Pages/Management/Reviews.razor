@@ -1,0 +1,531 @@
+@page "/management/reviews"
+@inject HttpClient Http
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Management.Reviews.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    @if (!isInitialized)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!Auth.IsManagement)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">@L["Pages.Management.Reviews.AccessDeniedTitle"]</h5>
+                    <p class="mb-0">@L["Pages.Management.Reviews.LoginRequired"] <a href="/management/login">@L["Pages.Management.Reviews.LoginLink"]</a></p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/management">@L["Pages.Management.Reviews.BreadcrumbDashboard"]</a></li>
+                <li class="breadcrumb-item active">@L["Pages.Management.Reviews.BreadcrumbReviews"]</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-4">@L["Pages.Management.Reviews.Title"]</h2>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>@L["Pages.Management.Reviews.Filters"]</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">@L["Pages.Management.Reviews.FilterType"]</label>
+                        <select class="form-select" @bind="filterType">
+                            <option value="all">@L["Pages.Management.Reviews.FilterTypeAll"]</option>
+                            <option value="agent">@L["Pages.Management.Reviews.FilterTypeAgent"]</option>
+                            <option value="customer">@L["Pages.Management.Reviews.FilterTypeCustomer"]</option>
+                            <option value="partner">@L["Pages.Management.Reviews.FilterTypePartner"]</option>
+                        </select>
+                    </div>
+                    @if (filterType != "all")
+                    {
+                        <div class="col-md-2">
+                            <label class="form-label">@L["Pages.Management.Reviews.FilterId"]</label>
+                            <input type="number" class="form-control" @bind="filterId" placeholder="ID" />
+                        </div>
+                    }
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.Reviews.FilterStartDate"]</label>
+                        <input type="date" class="form-control" @bind="startDate" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.Reviews.FilterEndDate"]</label>
+                        <input type="date" class="form-control" @bind="endDate" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.Reviews.FilterAmount"]</label>
+                        <input type="number" class="form-control" @bind="amount" min="1" max="100" placeholder="Max" />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" @onclick="LoadReviews" disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-search me-2"></i>
+                            }
+                            @L["Pages.Management.Reviews.SearchButton"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+            </div>
+        }
+        else if (reviews.Count == 0 && hasSearched)
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>@L["Pages.Management.Reviews.NoReviewsFound"]
+            </div>
+        }
+        else if (reviews.Count > 0)
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-star me-2"></i>@L["Pages.Management.Reviews.ReviewsTitle"]</h5>
+                    <span class="badge bg-primary">@L.GetString("Pages.Management.Reviews.ReviewCount", reviews.Count)</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>@L["Pages.Management.Reviews.TableOrderId"]</th>
+                                    <th>@L["Pages.Management.Reviews.TableCustomerId"]</th>
+                                    <th>@L["Pages.Management.Reviews.TablePartnerId"]</th>
+                                    <th>@L["Pages.Management.Reviews.TableAgentId"]</th>
+                                    <th>@L["Pages.Management.Reviews.TableFoodRating"]</th>
+                                    <th>@L["Pages.Management.Reviews.TableAgentRating"]</th>
+                                    <th>@L["Pages.Management.Reviews.TableOrderRating"]</th>
+                                    <th>@L["Pages.Management.Reviews.TableTimestamp"]</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var review in reviews)
+                                {
+                                    <tr>
+                                        <td>@review.OrderId</td>
+                                        <td>@review.CustomerId</td>
+                                        <td>@review.PartnerId</td>
+                                        <td>@(review.AgentId?.ToString() ?? "-")</td>
+                                        <td>@RenderRating(review.Ratings.Food)</td>
+                                        <td>@RenderRating(review.Ratings.Agent)</td>
+                                        <td>@RenderRating(review.Ratings.Order)</td>
+                                        <td>@FormatTimestamp(review.Timestamp)</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowDetails(review)">
+                                                <i class="bi bi-eye">@L["Pages.Management.Reviews.ViewDetails"]</i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Review Details Modal -->
+        @if (selectedReview != null)
+        {
+            <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">@L.GetString("Pages.Management.Reviews.ModalTitle", selectedReview.OrderId)</h5>
+                            <button type="button" class="btn-close" @onclick="CloseDetails"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <strong>@L["Pages.Management.Reviews.TableCustomerId"]:</strong> @selectedReview.CustomerId
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>@L["Pages.Management.Reviews.TablePartnerId"]:</strong> @selectedReview.PartnerId
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>@L["Pages.Management.Reviews.TableAgentId"]:</strong> @(selectedReview.AgentId?.ToString() ?? "-")
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="row">
+                                @if (selectedReview.Ratings.Food > 0)
+                                {
+                                    <div class="col-md-4 mb-3">
+                                        <h6>🍽️ @L["Pages.Management.Reviews.FoodQuality"]</h6>
+                                        <div class="mb-1">@RenderStars(selectedReview.Ratings.Food)</div>
+                                        @if (!string.IsNullOrEmpty(selectedReview.Comments.Food))
+                                        {
+                                            <p class="text-muted small fst-italic">"@selectedReview.Comments.Food"</p>
+                                        }
+                                    </div>
+                                }
+                                @if (selectedReview.Ratings.Agent > 0)
+                                {
+                                    <div class="col-md-4 mb-3">
+                                        <h6>🚴 @L["Pages.Management.Reviews.DeliveryAgent"]</h6>
+                                        <div class="mb-1">@RenderStars(selectedReview.Ratings.Agent)</div>
+                                        @if (!string.IsNullOrEmpty(selectedReview.Comments.Agent))
+                                        {
+                                            <p class="text-muted small fst-italic">"@selectedReview.Comments.Agent"</p>
+                                        }
+                                    </div>
+                                }
+                                @if (selectedReview.Ratings.Order > 0)
+                                {
+                                    <div class="col-md-4 mb-3">
+                                        <h6>📦 @L["Pages.Management.Reviews.OverallExperience"]</h6>
+                                        <div class="mb-1">@RenderStars(selectedReview.Ratings.Order)</div>
+                                        @if (!string.IsNullOrEmpty(selectedReview.Comments.Order))
+                                        {
+                                            <p class="text-muted small fst-italic">"@selectedReview.Comments.Order"</p>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <hr />
+                            <small class="text-muted">@L["Pages.Management.Reviews.SubmittedOn"] @FormatTimestamp(selectedReview.Timestamp)</small>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseDetails">@L["Pages.Management.Reviews.CloseButton"]</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool isInitialized;
+    private bool isLoading;
+    private bool hasSearched;
+    private string? errorMessage;
+    
+    // Filter state
+    private string filterType = "all";
+    private int? filterId;
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private int? amount;
+    
+    // Results
+    private List<ReviewDto> reviews = new();
+    private ReviewDto? selectedReview;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            isInitialized = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadReviews()
+    {
+        isLoading = true;
+        errorMessage = null;
+        hasSearched = true;
+        StateHasChanged();
+
+        try
+        {
+            var url = BuildUrl();
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                // The response format differs based on endpoint, so we need to handle different types
+                reviews = await ParseReviewsResponse(response);
+            }
+            else
+            {
+                errorMessage = $"Failed to load reviews. Status: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string BuildUrl()
+    {
+        var baseUrl = "/api/v1/feedback-hub/reviews";
+        var queryParams = new List<string>();
+
+        switch (filterType)
+        {
+            case "agent":
+                baseUrl = $"{baseUrl}/agents/{filterId ?? 0}";
+                break;
+            case "customer":
+                baseUrl = $"{baseUrl}/customers/{filterId ?? 0}";
+                break;
+            case "partner":
+                baseUrl = $"{baseUrl}/partners/{filterId ?? 0}";
+                break;
+            default:
+                baseUrl = $"{baseUrl}/orders";
+                break;
+        }
+
+        if (startDate.HasValue)
+            queryParams.Add($"startDate={startDate.Value:yyyy-MM-dd}");
+        if (endDate.HasValue)
+            queryParams.Add($"endDate={endDate.Value:yyyy-MM-dd}");
+        if (amount.HasValue)
+            queryParams.Add($"amount={amount.Value}");
+
+        if (queryParams.Count > 0)
+            baseUrl += "?" + string.Join("&", queryParams);
+
+        return baseUrl;
+    }
+
+    private async Task<List<ReviewDto>> ParseReviewsResponse(HttpResponseMessage response)
+    {
+        var result = new List<ReviewDto>();
+        var content = await response.Content.ReadAsStringAsync();
+        
+        // Parse based on filter type
+        switch (filterType)
+        {
+            case "agent":
+                var agentReviews = System.Text.Json.JsonSerializer.Deserialize<List<AgentReviewResponse>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (agentReviews != null)
+                {
+                    foreach (var r in agentReviews)
+                    {
+                        result.Add(new ReviewDto
+                        {
+                            OrderId = r.OrderId,
+                            CustomerId = r.CustomerId,
+                            PartnerId = r.PartnerId,
+                            AgentId = filterId,
+                            Timestamp = r.Timestamp,
+                            Ratings = r.Ratings,
+                            Comments = r.Comments
+                        });
+                    }
+                }
+                break;
+            case "customer":
+                var customerReviews = System.Text.Json.JsonSerializer.Deserialize<List<CustomerReviewResponse>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (customerReviews != null)
+                {
+                    foreach (var r in customerReviews)
+                    {
+                        result.Add(new ReviewDto
+                        {
+                            OrderId = r.OrderId,
+                            CustomerId = filterId ?? 0,
+                            PartnerId = r.PartnerId,
+                            AgentId = r.AgentId,
+                            Timestamp = r.Timestamp,
+                            Ratings = r.Ratings,
+                            Comments = r.Comments
+                        });
+                    }
+                }
+                break;
+            case "partner":
+                var partnerReviews = System.Text.Json.JsonSerializer.Deserialize<List<PartnerReviewResponse>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (partnerReviews != null)
+                {
+                    foreach (var r in partnerReviews)
+                    {
+                        result.Add(new ReviewDto
+                        {
+                            OrderId = r.OrderId,
+                            CustomerId = r.CustomerId,
+                            PartnerId = filterId ?? 0,
+                            AgentId = r.AgentId,
+                            Timestamp = r.Timestamp,
+                            Ratings = r.Ratings,
+                            Comments = r.Comments
+                        });
+                    }
+                }
+                break;
+            default:
+                var orderReviews = System.Text.Json.JsonSerializer.Deserialize<List<OrderReviewResponse>>(content, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (orderReviews != null)
+                {
+                    int idx = 0;
+                    foreach (var r in orderReviews)
+                    {
+                        result.Add(new ReviewDto
+                        {
+                            OrderId = idx++, // OrderId not in this response, use index
+                            CustomerId = r.CustomerId,
+                            PartnerId = r.PartnerId,
+                            AgentId = r.AgentId,
+                            Timestamp = r.Timestamp,
+                            Ratings = r.Ratings,
+                            Comments = r.Comments
+                        });
+                    }
+                }
+                break;
+        }
+        
+        return result;
+    }
+
+    private string RenderRating(int rating)
+    {
+        if (rating == 0) return "-";
+        return $"{rating}/5";
+    }
+
+    private MarkupString RenderStars(int rating)
+    {
+        if (rating == 0) return new MarkupString("-");
+        var stars = string.Join("", Enumerable.Range(1, 5).Select(i => 
+            i <= rating ? "<span class='text-warning'>★</span>" : "<span class='text-muted'>☆</span>"));
+        return new MarkupString(stars);
+    }
+
+    private string FormatTimestamp(string timestamp)
+    {
+        if (DateTime.TryParse(timestamp, out var dt))
+        {
+            return dt.ToLocalTime().ToString("g");
+        }
+        return timestamp;
+    }
+
+    private void ShowDetails(ReviewDto review)
+    {
+        selectedReview = review;
+    }
+
+    private void CloseDetails()
+    {
+        selectedReview = null;
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    // DTOs for parsing API responses
+    private class ReviewDto
+    {
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public string Timestamp { get; set; } = string.Empty;
+        public RatingsDto Ratings { get; set; } = new();
+        public CommentsDto Comments { get; set; } = new();
+    }
+
+    private class OrderReviewResponse
+    {
+        public int? AgentId { get; set; }
+        public int PartnerId { get; set; }
+        public int CustomerId { get; set; }
+        public string Timestamp { get; set; } = string.Empty;
+        public RatingsDto Ratings { get; set; } = new();
+        public CommentsDto Comments { get; set; } = new();
+    }
+
+    private class AgentReviewResponse
+    {
+        public int OrderId { get; set; }
+        public int PartnerId { get; set; }
+        public int CustomerId { get; set; }
+        public string Timestamp { get; set; } = string.Empty;
+        public RatingsDto Ratings { get; set; } = new();
+        public CommentsDto Comments { get; set; } = new();
+    }
+
+    private class CustomerReviewResponse
+    {
+        public int OrderId { get; set; }
+        public int? AgentId { get; set; }
+        public int PartnerId { get; set; }
+        public string Timestamp { get; set; } = string.Empty;
+        public RatingsDto Ratings { get; set; } = new();
+        public CommentsDto Comments { get; set; } = new();
+    }
+
+    private class PartnerReviewResponse
+    {
+        public int OrderId { get; set; }
+        public int? AgentId { get; set; }
+        public int CustomerId { get; set; }
+        public string Timestamp { get; set; } = string.Empty;
+        public RatingsDto Ratings { get; set; } = new();
+        public CommentsDto Comments { get; set; } = new();
+    }
+
+    private class RatingsDto
+    {
+        public int Food { get; set; }
+        public int Agent { get; set; }
+        public int Order { get; set; }
+    }
+
+    private class CommentsDto
+    {
+        public string? Food { get; set; }
+        public string? Agent { get; set; }
+        public string? Order { get; set; }
+    }
+}

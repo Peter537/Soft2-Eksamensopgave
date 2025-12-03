@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Kundeanmeldelser - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Kundeanmeldelser</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind som administrator for at se denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="BreadcrumbDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="BreadcrumbReviews" xml:space="preserve">
+    <value>Anmeldelser</value>
+  </data>
+  <data name="Filters" xml:space="preserve">
+    <value>Filtre</value>
+  </data>
+  <data name="FilterType" xml:space="preserve">
+    <value>Filtrer efter</value>
+  </data>
+  <data name="FilterTypeAll" xml:space="preserve">
+    <value>Alle anmeldelser</value>
+  </data>
+  <data name="FilterTypeAgent" xml:space="preserve">
+    <value>Efter agent</value>
+  </data>
+  <data name="FilterTypeCustomer" xml:space="preserve">
+    <value>Efter kunde</value>
+  </data>
+  <data name="FilterTypePartner" xml:space="preserve">
+    <value>Efter partner</value>
+  </data>
+  <data name="FilterId" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="FilterStartDate" xml:space="preserve">
+    <value>Startdato</value>
+  </data>
+  <data name="FilterEndDate" xml:space="preserve">
+    <value>Slutdato</value>
+  </data>
+  <data name="FilterAmount" xml:space="preserve">
+    <value>Maks resultater</value>
+  </data>
+  <data name="NoReviewsFound" xml:space="preserve">
+    <value>Ingen anmeldelser fundet, der matcher dine kriterier.</value>
+  </data>
+  <data name="ReviewsTitle" xml:space="preserve">
+    <value>Anmeldelser</value>
+  </data>
+  <data name="ReviewCount" xml:space="preserve">
+    <value>{0} anmeldelser</value>
+  </data>
+  <data name="TableOrderId" xml:space="preserve">
+    <value>Ordre ID</value>
+  </data>
+  <data name="TableCustomerId" xml:space="preserve">
+    <value>Kunde ID</value>
+  </data>
+  <data name="TablePartnerId" xml:space="preserve">
+    <value>Partner ID</value>
+  </data>
+  <data name="TableAgentId" xml:space="preserve">
+    <value>Agent ID</value>
+  </data>
+  <data name="TableFoodRating" xml:space="preserve">
+    <value>Mad</value>
+  </data>
+  <data name="TableAgentRating" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="TableOrderRating" xml:space="preserve">
+    <value>Ordre</value>
+  </data>
+  <data name="TableTimestamp" xml:space="preserve">
+    <value>Dato</value>
+  </data>
+  <data name="ModalTitle" xml:space="preserve">
+    <value>Anmeldelsesdetaljer - Ordre #{0}</value>
+  </data>
+  <data name="FoodQuality" xml:space="preserve">
+    <value>Madkvalitet</value>
+  </data>
+  <data name="DeliveryAgent" xml:space="preserve">
+    <value>Leveringsagent</value>
+  </data>
+  <data name="OverallExperience" xml:space="preserve">
+    <value>Samlet oplevelse</value>
+  </data>
+  <data name="SubmittedOn" xml:space="preserve">
+    <value>Indsendt den</value>
+  </data>
+  <data name="CloseButton" xml:space="preserve">
+    <value>Luk</value>
+  </data>
+  <data name="SearchButton" xml:space="preserve">
+    <value>Søg</value>
+  </data>
+  <data name="ViewDetails" xml:space="preserve">
+    <value>Se detaljer</value>
+  </data>
+</root>

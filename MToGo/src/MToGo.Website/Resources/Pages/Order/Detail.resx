@@ -102,4 +102,22 @@
   <data name="Total" xml:space="preserve">
     <value>Total</value>
   </data>
+  <data name="ReviewTitle" xml:space="preserve">
+    <value>Customer Review</value>
+  </data>
+  <data name="FoodQuality" xml:space="preserve">
+    <value>Food Quality</value>
+  </data>
+  <data name="DeliveryAgent" xml:space="preserve">
+    <value>Delivery Agent</value>
+  </data>
+  <data name="OverallExperience" xml:space="preserve">
+    <value>Overall Experience</value>
+  </data>
+  <data name="ReviewSubmittedOn" xml:space="preserve">
+    <value>Review submitted on</value>
+  </data>
+  <data name="NoReviewYet" xml:space="preserve">
+    <value>No review has been submitted for this order yet.</value>
+  </data>
 </root>

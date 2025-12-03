@@ -192,7 +192,77 @@
                                     <h5 class="mb-0"><i class="bi bi-star me-2"></i>@L["Pages.Customer.OrderDetail.RateYourOrder"]</h5>
                                 </div>
                                 <div class="card-body">
-                                    @if (hasReviewed)
+                                    @if (hasReviewed && existingReview != null)
+                                    {
+                                        <div class="alert alert-success mb-3">
+                                            <i class="bi bi-check-circle me-2"></i>@L["Pages.Customer.OrderDetail.ThankYouFeedback"]
+                                        </div>
+                                        
+                                        <div class="row">
+                                            @* Food Rating Display *@
+                                            @if (existingReview.FoodRating > 0)
+                                            {
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">🍽️ @L["Pages.Customer.OrderDetail.FoodQuality"]</label>
+                                                    <div class="mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <span class="@(existingReview.FoodRating >= i ? "text-warning" : "text-muted")" style="font-size: 1.5rem;">
+                                                                @(existingReview.FoodRating >= i ? "★" : "☆")
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(existingReview.FoodComment))
+                                                    {
+                                                        <p class="text-muted small mb-0 fst-italic">"@existingReview.FoodComment"</p>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @* Agent Rating Display *@
+                                            @if (existingReview.AgentRating > 0)
+                                            {
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">🚴 @L["Pages.Customer.OrderDetail.DeliveryAgent"]</label>
+                                                    <div class="mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <span class="@(existingReview.AgentRating >= i ? "text-warning" : "text-muted")" style="font-size: 1.5rem;">
+                                                                @(existingReview.AgentRating >= i ? "★" : "☆")
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(existingReview.AgentComment))
+                                                    {
+                                                        <p class="text-muted small mb-0 fst-italic">"@existingReview.AgentComment"</p>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @* Order Rating Display *@
+                                            @if (existingReview.OrderRating > 0)
+                                            {
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">📦 @L["Pages.Customer.OrderDetail.OverallExperience"]</label>
+                                                    <div class="mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <span class="@(existingReview.OrderRating >= i ? "text-warning" : "text-muted")" style="font-size: 1.5rem;">
+                                                                @(existingReview.OrderRating >= i ? "★" : "☆")
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(existingReview.OrderComment))
+                                                    {
+                                                        <p class="text-muted small mb-0 fst-italic">"@existingReview.OrderComment"</p>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                        
+                                        <small class="text-muted">@L["Pages.Customer.OrderDetail.ReviewSubmittedOn"] @existingReview.CreatedAt.ToLocalTime().ToString("f")</small>
+                                    }
+                                    else if (hasReviewed)
                                     {
                                         <div class="alert alert-success mb-0">
                                             <i class="bi bi-check-circle me-2"></i>@L["Pages.Customer.OrderDetail.ThankYouFeedback"]
@@ -394,6 +464,7 @@
     private bool hasReviewed = false;
     private bool isSubmittingReview = false;
     private string? reviewErrorMessage;
+    private ReviewResponse? existingReview;
     
     // Status timestamps (populated from WebSocket events)
     private Dictionary<string, string> statusTimestamps = new();
@@ -767,6 +838,32 @@
             {
                 var result = await response.Content.ReadFromJsonAsync<ReviewExistsResponse>();
                 hasReviewed = result?.Exists ?? false;
+                
+                // If review exists, fetch the full review details
+                if (hasReviewed)
+                {
+                    await LoadExistingReview();
+                }
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadExistingReview()
+    {
+        try
+        {
+            var url = $"/api/v1/feedback-hub/reviews/order/{OrderId}";
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                existingReview = await response.Content.ReadFromJsonAsync<ReviewResponse>();
             }
         }
         catch { }
@@ -858,5 +955,21 @@
     public class ReviewExistsResponse
     {
         public bool Exists { get; set; }
+    }
+
+    public class ReviewResponse
+    {
+        public int Id { get; set; }
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int FoodRating { get; set; }
+        public int AgentRating { get; set; }
+        public int OrderRating { get; set; }
+        public string? FoodComment { get; set; }
+        public string? AgentComment { get; set; }
+        public string? OrderComment { get; set; }
     }
 }

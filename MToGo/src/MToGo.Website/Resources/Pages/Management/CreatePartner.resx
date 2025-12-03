@@ -13,102 +13,105 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PageTitle" xml:space="preserve">
-    <value>Partner Registrering - MToGo</value>
+    <value>Create Partner - MToGo</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Restaurant Registrering</value>
+    <value>Create Partner</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Access Denied</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>You must be logged in as management to access this page.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Login here</value>
+  </data>
+  <data name="BreadcrumbDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="BreadcrumbCreatePartner" xml:space="preserve">
+    <value>Create Partner</value>
   </data>
   <data name="RestaurantInfo" xml:space="preserve">
     <value>Restaurant Information</value>
   </data>
   <data name="Name" xml:space="preserve">
-    <value>Restaurant Navn</value>
+    <value>Restaurant Name</value>
   </data>
   <data name="NamePlaceholder" xml:space="preserve">
-    <value>Indtast restaurant navn</value>
+    <value>Enter restaurant name</value>
   </data>
   <data name="Address" xml:space="preserve">
-    <value>Adresse</value>
+    <value>Address</value>
   </data>
   <data name="AddressPlaceholder" xml:space="preserve">
-    <value>Indtast restaurant adresse</value>
+    <value>Enter restaurant address</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>Email</value>
   </data>
   <data name="EmailPlaceholder" xml:space="preserve">
-    <value>Indtast din email</value>
+    <value>Enter email address</value>
   </data>
   <data name="Password" xml:space="preserve">
-    <value>Adgangskode</value>
+    <value>Password</value>
   </data>
   <data name="PasswordPlaceholder" xml:space="preserve">
-    <value>Indtast din adgangskode</value>
+    <value>Enter password</value>
   </data>
   <data name="ConfirmPassword" xml:space="preserve">
-    <value>Bekræft Adgangskode</value>
+    <value>Confirm Password</value>
   </data>
   <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
-    <value>Bekræft din adgangskode</value>
+    <value>Confirm your password</value>
   </data>
   <data name="MenuSection" xml:space="preserve">
-    <value>Menu Varer</value>
+    <value>Initial Menu</value>
   </data>
   <data name="MenuDescription" xml:space="preserve">
-    <value>Tilføj mindst én menu vare til din restaurant. Du kan tilføje flere varer senere.</value>
+    <value>Add at least one menu item for the partner. More items can be added later.</value>
   </data>
   <data name="MenuItem" xml:space="preserve">
-    <value>Vare</value>
+    <value>Menu Item</value>
   </data>
   <data name="ItemName" xml:space="preserve">
-    <value>Vare Navn</value>
+    <value>Item Name</value>
   </data>
   <data name="ItemNamePlaceholder" xml:space="preserve">
-    <value>f.eks. Margherita Pizza</value>
+    <value>e.g., Pizza Margherita</value>
   </data>
   <data name="ItemPrice" xml:space="preserve">
-    <value>Pris (DKK)</value>
+    <value>Price</value>
   </data>
   <data name="ItemPricePlaceholder" xml:space="preserve">
-    <value>0,00</value>
-  </data>
-  <data name="AddMenuItem" xml:space="preserve">
-    <value>Tilføj Menu Vare</value>
+    <value>0.00</value>
   </data>
   <data name="RemoveItem" xml:space="preserve">
-    <value>Fjern</value>
+    <value>Remove</value>
   </data>
-  <data name="RegisterButton" xml:space="preserve">
-    <value>Registrer Restaurant</value>
+  <data name="AddMenuItem" xml:space="preserve">
+    <value>Add Menu Item</value>
   </data>
-  <data name="CreatingAccount" xml:space="preserve">
-    <value>Opretter konto...</value>
+  <data name="CreateButton" xml:space="preserve">
+    <value>Create Partner</value>
   </data>
-  <data name="HasAccount" xml:space="preserve">
-    <value>Har du allerede en konto?</value>
+  <data name="Processing" xml:space="preserve">
+    <value>Creating...</value>
   </data>
-  <data name="LoginHere" xml:space="preserve">
-    <value>Log ind her</value>
-  </data>
-  <data name="RegistrationSuccessful" xml:space="preserve">
-    <value>Registrering gennemført! Dit partner ID er {0}</value>
-  </data>
-  <data name="RegistrationFailed" xml:space="preserve">
-    <value>Registrering mislykkedes. Prøv venligst igen.</value>
-  </data>
-  <data name="ErrorOccurred" xml:space="preserve">
-    <value>Der opstod en fejl: {0}</value>
+  <data name="SuccessMessage" xml:space="preserve">
+    <value>Partner created successfully!</value>
   </data>
   <data name="PasswordMismatch" xml:space="preserve">
-    <value>Adgangskoderne matcher ikke.</value>
+    <value>Passwords do not match</value>
   </data>
   <data name="EmptyMenuError" xml:space="preserve">
-    <value>Tilføj venligst mindst én gyldig menu vare med navn og pris.</value>
+    <value>Please add at least one menu item with a name and price.</value>
   </data>
-  <data name="ManagedRegistrationTitle" xml:space="preserve">
-    <value>Registrering administreres af administrationen</value>
+  <data name="CreateFailed" xml:space="preserve">
+    <value>Failed to create partner. Please try again.</value>
   </data>
-  <data name="ManagedRegistrationDescription" xml:space="preserve">
-    <value>Restaurant partnerkonti oprettes af platformens administratorer. Hvis du ønsker at blive partner, kontakt venligst MToGo administrationen.</value>
+  <data name="Error" xml:space="preserve">
+    <value>An error occurred: {0}</value>
   </data>
 </root>
