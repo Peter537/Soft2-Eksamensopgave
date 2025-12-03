@@ -86,6 +86,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Kafka__BootstrapServers: kafka:9092
+      # CORS settings - whitelist the website origin
+      CorsSettings__AllowedOrigins__0: http://localhost:8081
+      CorsSettings__AllowedOrigins__1: http://website:8080
+      CorsSettings__AllowCredentials: "true"
+      CorsSettings__LogBlockedRequests: "true"
       # Reverse proxy cluster destinations
       ReverseProxy__Clusters__orders-cluster__Destinations__orders-destination__Address: http://order-service:8080
       ReverseProxy__Clusters__customers-cluster__Destinations__customers-destination__Address: http://customer-service:8080
