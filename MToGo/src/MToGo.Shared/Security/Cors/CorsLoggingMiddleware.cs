@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 
 namespace MToGo.Shared.Security.Cors;
 
@@ -18,26 +19,28 @@ public class CorsLoggingMiddleware
     private static string SanitizeForLog(string? value)
     {
         if (string.IsNullOrEmpty(value)) return value ?? "";
-        string sanitized = value.Replace("\r", "")
-                                .Replace("\n", "")
-                                .Replace("\t", "")
-                                .Replace("|", "");
+                 
+        string sanitized = Regex.Replace(value, @"[\p{C}\u2028\u2029]+", "");
         return $"[USERINPUT:{sanitized}]";
     }
 
     private static string SanitizeHttpMethodForLog(string? method)
     {
         if (string.IsNullOrEmpty(method))
+        {
             return "UNKNOWN";
+        }
 
         string[] allowedMethods = new[]
         {
             "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "TRACE", "CONNECT"
         };
 
-        if (allowedMethods.Contains(method.Trim(), StringComparer.OrdinalIgnoreCase))
+        string trimmed = method.Trim();
+        if (allowedMethods.Contains(trimmed, StringComparer.OrdinalIgnoreCase))
         {
-            return method.Trim().ToUpperInvariant();
+            string sanitized = trimmed.ToUpperInvariant().Replace("\r", "").Replace("\n", "").Replace("\t", "").Replace("|", "");
+            return sanitized;
         }
         return "UNKNOWN";
     }
