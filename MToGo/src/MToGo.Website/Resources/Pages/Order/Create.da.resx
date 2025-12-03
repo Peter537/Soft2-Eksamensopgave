@@ -85,9 +85,24 @@
     <value>Afgiv Ordre</value>
   </data>
   <data name="RequiredFields" xml:space="preserve">
-    <value>Tilføj venligst varer og indtast en leveringsadresse for at afgive din ordre.</value>
+    <value>Tilføj venligst varer, indtast en leveringsadresse og vælg en betalingsmetode for at afgive din ordre.</value>
   </data>
   <data name="OrderFailed" xml:space="preserve">
     <value>Kunne ikke afgive ordre: {0}</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Fjern</value>
+  </data>
+  <data name="PaymentMethod" xml:space="preserve">
+    <value>Betalingsmetode</value>
+  </data>
+  <data name="SelectPaymentMethod" xml:space="preserve">
+    <value>Vælg hvordan du vil betale for din ordre</value>
+  </data>
+  <data name="PaymentRequired" xml:space="preserve">
+    <value>Vælg venligst en betalingsmetode for at fortsætte</value>
+  </data>
+  <data name="PaymentFailed" xml:space="preserve">
+    <value>Betaling mislykkedes: {0}</value>
   </data>
 </root>

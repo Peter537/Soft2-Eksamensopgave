@@ -1,3 +1,4 @@
+using MToGo.NotificationService.Adapters;
 using MToGo.NotificationService.BackgroundServices;
 using MToGo.NotificationService.Clients;
 using MToGo.NotificationService.Services;
@@ -15,6 +16,9 @@ builder.Services.AddHttpContextAccessor();
 
 // Register services
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Register Notification Adapter (Adapter pattern - wraps legacy API)
+builder.Services.AddScoped<INotificationAdapter, LegacyNotificationAdapter>();
 
 // Configure HttpClient for Legacy API via Gateway
 builder.Services.AddHttpClient<ILegacyNotificationApiClient, LegacyNotificationApiClient>(client =>

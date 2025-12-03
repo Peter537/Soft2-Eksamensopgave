@@ -4,8 +4,10 @@
 @inject AuthService Auth
 @inject NavigationManager Navigation
 @inject ILocalizerService L
+@inject PaymentContext PaymentContext
 @implements IDisposable
 @rendermode InteractiveServer
+@using MToGo.Website.Services.Payment
 
 <PageTitle>@L["Pages.Order.Create.PageTitle"]</PageTitle>
 
@@ -89,7 +91,7 @@
                                             <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
                                             <td class="text-center">
                                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItem(item)">
-                                                    <i class="bi bi-trash"></i>
+                                                    <i class="bi bi-trash">@L["Pages.Order.Create.Remove"]</i>
                                                 </button>
                                             </td>
                                         </tr>
@@ -132,6 +134,48 @@
                             </div>
                         </div>
 
+                        <!-- Payment Method Selection (Strategy Pattern) -->
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-credit-card-2-front me-2"></i>@L["Pages.Order.Create.PaymentMethod"]
+                                </h5>
+                                <p class="text-muted small mb-3">@L["Pages.Order.Create.SelectPaymentMethod"]</p>
+                                
+                                <div class="row g-3">
+                                    @foreach (var strategy in PaymentContext.GetAvailableStrategies())
+                                    {
+                                        <div class="col-md-6 col-lg-4">
+                                            <div class="card h-100 payment-option @(selectedPaymentMethod == strategy.PaymentMethodId ? "border-primary bg-primary bg-opacity-10" : "")" 
+                                                 style="cursor: pointer;" 
+                                                 @onclick="() => SelectPaymentMethod(strategy.PaymentMethodId)">
+                                                <div class="card-body text-center">
+                                                    <div class="form-check d-flex align-items-center justify-content-center gap-2">
+                                                        <input class="form-check-input" type="radio" 
+                                                               name="paymentMethod" 
+                                                               id="@strategy.PaymentMethodId"
+                                                               checked="@(selectedPaymentMethod == strategy.PaymentMethodId)"
+                                                               @onchange="() => SelectPaymentMethod(strategy.PaymentMethodId)" />
+                                                        <i class="bi @strategy.IconClass fs-4"></i>
+                                                    </div>
+                                                    <h6 class="card-title mt-2 mb-1">@strategy.DisplayName</h6>
+                                                    <p class="card-text small text-muted mb-0">@strategy.Description</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                @if (string.IsNullOrEmpty(selectedPaymentMethod))
+                                {
+                                    <div class="alert alert-warning mt-3 mb-0">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>
+                                        @L["Pages.Order.Create.PaymentRequired"]
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
                         <!-- Place Order Button -->
                         <div class="d-grid">
                             <button class="btn btn-success btn-lg" @onclick="PlaceOrder" disabled="@(isSubmitting || !CanPlaceOrder())">
@@ -170,6 +214,7 @@
     private string? errorMessage;
     private bool isLoading = true;
     private bool isSubmitting;
+    private string? selectedPaymentMethod;
 
     protected override void OnInitialized()
     {
@@ -253,6 +298,12 @@
         }
     }
 
+    private void SelectPaymentMethod(string paymentMethodId)
+    {
+        selectedPaymentMethod = paymentMethodId;
+        PaymentContext.SetStrategy(paymentMethodId);
+    }
+
     private void IncreaseQuantity(OrderItemModel item)
     {
         item.Quantity++;
@@ -293,7 +344,9 @@
 
     private bool CanPlaceOrder()
     {
-        return orderItems.Count > 0 && !string.IsNullOrWhiteSpace(deliveryAddress);
+        return orderItems.Count > 0 
+            && !string.IsNullOrWhiteSpace(deliveryAddress)
+            && !string.IsNullOrEmpty(selectedPaymentMethod);
     }
 
     private async Task PlaceOrder()
@@ -305,6 +358,15 @@
 
         try
         {
+            // Process payment using the Strategy Pattern
+            var paymentResult = await PaymentContext.ProcessPaymentAsync(CalculateTotal(), 0);
+            
+            if (!paymentResult.Success)
+            {
+                errorMessage = L.GetString("Pages.Order.Create.PaymentFailed", paymentResult.ErrorMessage ?? "Unknown error");
+                return;
+            }
+
             var request = new OrderCreateRequest
             {
                 CustomerId = Auth.Id ?? 0,
@@ -312,6 +374,8 @@
                 DeliveryAddress = deliveryAddress,
                 DeliveryFee = deliveryFee,
                 Distance = "5 km", // Placeholder - would be calculated in real app
+                PaymentMethod = selectedPaymentMethod!,
+                PaymentTransactionId = paymentResult.TransactionId,
                 Items = orderItems.Select(i => new OrderCreateItemRequest
                 {
                     FoodItemId = i.FoodItemId,
@@ -386,6 +450,8 @@
         public string DeliveryAddress { get; set; } = string.Empty;
         public decimal DeliveryFee { get; set; }
         public string Distance { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = string.Empty;
+        public string? PaymentTransactionId { get; set; }
         public List<OrderCreateItemRequest> Items { get; set; } = new();
     }
 

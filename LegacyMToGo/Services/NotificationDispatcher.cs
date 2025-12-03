@@ -1,17 +1,30 @@
 using LegacyMToGo.Models;
+using LegacyMToGo.Services.Notifications;
 
 namespace LegacyMToGo.Services;
 
-public class NotificationDispatcher(ILogger<NotificationDispatcher> logger) : INotificationDispatcher
+/// <summary>
+/// Dispatches notifications using the Factory pattern.
+/// Delegates the actual sending to the appropriate notification sender created by the factory.
+/// </summary>
+public class NotificationDispatcher : INotificationDispatcher
 {
-    public Task DispatchAsync(NotificationMethod method, string destination, string message, CancellationToken cancellationToken = default)
+    private readonly INotificationSenderFactory _senderFactory;
+    private readonly ILogger<NotificationDispatcher> _logger;
+
+    public NotificationDispatcher(INotificationSenderFactory senderFactory, ILogger<NotificationDispatcher> logger)
     {
-        var sanitizedMessage = message?
-            .Replace("\r\n", " ")
-            .Replace("\n", " ")
-            .Replace("\r", " ");
-            
-        logger.LogInformation("Legacy notification via {Method} to {Destination}: {Message}", method, destination, sanitizedMessage);
-        return Task.CompletedTask;
+        _senderFactory = senderFactory;
+        _logger = logger;
+    }
+
+    public async Task DispatchAsync(NotificationMethod method, string destination, string message, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Dispatching notification via {Method} to {Destination}", method, destination);
+
+        var sender = _senderFactory.CreateSender(method);
+        await sender.SendAsync(destination, message, cancellationToken);
+
+        _logger.LogInformation("Notification dispatched successfully via {Method}", method);
     }
 }
