@@ -18,7 +18,28 @@ public class CorsLoggingMiddleware
     private static string SanitizeForLog(string? value)
     {
         if (string.IsNullOrEmpty(value)) return value ?? "";
-        return value.Replace("\r", "").Replace("\n", "");
+        string sanitized = value.Replace("\r", "")
+                                .Replace("\n", "")
+                                .Replace("\t", "")
+                                .Replace("|", "");
+        return $"[USERINPUT:{sanitized}]";
+    }
+
+    private static string SanitizeHttpMethodForLog(string? method)
+    {
+        if (string.IsNullOrEmpty(method))
+            return "UNKNOWN";
+
+        string[] allowedMethods = new[]
+        {
+            "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS", "TRACE", "CONNECT"
+        };
+
+        if (allowedMethods.Contains(method.Trim(), StringComparer.OrdinalIgnoreCase))
+        {
+            return method.Trim().ToUpperInvariant();
+        }
+        return "UNKNOWN";
     }
 
     public CorsLoggingMiddleware(
@@ -48,7 +69,7 @@ public class CorsLoggingMiddleware
                     "CORS: Blocked request from non-compliant origin. Origin: {Origin}, Path: {Path}, Method: {Method}, UserAgent: {UserAgent}, IP: {IP}",
                     SanitizeForLog(origin),
                     SanitizeForLog(context.Request.Path.ToString()),
-                    SanitizeForLog(context.Request.Method),
+                    SanitizeHttpMethodForLog(context.Request.Method),
                     SanitizeForLog(context.Request.Headers.UserAgent.FirstOrDefault() ?? "Unknown"),
                     SanitizeForLog(context.Connection.RemoteIpAddress?.ToString() ?? "Unknown"));
             }
