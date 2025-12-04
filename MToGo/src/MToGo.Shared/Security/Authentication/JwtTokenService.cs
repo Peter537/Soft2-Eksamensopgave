@@ -28,7 +28,7 @@ public class JwtTokenService : IJwtTokenService
             new(JwtClaims.Id, userId.ToString()),
             new(JwtClaims.Email, email),
             new(JwtClaims.Role, role),
-            new(ClaimTypes.Role, role) // Standard role claim for [Authorize(Roles = "...")] support
+            new(ClaimTypes.Role, role) // ASP.NET Core uses ClaimTypes.Role for role-based authorization
         };
 
         if (!string.IsNullOrEmpty(name))
@@ -45,66 +45,5 @@ public class JwtTokenService : IJwtTokenService
         );
 
         return _tokenHandler.WriteToken(token);
-    }
-
-    public ClaimsPrincipal? ValidateToken(string token)
-    {
-        try
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
-            
-            var validationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-                ValidIssuer = _jwtSettings.Issuer,
-                ValidAudience = _jwtSettings.Audience,
-                IssuerSigningKey = key,
-                ClockSkew = TimeSpan.Zero // No tolerance for token expiration
-            };
-
-            var principal = _tokenHandler.ValidateToken(token, validationParameters, out _);
-            return principal;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    public bool IsTokenExpired(string token)
-    {
-        try
-        {
-            var jwtToken = _tokenHandler.ReadJwtToken(token);
-            return jwtToken.ValidTo < DateTime.UtcNow;
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    public (int UserId, string Role)? GetUserInfoFromToken(string token)
-    {
-        try
-        {
-            var jwtToken = _tokenHandler.ReadJwtToken(token);
-            var idClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtClaims.Id);
-            var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtClaims.Role);
-
-            if (idClaim != null && roleClaim != null && int.TryParse(idClaim.Value, out var id))
-            {
-                return (id, roleClaim.Value);
-            }
-
-            return null;
-        }
-        catch
-        {
-            return null;
-        }
     }
 }
