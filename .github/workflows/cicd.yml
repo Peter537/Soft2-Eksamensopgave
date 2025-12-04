@@ -411,6 +411,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release
 
+      - name: Run EP & BVA Tests
+        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release --filter "ServiceFeeCalculationTests" --logger "console;verbosity=normal"
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -504,6 +507,16 @@ jobs:
 
       - name: Test
         run: dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release
+
+      - name: Install ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+          which chromium-browser
+
+      - name: Run Selenium UI Tests
+        run: dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release --filter "OrderCreationUITests" --logger "console;verbosity=normal"
+        continue-on-error: true
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
