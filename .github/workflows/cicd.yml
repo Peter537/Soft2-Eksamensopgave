@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: cicd-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write
@@ -120,6 +124,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.AgentBonusService.csproj', '**/MToGo.AgentBonusService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj
 
@@ -127,7 +139,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.AgentBonusService.Tests/MToGo.AgentBonusService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.AgentBonusService.Tests/MToGo.AgentBonusService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -136,23 +151,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-agentbonus"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.AgentBonusService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.AgentBonusService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentbonus:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   agentservice_ci:
     name: AgentService - build, test & docker
@@ -167,6 +179,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.AgentService.csproj', '**/MToGo.AgentService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj
 
@@ -174,7 +194,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.AgentService.Tests/MToGo.AgentService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.AgentService.Tests/MToGo.AgentService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -183,23 +206,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-agentservice"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.AgentService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.AgentService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentservice:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   customerservice_ci:
     name: CustomerService - build, test & docker
@@ -214,6 +234,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.CustomerService.csproj', '**/MToGo.CustomerService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj
 
@@ -221,7 +249,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.CustomerService.Tests/MToGo.CustomerService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.CustomerService.Tests/MToGo.CustomerService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -230,23 +261,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-customerservice"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.CustomerService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.CustomerService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-customerservice:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   feedbackhub_ci:
     name: FeedbackHub - build, test & docker
@@ -261,6 +289,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.FeedbackHubService.csproj', '**/MToGo.FeedbackHubService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj
 
@@ -268,7 +304,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.FeedbackHubService.Tests/MToGo.FeedbackHubService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.FeedbackHubService.Tests/MToGo.FeedbackHubService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -277,23 +316,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-feedbackhub"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.FeedbackHubService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.FeedbackHubService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-feedbackhub:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   gateway_ci:
     name: Gateway - build, test & docker
@@ -308,6 +344,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.Gateway.csproj', '**/MToGo.Gateway.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj
 
@@ -315,7 +359,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.Gateway.Tests/MToGo.Gateway.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.Gateway.Tests/MToGo.Gateway.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -324,23 +371,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-gateway"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.Gateway/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.Gateway/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-gateway:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   notification_ci:
     name: Notification - build, test & docker
@@ -355,6 +399,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.NotificationService.csproj', '**/MToGo.NotificationService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj
 
@@ -362,7 +414,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.NotificationService.Tests/MToGo.NotificationService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.NotificationService.Tests/MToGo.NotificationService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -371,23 +426,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-notification"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.NotificationService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.NotificationService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-notification:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   order_ci:
     name: Order - build, test & docker
@@ -402,6 +454,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.OrderService.csproj', '**/MToGo.OrderService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj
 
@@ -409,10 +469,13 @@ jobs:
         run: dotnet build MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release 
 
       - name: Run EP & BVA Tests
-        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release --filter "ServiceFeeCalculationTests" --logger "console;verbosity=normal"
+        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release  --filter "ServiceFeeCalculationTests" --logger "console;verbosity=normal"
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -421,23 +484,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-order"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.OrderService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.OrderService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-order:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   partner_ci:
     name: Partner - build, test & docker
@@ -452,6 +512,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.PartnerService.csproj', '**/MToGo.PartnerService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj
 
@@ -459,7 +527,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.PartnerService.Tests/MToGo.PartnerService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.PartnerService.Tests/MToGo.PartnerService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -468,23 +539,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-partner"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.PartnerService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.PartnerService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-partner:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   website_ci:
     name: Website - build, test & docker
@@ -499,6 +567,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.Website.csproj', '**/MToGo.Website.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.Website/MToGo.Website.csproj
 
@@ -506,7 +582,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.Website/MToGo.Website.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -515,23 +594,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-website"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.Website/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.Website/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-website:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   websocketagent_ci:
     name: WebSocketAgent - build, test & docker
@@ -546,6 +622,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.WebSocketAgentService.csproj', '**/MToGo.WebSocketAgentService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj
 
@@ -553,7 +637,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.WebSocketAgentService.Tests/MToGo.WebSocketAgentService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.WebSocketAgentService.Tests/MToGo.WebSocketAgentService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -562,23 +649,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-websocketagent"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.WebSocketAgentService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.WebSocketAgentService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketagent:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   websocketcustomer_ci:
     name: WebSocketCustomer - build, test & docker
@@ -593,6 +677,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.WebSocketCustomerService.csproj', '**/MToGo.WebSocketCustomerService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj
 
@@ -600,7 +692,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.WebSocketCustomerService.Tests/MToGo.WebSocketCustomerService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.WebSocketCustomerService.Tests/MToGo.WebSocketCustomerService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -609,23 +704,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-websocketcustomer"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.WebSocketCustomerService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.WebSocketCustomerService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketcustomer:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   websocketpartner_ci:
     name: WebSocketPartner - build, test & docker
@@ -640,6 +732,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.WebSocketPartnerService.csproj', '**/MToGo.WebSocketPartnerService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj
 
@@ -647,7 +747,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.WebSocketPartnerService.Tests/MToGo.WebSocketPartnerService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.WebSocketPartnerService.Tests/MToGo.WebSocketPartnerService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -656,23 +759,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-websocketpartner"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.WebSocketPartnerService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.WebSocketPartnerService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketpartner:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   management_ci:
     name: Management - build, test & docker
@@ -687,6 +787,14 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.ManagementService.csproj', '**/MToGo.ManagementService.Tests.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj
 
@@ -694,7 +802,10 @@ jobs:
         run: dotnet build MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test MToGo/tests/MToGo.ManagementService.Tests/MToGo.ManagementService.Tests.csproj -c Release
+        run: dotnet test MToGo/tests/MToGo.ManagementService.Tests/MToGo.ManagementService.Tests.csproj -c Release 
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -703,23 +814,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-management"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f MToGo/src/MToGo.ManagementService/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            MToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.ManagementService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-management:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   legacy_ci:
     name: LegacyMToGo - build & docker
@@ -734,11 +842,22 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/LegacyMToGo.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore LegacyMToGo/LegacyMToGo.csproj
 
       - name: Build
         run: dotnet build LegacyMToGo/LegacyMToGo.csproj -c Release --no-restore
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -747,23 +866,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build & push Docker image
-        run: |
-          OWNER="${GITHUB_REPOSITORY_OWNER,,}"
-          IMAGE_NAME="mtogo-legacy"
-          IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
-          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
-
-          docker build \
-            -f LegacyMToGo/Dockerfile \
-            -t "$IMAGE" \
-            -t "$IMAGE_LATEST" \
-            LegacyMToGo/
-
-          docker push "$IMAGE"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
-            docker push "$IMAGE_LATEST"
-          fi
+        uses: docker/build-push-action@v5
+        with:
+          context: LegacyMToGo/
+          file: LegacyMToGo/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-legacy:latest', env.OWNER_LC) || '' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # Save build outputs for security workflow
   save_build_outputs:
@@ -817,3 +933,4 @@ jobs:
           name: build-outputs
           path: build-outputs.json
           retention-days: 1
+
