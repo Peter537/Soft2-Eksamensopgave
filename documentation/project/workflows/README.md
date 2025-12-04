@@ -35,7 +35,3 @@ Sikkerhedsplanen dækker:
 - Data beskyttelse
 - Sårbarhedshåndtering
 - Compliance krav
-
-## Ressourcer
-
-Pipeline-diagrammer og sikkerhedsmodeller findes i `/resources` mappen.
