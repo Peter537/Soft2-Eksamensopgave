@@ -141,13 +141,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-agentbonus"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.AgentBonusService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   agentservice_ci:
     name: AgentService - build, test & docker
@@ -183,13 +188,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-agentservice"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.AgentService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   customerservice_ci:
     name: CustomerService - build, test & docker
@@ -225,13 +235,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-customerservice"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.CustomerService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   feedbackhub_ci:
     name: FeedbackHub - build, test & docker
@@ -267,13 +282,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-feedbackhub"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.FeedbackHubService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   gateway_ci:
     name: Gateway - build, test & docker
@@ -309,13 +329,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-gateway"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.Gateway/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   notification_ci:
     name: Notification - build, test & docker
@@ -351,13 +376,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-notification"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.NotificationService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   order_ci:
     name: Order - build, test & docker
@@ -393,13 +423,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-order"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.OrderService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   partner_ci:
     name: Partner - build, test & docker
@@ -435,13 +470,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-partner"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.PartnerService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   website_ci:
     name: Website - build, test & docker
@@ -477,13 +517,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-website"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.Website/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   websocketagent_ci:
     name: WebSocketAgent - build, test & docker
@@ -519,13 +564,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketagent"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketAgentService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   websocketcustomer_ci:
     name: WebSocketCustomer - build, test & docker
@@ -561,13 +611,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketcustomer"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketCustomerService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   websocketpartner_ci:
     name: WebSocketPartner - build, test & docker
@@ -603,13 +658,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-websocketpartner"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.WebSocketPartnerService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   management_ci:
     name: Management - build, test & docker
@@ -645,18 +705,23 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-management"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f MToGo/src/MToGo.ManagementService/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             MToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   legacy_ci:
     name: LegacyMToGo - build & docker
     needs: detect_changes
-    if: ${{ needs.detect_changes.outputs.legacy == 'true' }}
+    if: ${{ needs.detect_changes.outputs.legacy == 'true' || needs.detect_changes.outputs.shared == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -684,13 +749,18 @@ jobs:
           OWNER="${GITHUB_REPOSITORY_OWNER,,}"
           IMAGE_NAME="mtogo-legacy"
           IMAGE="ghcr.io/${OWNER}/${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_LATEST="ghcr.io/${OWNER}/${IMAGE_NAME}:latest"
 
           docker build \
             -f LegacyMToGo/Dockerfile \
             -t "$IMAGE" \
+            -t "$IMAGE_LATEST" \
             LegacyMToGo/
 
           docker push "$IMAGE"
+          if [ "${{ github.ref }}" = "refs/heads/main" ] && [ "${{ github.event_name }}" = "push" ]; then
+            docker push "$IMAGE_LATEST"
+          fi
 
   # Save build outputs for security workflow
   save_build_outputs:
