@@ -141,6 +141,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.AgentBonusService.Tests/MToGo.AgentBonusService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -158,8 +161,8 @@ jobs:
           file: MToGo/src/MToGo.AgentBonusService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentbonus:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentbonus:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -193,6 +196,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.AgentService.Tests/MToGo.AgentService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -210,8 +216,8 @@ jobs:
           file: MToGo/src/MToGo.AgentService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-agentservice:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentservice:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentservice:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -245,6 +251,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.CustomerService.Tests/MToGo.CustomerService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -262,8 +271,8 @@ jobs:
           file: MToGo/src/MToGo.CustomerService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-customerservice:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-customerservice:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-customerservice:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -297,6 +306,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.FeedbackHubService.Tests/MToGo.FeedbackHubService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -314,8 +326,8 @@ jobs:
           file: MToGo/src/MToGo.FeedbackHubService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-feedbackhub:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-feedbackhub:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -349,6 +361,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.Gateway.Tests/MToGo.Gateway.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -366,8 +381,8 @@ jobs:
           file: MToGo/src/MToGo.Gateway/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-gateway:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-gateway:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-gateway:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -401,6 +416,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.NotificationService.Tests/MToGo.NotificationService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -418,8 +436,8 @@ jobs:
           file: MToGo/src/MToGo.NotificationService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-notification:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-notification:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-notification:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -456,6 +474,9 @@ jobs:
       - name: Run EP & BVA Tests
         run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release  --filter "ServiceFeeCalculationTests" --logger "console;verbosity=normal"
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -473,8 +494,8 @@ jobs:
           file: MToGo/src/MToGo.OrderService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-order:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-order:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-order:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -508,6 +529,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.PartnerService.Tests/MToGo.PartnerService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -525,8 +549,8 @@ jobs:
           file: MToGo/src/MToGo.PartnerService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-partner:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-partner:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-partner:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -560,6 +584,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -577,8 +604,8 @@ jobs:
           file: MToGo/src/MToGo.Website/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-website:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-website:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-website:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -612,6 +639,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.WebSocketAgentService.Tests/MToGo.WebSocketAgentService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -629,8 +659,8 @@ jobs:
           file: MToGo/src/MToGo.WebSocketAgentService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketagent:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketagent:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -664,6 +694,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.WebSocketCustomerService.Tests/MToGo.WebSocketCustomerService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -681,8 +714,8 @@ jobs:
           file: MToGo/src/MToGo.WebSocketCustomerService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketcustomer:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketcustomer:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -716,6 +749,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.WebSocketPartnerService.Tests/MToGo.WebSocketPartnerService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -733,8 +769,8 @@ jobs:
           file: MToGo/src/MToGo.WebSocketPartnerService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketpartner:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketpartner:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -768,6 +804,9 @@ jobs:
       - name: Test
         run: dotnet test MToGo/tests/MToGo.ManagementService.Tests/MToGo.ManagementService.Tests.csproj -c Release 
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -785,8 +824,8 @@ jobs:
           file: MToGo/src/MToGo.ManagementService/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-management:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-management:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-management:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -817,6 +856,9 @@ jobs:
       - name: Build
         run: dotnet build LegacyMToGo/LegacyMToGo.csproj -c Release --no-restore
 
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -834,8 +876,8 @@ jobs:
           file: LegacyMToGo/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/mtogo-legacy:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-legacy:latest', github.repository_owner) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ env.IMAGE_TAG }}
+            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-legacy:latest', env.OWNER_LC) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -891,3 +933,4 @@ jobs:
           name: build-outputs
           path: build-outputs.json
           retention-days: 1
+
