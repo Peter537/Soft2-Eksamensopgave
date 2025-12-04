@@ -1,5 +1,6 @@
 using LegacyMToGo.Data;
 using LegacyMToGo.Services;
+using LegacyMToGo.Services.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,7 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<LegacyContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register notification senders (Factory pattern)
+builder.Services.AddScoped<EmailNotificationSender>();
+builder.Services.AddScoped<SmsNotificationSender>();
+builder.Services.AddScoped<PushNotificationSender>();
+builder.Services.AddScoped<INotificationSenderFactory, NotificationSenderFactory>();
 builder.Services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

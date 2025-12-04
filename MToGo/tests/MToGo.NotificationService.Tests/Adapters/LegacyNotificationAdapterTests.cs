@@ -1,0 +1,390 @@
+using Microsoft.Extensions.Logging;
+using Moq;
+using MToGo.NotificationService.Adapters;
+using MToGo.NotificationService.Clients;
+using MToGo.NotificationService.Exceptions;
+using MToGo.NotificationService.Models;
+
+namespace MToGo.NotificationService.Tests.Adapters;
+
+/// <summary>
+/// Tests for the Legacy Notification Adapter (Adapter pattern).
+/// </summary>
+public class LegacyNotificationAdapterTests
+{
+    private readonly Mock<ILegacyNotificationApiClient> _mockLegacyClient;
+    private readonly Mock<ILogger<LegacyNotificationAdapter>> _mockLogger;
+    private readonly LegacyNotificationAdapter _sut;
+
+    public LegacyNotificationAdapterTests()
+    {
+        _mockLegacyClient = new Mock<ILegacyNotificationApiClient>();
+        _mockLogger = new Mock<ILogger<LegacyNotificationAdapter>>();
+        _sut = new LegacyNotificationAdapter(_mockLegacyClient.Object, _mockLogger.Object);
+    }
+
+    #region SendAsync Tests
+
+    [Fact]
+    public async Task SendAsync_WithValidInput_ReturnsSuccessResult()
+    {
+        // Arrange
+        var customerId = 1;
+        var title = "Order Update";
+        var body = "Your order is on its way!";
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ReturnsAsync(new NotificationResponse { Success = true, Message = "Sent" });
+
+        // Act
+        var result = await _sut.SendAsync(customerId, title, body);
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
+    public async Task SendAsync_CombinesTitleAndBodyInMessage()
+    {
+        // Arrange
+        var customerId = 1;
+        var title = "Test Title";
+        var body = "Test Body";
+        NotificationRequest? capturedRequest = null;
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .Callback<NotificationRequest>(r => capturedRequest = r)
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        await _sut.SendAsync(customerId, title, body);
+
+        // Assert
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(customerId, capturedRequest.CustomerId);
+        Assert.Contains(title, capturedRequest.Message);
+        Assert.Contains(body, capturedRequest.Message);
+    }
+
+    [Fact]
+    public async Task SendAsync_WithEmptyTitle_UsesOnlyBody()
+    {
+        // Arrange
+        var customerId = 1;
+        var title = "";
+        var body = "Test Body";
+        NotificationRequest? capturedRequest = null;
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .Callback<NotificationRequest>(r => capturedRequest = r)
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        await _sut.SendAsync(customerId, title, body);
+
+        // Assert
+        Assert.NotNull(capturedRequest);
+        Assert.Equal(body, capturedRequest.Message);
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenCustomerNotFound_ReturnsCustomerNotFoundError()
+    {
+        // Arrange
+        var customerId = 999;
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ThrowsAsync(new CustomerNotFoundException("Customer not found"));
+
+        // Act
+        var result = await _sut.SendAsync(customerId, "Title", "Body");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.CustomerNotFound, result.Error);
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenNotificationFails_ReturnsServiceUnavailableError()
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ThrowsAsync(new NotificationFailedException("Service error"));
+
+        // Act
+        var result = await _sut.SendAsync(1, "Title", "Body");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.ServiceUnavailable, result.Error);
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenHttpRequestFails_ReturnsServiceUnavailableError()
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+        // Act
+        var result = await _sut.SendAsync(1, "Title", "Body");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.ServiceUnavailable, result.Error);
+    }
+
+    [Fact]
+    public async Task SendAsync_WhenUnexpectedError_ReturnsUnknownError()
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ThrowsAsync(new InvalidOperationException("Unexpected"));
+
+        // Act
+        var result = await _sut.SendAsync(1, "Title", "Body");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.Unknown, result.Error);
+    }
+
+    #endregion
+
+    #region SendOrderUpdateAsync Tests
+
+    [Fact]
+    public async Task SendOrderUpdateAsync_WithValidInput_ReturnsSuccessResult()
+    {
+        // Arrange
+        var customerId = 1;
+        var orderId = 100;
+        var status = "Delivered";
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        var result = await _sut.SendOrderUpdateAsync(customerId, orderId, status);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task SendOrderUpdateAsync_FormatsMessageCorrectly()
+    {
+        // Arrange
+        var customerId = 1;
+        var orderId = 123;
+        var status = "Out for Delivery";
+        NotificationRequest? capturedRequest = null;
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .Callback<NotificationRequest>(r => capturedRequest = r)
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        await _sut.SendOrderUpdateAsync(customerId, orderId, status);
+
+        // Assert
+        Assert.NotNull(capturedRequest);
+        Assert.Contains("Order Update", capturedRequest.Message);
+        Assert.Contains("#123", capturedRequest.Message);
+        Assert.Contains(status, capturedRequest.Message);
+    }
+
+    [Theory]
+    [InlineData("Placed")]
+    [InlineData("Accepted")]
+    [InlineData("Ready")]
+    [InlineData("PickedUp")]
+    [InlineData("Delivered")]
+    public async Task SendOrderUpdateAsync_WithVariousStatuses_Succeeds(string status)
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        var result = await _sut.SendOrderUpdateAsync(1, 100, status);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task SendOrderUpdateAsync_WhenCustomerNotFound_ReturnsError()
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ThrowsAsync(new CustomerNotFoundException("Customer not found"));
+
+        // Act
+        var result = await _sut.SendOrderUpdateAsync(999, 100, "Delivered");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.CustomerNotFound, result.Error);
+    }
+
+    #endregion
+
+    #region SendPromotionAsync Tests
+
+    [Fact]
+    public async Task SendPromotionAsync_WithValidInput_ReturnsSuccessResult()
+    {
+        // Arrange
+        var customerId = 1;
+        var promotionTitle = "Weekend Special";
+        var promotionDetails = "Get 20% off on all orders!";
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        var result = await _sut.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task SendPromotionAsync_FormatsMessageWithEmoji()
+    {
+        // Arrange
+        var customerId = 1;
+        var promotionTitle = "Flash Sale";
+        var promotionDetails = "Limited time offer!";
+        NotificationRequest? capturedRequest = null;
+        
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .Callback<NotificationRequest>(r => capturedRequest = r)
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        await _sut.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
+
+        // Assert
+        Assert.NotNull(capturedRequest);
+        Assert.Contains("🎉", capturedRequest.Message);
+        Assert.Contains(promotionTitle, capturedRequest.Message);
+        Assert.Contains(promotionDetails, capturedRequest.Message);
+    }
+
+    [Theory]
+    [InlineData("Summer Sale", "50% off everything")]
+    [InlineData("New Menu Items", "Try our new dishes")]
+    [InlineData("Loyalty Reward", "Free delivery on your next order")]
+    public async Task SendPromotionAsync_WithVariousPromotions_Succeeds(string title, string details)
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ReturnsAsync(new NotificationResponse { Success = true });
+
+        // Act
+        var result = await _sut.SendPromotionAsync(1, title, details);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task SendPromotionAsync_WhenServiceUnavailable_ReturnsError()
+    {
+        // Arrange
+        _mockLegacyClient
+            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
+            .ThrowsAsync(new NotificationFailedException("Service unavailable"));
+
+        // Act
+        var result = await _sut.SendPromotionAsync(1, "Sale", "Details");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.ServiceUnavailable, result.Error);
+    }
+
+    #endregion
+
+    #region NotificationAdapterResult Tests
+
+    [Fact]
+    public void NotificationAdapterResult_Succeeded_ReturnsCorrectResult()
+    {
+        // Act
+        var result = NotificationAdapterResult.Succeeded("Custom message");
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal("Custom message", result.Message);
+        Assert.Null(result.Error);
+    }
+
+    [Fact]
+    public void NotificationAdapterResult_Succeeded_WithoutMessage_UsesDefault()
+    {
+        // Act
+        var result = NotificationAdapterResult.Succeeded();
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal("Notification sent successfully", result.Message);
+    }
+
+    [Fact]
+    public void NotificationAdapterResult_Failed_ReturnsCorrectResult()
+    {
+        // Act
+        var result = NotificationAdapterResult.Failed(NotificationAdapterError.CustomerNotFound, "Not found");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(NotificationAdapterError.CustomerNotFound, result.Error);
+        Assert.Equal("Not found", result.Message);
+    }
+
+    [Theory]
+    [InlineData(NotificationAdapterError.CustomerNotFound)]
+    [InlineData(NotificationAdapterError.ServiceUnavailable)]
+    [InlineData(NotificationAdapterError.InvalidRequest)]
+    [InlineData(NotificationAdapterError.Unknown)]
+    public void NotificationAdapterResult_Failed_WithVariousErrors_SetsCorrectError(NotificationAdapterError error)
+    {
+        // Act
+        var result = NotificationAdapterResult.Failed(error, "Error message");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal(error, result.Error);
+    }
+
+    #endregion
+
+    #region Interface Implementation Tests
+
+    [Fact]
+    public void LegacyNotificationAdapter_ImplementsINotificationAdapter()
+    {
+        // Assert
+        Assert.IsAssignableFrom<INotificationAdapter>(_sut);
+    }
+
+    #endregion
+}

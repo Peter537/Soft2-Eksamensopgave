@@ -217,6 +217,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Kafka__BootstrapServers: kafka:9092
+      Gateway__BaseUrl: http://gateway:8080
     depends_on:
       kafka:
         condition: service_healthy
