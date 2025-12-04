@@ -6,6 +6,20 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace MToGo.Website.Tests.Selenium
 {
+    /// <summary>
+    /// Selenium UI Tests for Order Creation Flow.
+    /// 
+    /// IMPORTANT: These tests require:
+    /// 1. A running MToGo application instance (docker-compose up)
+    /// 2. Chrome browser installed
+    /// 
+    /// To run locally:
+    ///   1. Start the application: docker-compose up -d
+    ///   2. Run tests: dotnet test --filter "OrderCreationUITests"
+    /// 
+    /// These tests are skipped in CI/CD as they require the full infrastructure.
+    /// For CI, use unit tests and integration tests instead.
+    /// </summary>
     public class OrderCreationUITests : IDisposable
     {
         private readonly IWebDriver _driver;
