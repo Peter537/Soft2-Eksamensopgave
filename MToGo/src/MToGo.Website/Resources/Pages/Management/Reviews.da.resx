@@ -120,4 +120,13 @@
   <data name="ViewDetails" xml:space="preserve">
     <value>Se detaljer</value>
   </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse anmeldelser. Status: {0}</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
 </root>

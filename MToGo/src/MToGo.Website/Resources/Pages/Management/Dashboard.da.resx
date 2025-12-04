@@ -75,4 +75,16 @@
   <data name="OpenGrafanaButton" xml:space="preserve">
     <value>Åbn Grafana</value>
   </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="AgentBonusTitle" xml:space="preserve">
+    <value>Agent Bonus Beregner</value>
+  </data>
+  <data name="AgentBonusDescription" xml:space="preserve">
+    <value>Beregn månedlige bonusser for agenter baseret på leveringer, tidspræstation og kundeanmeldelser.</value>
+  </data>
+  <data name="AgentBonusButton" xml:space="preserve">
+    <value>Beregn Bonus</value>
+  </data>
 </root>
