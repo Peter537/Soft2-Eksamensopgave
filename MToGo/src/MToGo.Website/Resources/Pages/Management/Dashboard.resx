@@ -66,4 +66,13 @@
   <data name="ViewReviewsButton" xml:space="preserve">
     <value>View Reviews</value>
   </data>
+  <data name="GrafanaTitle" xml:space="preserve">
+    <value>Grafana Analytics</value>
+  </data>
+  <data name="GrafanaDescription" xml:space="preserve">
+    <value>Access Grafana dashboards for real-time monitoring, metrics, and analytics.</value>
+  </data>
+  <data name="OpenGrafanaButton" xml:space="preserve">
+    <value>Open Grafana</value>
+  </data>
 </root>

@@ -1,0 +1,63 @@
+# ===========================================
+# Alertmanager Configuration for MToGo
+# ===========================================
+# This is a template file. The entrypoint script substitutes
+# ${DISCORD_WEBHOOK_ALERT} with the actual value from the environment.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: "discord-business-alerts"
+
+  group_by: ["alertname", "category", "kpi"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+  routes:
+    - match:
+        severity: critical
+      receiver: "discord-business-alerts"
+      group_wait: 5s
+      group_interval: 30s
+      repeat_interval: 15m
+
+    - match:
+        severity: info
+      receiver: "discord-business-alerts"
+      group_wait: 5m
+      repeat_interval: 24h
+
+inhibit_rules:
+  - source_match:
+      alertname: NoActivePartners
+    target_match:
+      alertname: LowActivePartners
+    equal: ["category"]
+
+  - source_match:
+      alertname: NoActiveAgents
+    target_match:
+      alertname: LowActiveAgents
+    equal: ["category"]
+
+receivers:
+  - name: "discord-business-alerts"
+    discord_configs:
+      - webhook_url: "${DISCORD_WEBHOOK_ALERT}"
+        title: '{{ if eq .Status "firing" }}🔔 MToGo Alert{{ else }}✅ Resolved{{ end }}'
+        message: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+
+          {{ .Annotations.description }}
+
+          *Severity:* {{ .Labels.severity }}
+          *KPI:* {{ .Labels.kpi }}
+          *Status:* {{ .Status }}
+          {{ if eq .Status "resolved" }}*Resolved at:* {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
+
+          ---
+          {{ end }}
+        send_resolved: true

@@ -1,0 +1,234 @@
+# ===========================================
+# MToGo Business Intelligence Alert Rules
+# ===========================================
+# These are "relaxed" alerts for KPI trend monitoring.
+# They are NOT critical service alerts, but rather business
+# intelligence notifications to help track platform health.
+#
+# Alert Severity Levels:
+# - info: Informational, no action required (positive trends, milestones)
+# - warning: Worth investigating, not urgent (negative trends)
+# - critical: Requires attention soon (significant negative impact on business)
+
+groups:
+  # ===========================================
+  # Active Customers Alerts
+  # ===========================================
+  - name: customer_alerts
+    interval: 5m
+    rules:
+      # Alert when active customers drop by 10% or more compared to previous month
+      - alert: ActiveCustomersDecline
+        expr: |
+          (
+            (mtogo_active_customers_previous_month - mtogo_active_customers_monthly) 
+            / mtogo_active_customers_previous_month
+          ) >= 0.10
+          and mtogo_active_customers_previous_month > 0
+        for: 1h
+        labels:
+          severity: warning
+          category: business_kpi
+          kpi: active_customers
+        annotations:
+          summary: "Active customers declined by {{ $value | humanizePercentage }}"
+          description: |
+            Active customers this month: {{ with printf "mtogo_active_customers_monthly" | query }}{{ . | first | value }}{{ end }}
+            Active customers previous month: {{ with printf "mtogo_active_customers_previous_month" | query }}{{ . | first | value }}{{ end }}
+            This may indicate customer churn or reduced engagement. Consider investigating recent changes or running a re-engagement campaign.
+
+      # Alert when active customers grow by 20% or more (positive trend!)
+      - alert: ActiveCustomersGrowth
+        expr: |
+          (
+            (mtogo_active_customers_monthly - mtogo_active_customers_previous_month) 
+            / mtogo_active_customers_previous_month
+          ) >= 0.20
+          and mtogo_active_customers_previous_month > 0
+        for: 1h
+        labels:
+          severity: info
+          category: business_kpi
+          kpi: active_customers
+        annotations:
+          summary: "🎉 Active customers grew by {{ $value | humanizePercentage }}"
+          description: |
+            Active customers this month: {{ with printf "mtogo_active_customers_monthly" | query }}{{ . | first | value }}{{ end }}
+            Active customers previous month: {{ with printf "mtogo_active_customers_previous_month" | query }}{{ . | first | value }}{{ end }}
+            Great news! Customer engagement is increasing significantly.
+
+      # Alert when active customers drops to critically low levels
+      - alert: ActiveCustomersCriticallyLow
+        expr: mtogo_active_customers_monthly < 5
+        for: 30m
+        labels:
+          severity: warning
+          category: business_kpi
+          kpi: active_customers
+        annotations:
+          summary: "⚠️ Very few active customers: {{ $value }}"
+          description: |
+            Only {{ $value }} active customers in the last 30 days.
+            This is critically low and may indicate a serious problem with the platform or service.
+
+  # ===========================================
+  # Order Volume Alerts
+  # ===========================================
+  - name: order_alerts
+    interval: 5m
+    rules:
+      # Alert when daily orders drop by 15% or more compared to same day last week
+      - alert: DailyOrdersDecline
+        expr: |
+          (
+            (mtogo_orders_same_day_last_week - mtogo_orders_last_day) 
+            / mtogo_orders_same_day_last_week
+          ) >= 0.15
+          and mtogo_orders_same_day_last_week > 5
+        for: 2h
+        labels:
+          severity: warning
+          category: business_kpi
+          kpi: orders_per_day
+        annotations:
+          summary: "Daily orders down {{ $value | humanizePercentage }} vs last week"
+          description: |
+            Orders today: {{ with printf "mtogo_orders_last_day" | query }}{{ . | first | value }}{{ end }}
+            Orders same day last week: {{ with printf "mtogo_orders_same_day_last_week" | query }}{{ . | first | value }}{{ end }}
+            Demand is lower than usual. This could be seasonal or indicate an issue worth investigating.
+
+      # Alert when daily orders surge by 30% or more (capacity planning!)
+      - alert: DailyOrdersSurge
+        expr: |
+          (
+            (mtogo_orders_last_day - mtogo_orders_same_day_last_week) 
+            / mtogo_orders_same_day_last_week
+          ) >= 0.30
+          and mtogo_orders_same_day_last_week > 5
+        for: 1h
+        labels:
+          severity: info
+          category: business_kpi
+          kpi: orders_per_day
+        annotations:
+          summary: "📈 Order surge: up {{ $value | humanizePercentage }} vs last week"
+          description: |
+            Orders today: {{ with printf "mtogo_orders_last_day" | query }}{{ . | first | value }}{{ end }}
+            Orders same day last week: {{ with printf "mtogo_orders_same_day_last_week" | query }}{{ . | first | value }}{{ end }}
+            High demand detected! Ensure sufficient partner and agent capacity.
+
+      # Alert when no orders in the last hour during business hours
+      # Note: This rule assumes orders should be coming in. Adjust based on actual traffic patterns.
+      - alert: NoRecentOrders
+        expr: mtogo_orders_last_hour == 0
+        for: 2h
+        labels:
+          severity: warning
+          category: business_kpi
+          kpi: orders_per_hour
+        annotations:
+          summary: "No orders received in the last hour"
+          description: |
+            Zero orders have been placed in the last hour.
+            This could indicate a technical issue or unusually low demand.
+            Check if the ordering flow is working correctly.
+
+  # ===========================================
+  # Partner Availability Alerts
+  # ===========================================
+  - name: partner_alerts
+    interval: 15s
+    rules:
+      # Alert when active partners drops below minimum threshold
+      - alert: LowActivePartners
+        expr: mtogo_active_partners < 5
+        for: 30m
+        labels:
+          severity: warning
+          category: business_kpi
+          kpi: active_partners
+        annotations:
+          summary: "Low partner availability: only {{ $value }} active"
+          description: |
+            Only {{ $value }} partners are currently active.
+            This limits customer restaurant choices and could affect order volume.
+            Consider reaching out to inactive partners.
+
+      # Alert when no active partners (critical!)
+      - alert: NoActivePartners
+        expr: mtogo_active_partners == 0
+        for: 15s
+        labels:
+          severity: critical
+          category: business_kpi
+          kpi: active_partners
+        annotations:
+          summary: "🚨 No active partners - orders cannot be fulfilled!"
+          description: |
+            There are currently no active partners on the platform.
+            Customers cannot place orders. Immediate action required!
+
+      # Alert when partner count increases significantly (growth!)
+      - alert: PartnerGrowth
+        expr: |
+          (mtogo_active_partners - mtogo_active_partners offset 7d) >= 3
+          and mtogo_active_partners offset 7d > 0
+        for: 1h
+        labels:
+          severity: info
+          category: business_kpi
+          kpi: active_partners
+        annotations:
+          summary: "🎉 Partner network growing: +{{ $value }} new partners this week"
+          description: |
+            The partner network has grown by {{ $value }} active partners compared to last week.
+            Current active partners: {{ with printf "mtogo_active_partners" | query }}{{ . | first | value }}{{ end }}
+
+  # ===========================================
+  # Agent Availability Alerts
+  # ===========================================
+  - name: agent_alerts
+    interval: 15s
+    rules:
+      # Alert when active agents drops below minimum threshold
+      - alert: LowActiveAgents
+        expr: mtogo_active_agents < 3
+        for: 30m
+        labels:
+          severity: warning
+          category: business_kpi
+          kpi: active_agents
+        annotations:
+          summary: "Low agent availability: only {{ $value }} active"
+          description: |
+            Only {{ $value }} delivery agents are currently available.
+            This could lead to longer delivery times and customer dissatisfaction.
+            Consider recruiting more agents or incentivizing existing ones to go online.
+
+      # Alert when no active agents (critical for deliveries!)
+      - alert: NoActiveAgents
+        expr: mtogo_active_agents == 0
+        for: 15s
+        labels:
+          severity: critical
+          category: business_kpi
+          kpi: active_agents
+        annotations:
+          summary: "🚨 No active agents - deliveries cannot be made!"
+          description: |
+            There are currently no active delivery agents.
+            Orders can be placed but cannot be delivered. Immediate action required!
+
+      # Alert when agent availability is high (good capacity)
+      - alert: HighAgentAvailability
+        expr: mtogo_active_agents >= 10
+        for: 1h
+        labels:
+          severity: info
+          category: business_kpi
+          kpi: active_agents
+        annotations:
+          summary: "✅ Good agent capacity: {{ $value }} agents available"
+          description: |
+            {{ $value }} delivery agents are currently available.
+            The platform has good delivery capacity.

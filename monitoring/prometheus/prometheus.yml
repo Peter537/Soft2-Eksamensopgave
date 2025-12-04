@@ -1,0 +1,60 @@
+# Prometheus Configuration for MToGo
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: "mtogo-monitor"
+
+# Alerting configuration - send alerts to Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Rule files for business intelligence alerts
+rule_files:
+  - "alert_rules.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # ===========================================
+  # Docker Compose Configuration
+  # ===========================================
+
+  # Order Service - KPIs: Active customers (monthly), Orders per hour/day
+  - job_name: "order-service"
+    static_configs:
+      - targets: ["order-service:8080"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Partner Service - KPI: Active partners
+  - job_name: "partner-service"
+    static_configs:
+      - targets: ["partner-service:8080"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Agent Service - KPI: Active agents
+  - job_name: "agent-service"
+    static_configs:
+      - targets: ["agent-service:8080"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Gateway Service - HTTP metrics
+  - job_name: "gateway"
+    static_configs:
+      - targets: ["gateway:8080"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # ===========================================
+  # Kubernetes Configuration (Production)
+  # ===========================================

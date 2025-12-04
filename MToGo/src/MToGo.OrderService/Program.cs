@@ -1,7 +1,9 @@
 using MToGo.OrderService.Entities;
+using MToGo.OrderService.Metrics;
 using MToGo.OrderService.Repositories;
 using MToGo.OrderService.Services;
 using MToGo.Shared.Kafka;
+using MToGo.Shared.Metrics;
 using MToGo.Shared.Security;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,6 +17,10 @@ builder.Services.AddHttpContextAccessor();
 
 // Add MToGo Security (JWT Authentication & Authorization)
 builder.Services.AddMToGoSecurity(builder.Configuration);
+
+// Add Prometheus metrics
+builder.Services.AddMToGoMetrics();
+builder.Services.AddHostedService<OrderMetricsCollector>();
 
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -45,12 +51,18 @@ if (app.Environment.IsDevelopment())
     dbContext.Database.EnsureCreated();
 }
 
+// Add HTTP metrics middleware
+app.UseMToGoHttpMetrics();
+
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map Prometheus metrics endpoint at /metrics
+app.MapMToGoMetrics();
 
 app.Run();
 

@@ -108,3 +108,8 @@ devops:
       - any-glob-to-any-file:
           - .github/**
           - terraform/**
+
+monitoring:
+  - changed-files:
+      - any-glob-to-any-file:
+          - monitoring/**
