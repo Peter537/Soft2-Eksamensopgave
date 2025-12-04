@@ -14,7 +14,7 @@
     {
         <div class="text-center">
             <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
+                <span class="visually-hidden">@L["Pages.Management.Reviews.Loading"]</span>
             </div>
         </div>
     }
@@ -287,12 +287,12 @@
             }
             else
             {
-                errorMessage = $"Failed to load reviews. Status: {response.StatusCode}";
+                errorMessage = L.GetString("Pages.Management.Reviews.LoadFailed", response.StatusCode);
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred: {ex.Message}";
+            errorMessage = L.GetString("Pages.Management.Reviews.Error", ex.Message);
         }
         finally
         {
