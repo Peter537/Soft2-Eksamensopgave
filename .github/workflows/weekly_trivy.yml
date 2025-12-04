@@ -1,0 +1,450 @@
+name: Weekly Trivy - All Docker Images
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # Every Sunday at 02:00 UTC (after weekly CodeQL)
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+env:
+  OWNER_LC: peter537
+
+jobs:
+  trivy_customerservice:
+    name: Trivy - CustomerService
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull CustomerService image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:latest
+
+      - name: Trivy image scan (CustomerService)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:latest
+          format: sarif
+          output: trivy-customerservice-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (CustomerService)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-customerservice-image.sarif
+          category: weekly-trivy-customerservice
+
+  trivy_order:
+    name: Trivy - Order
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Order image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-order:latest
+
+      - name: Trivy image scan (Order)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-order:latest
+          format: sarif
+          output: trivy-order-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (Order)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-order-image.sarif
+          category: weekly-trivy-order
+
+  trivy_agentbonus:
+    name: Trivy - AgentBonus
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull AgentBonus image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:latest
+
+      - name: Trivy image scan (AgentBonus)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:latest
+          format: sarif
+          output: trivy-agentbonus-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (AgentBonus)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-agentbonus-image.sarif
+          category: weekly-trivy-agentbonus
+
+  trivy_agentservice:
+    name: Trivy - AgentService
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull AgentService image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:latest
+
+      - name: Trivy image scan (AgentService)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:latest
+          format: sarif
+          output: trivy-agentservice-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (AgentService)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-agentservice-image.sarif
+          category: weekly-trivy-agentservice
+
+  trivy_feedbackhub:
+    name: Trivy - FeedbackHub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull FeedbackHub image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:latest
+
+      - name: Trivy image scan (FeedbackHub)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:latest
+          format: sarif
+          output: trivy-feedbackhub-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (FeedbackHub)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-feedbackhub-image.sarif
+          category: weekly-trivy-feedbackhub
+
+  trivy_gateway:
+    name: Trivy - Gateway
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Gateway image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:latest
+
+      - name: Trivy image scan (Gateway)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:latest
+          format: sarif
+          output: trivy-gateway-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (Gateway)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-gateway-image.sarif
+          category: weekly-trivy-gateway
+
+  trivy_notification:
+    name: Trivy - Notification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Notification image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:latest
+
+      - name: Trivy image scan (Notification)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:latest
+          format: sarif
+          output: trivy-notification-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (Notification)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-notification-image.sarif
+          category: weekly-trivy-notification
+
+  trivy_partner:
+    name: Trivy - Partner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Partner image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:latest
+
+      - name: Trivy image scan (Partner)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:latest
+          format: sarif
+          output: trivy-partner-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (Partner)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-partner-image.sarif
+          category: weekly-trivy-partner
+
+  trivy_website:
+    name: Trivy - Website
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Website image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-website:latest
+
+      - name: Trivy image scan (Website)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-website:latest
+          format: sarif
+          output: trivy-website-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (Website)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-website-image.sarif
+          category: weekly-trivy-website
+
+  trivy_websocketagent:
+    name: Trivy - WebSocketAgent
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull WebSocketAgent image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:latest
+
+      - name: Trivy image scan (WebSocketAgent)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:latest
+          format: sarif
+          output: trivy-websocketagent-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (WebSocketAgent)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-websocketagent-image.sarif
+          category: weekly-trivy-websocketagent
+
+  trivy_websocketcustomer:
+    name: Trivy - WebSocketCustomer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull WebSocketCustomer image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:latest
+
+      - name: Trivy image scan (WebSocketCustomer)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:latest
+          format: sarif
+          output: trivy-websocketcustomer-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (WebSocketCustomer)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-websocketcustomer-image.sarif
+          category: weekly-trivy-websocketcustomer
+
+  trivy_websocketpartner:
+    name: Trivy - WebSocketPartner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull WebSocketPartner image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:latest
+
+      - name: Trivy image scan (WebSocketPartner)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:latest
+          format: sarif
+          output: trivy-websocketpartner-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (WebSocketPartner)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-websocketpartner-image.sarif
+          category: weekly-trivy-websocketpartner
+
+  trivy_management:
+    name: Trivy - Management
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Management image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-management:latest
+
+      - name: Trivy image scan (Management)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-management:latest
+          format: sarif
+          output: trivy-management-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (Management)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-management-image.sarif
+          category: weekly-trivy-management
+
+  trivy_legacy:
+    name: Trivy - LegacyMToGo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull LegacyMToGo image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:latest
+
+      - name: Trivy image scan (LegacyMToGo)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:latest
+          format: sarif
+          output: trivy-legacy-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (LegacyMToGo)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-legacy-image.sarif
+          category: weekly-trivy-legacy

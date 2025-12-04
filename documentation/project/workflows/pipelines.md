@@ -32,7 +32,14 @@ Dette dokument beskriver alle pipelines, der anvendes i udviklingen af MToGo-sys
 ## Main/shared Workflows & Automations
 
 - **weekly_codeql.yml**:  
-  Ekstra CodeQL-scan, som kører ugentligt på main for at fange eventuelle nye sårbarheder i eksisterende kode.
+  Ekstra CodeQL-scan, som kører ugentligt på main for at fange eventuelle nye sårbarheder i eksisterende kode. Dette sikrer, at nye CVE'er eller sikkerhedsproblemer, der opdages efter koden er merget, bliver identificeret selv uden kodeændringer.
+
+- **weekly_trivy.yml**:  
+  Ugentlig Trivy image-scan af alle Docker images i GitHub Container Registry (GHCR). Kører hver søndag og scanner alle service-images for HIGH og CRITICAL sårbarheder.
+  
+  Formål: Selvom security.yml scanner images ved ændringer, kan nye CVE'er dukke op i base images eller dependencies efter deployment. Denne ugentlige scan sikrer, at vi opdager nye sårbarheder i eksisterende images, så vi kan reagere proaktivt.
+  
+  Resultater uploades til GitHub Security-tabben via SARIF-format.
 
 - **performance.yml**:  
   Long-run performance tests af hele applikationen.  
