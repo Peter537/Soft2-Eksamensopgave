@@ -62,7 +62,7 @@ En samlet oversigt kan findes inde på dette link:
 
 ### System Context Diagram
 
-![System Context Diagram](./img/system-context-diagram.png)
+![System Context Diagram](./resources/system-context-diagram.png)
 
 **MToGo App**:  
 MToGo er en madleveringsplatform, der forbinder kunder med restauranter og leveringsagenter. Systemet håndterer ordreoprettelse, betaling, tracking og kommunikation i realtid via API'er, WebSockets og Kafka-events.
@@ -90,8 +90,8 @@ MToGo er en madleveringsplatform, der forbinder kunder med restauranter og lever
 
 ### Container Diagram
 
-![Container Diagram](./img/container-diagram.png)
-_Dette billede kan være svært at læse; billedet kan findes i [/img/container-diagram.png](./img/container-diagram.png)_
+![Container Diagram](./resources/container-diagram.png)
+_Dette billede kan være svært at læse; billedet kan findes i [/img/container-diagram.png](./resources/container-diagram.png)_
 
 **Service Arkitektur**:  
 MToGo-systemet er bygget som en service-arkitektur, hvor hver service kører som en separat container. Services kommunikerer via REST API'er, WebSockets og Kafka-events for løs kobling og skalerbarhed. Gatewayen fungerer som en central indgangspunkt for alle eksterne requests.
@@ -151,7 +151,7 @@ Lytter på WebSocket events: OrderAccepted, OrderReady, AgentAssigned
 
 #### Component Diagram
 
-![Order Service Component Diagram](./img/order-service-component-diagram.png)
+![Order Service Component Diagram](./resources/order-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Order Service, herunder:
 
@@ -201,7 +201,7 @@ Vi opretter en ny ordre med både foodItemId og name for at sikre data konsisten
 
 ### Component Diagram
 
-![Partner Service Component Diagram](./img/partner-service-component-diagram.png)
+![Partner Service Component Diagram](./resources/partner-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Partner Service, herunder:
 
@@ -230,7 +230,7 @@ Alle endpoints starter med /partners/
 
 ### Component Diagram
 
-![Feedback Hub Service Component Diagram](./img/feedback-hub-service-component-diagram.png)
+![Feedback Hub Service Component Diagram](./resources/feedback-hub-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Feedback Hub Service, herunder:
 
@@ -256,7 +256,7 @@ Alle endpoints starter med /feedback-hub/
 
 ### Component Diagram
 
-![Customer Service Component Diagram](./img/customer-service-component-diagram.png)
+![Customer Service Component Diagram](./resources/customer-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Customer Service, herunder:
 
@@ -293,7 +293,7 @@ Disse endpoints kommer til at kalde Legacy Customer API'en, hvor dette er en Ada
 
 ### Component Diagram
 
-![Agent Service Component Diagram](./img/agent-service-component-diagram.png)
+![Agent Service Component Diagram](./resources/agent-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Agent Service, herunder:
 
@@ -318,7 +318,7 @@ Alle endpoints starter med /agents/
 
 ### Component Diagram
 
-![Agent Bonus Service Component Diagram](./img/agent-bonus-service-component-diagram.png)
+![Agent Bonus Service Component Diagram](./resources/agent-bonus-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Agent Bonus Service, herunder:
 
@@ -339,7 +339,7 @@ Alle endpoints starter med /agent-bonus/
 
 ### Component Diagram
 
-![Notification Service Component Diagram](./img/notification-service-component-diagram.png)
+![Notification Service Component Diagram](./resources/notification-service-component-diagram.png)
 
 Dette diagram viser komponenterne i Notification Service, herunder:
 
@@ -362,7 +362,7 @@ Lytter på Kafka Events: OrderAccepted, OrderRejected, OrderPickedUp, OrderDeliv
 
 ### Component Diagram
 
-![WebSocket Customer Service Component Diagram](./img/websocket-customer-service-component-diagram.png)
+![WebSocket Customer Service Component Diagram](./resources/websocket-customer-service-component-diagram.png)
 
 Dette diagram viser komponenterne i WebSocket Customer Service, herunder:
 
@@ -394,7 +394,7 @@ Lytter på Kafka Events: OrderAccepted, OrderRejected, OrderPickedUp, OrderDeliv
 
 ### Component Diagram
 
-![WebSocket Partner Service Component Diagram](./img/websocket-partner-service-component-diagram.png)
+![WebSocket Partner Service Component Diagram](./resources/websocket-partner-service-component-diagram.png)
 
 Dette diagram viser komponenterne i WebSocket Partner Service, herunder:
 
@@ -425,7 +425,7 @@ Lytter på Kafka Events: OrderCreated, AgentAssigned, OrderPickedUp
 
 ### Component Diagram
 
-![WebSocket Agent Service Component Diagram](./img/websocket-agent-service-component-diagram.png)
+![WebSocket Agent Service Component Diagram](./resources/websocket-agent-service-component-diagram.png)
 
 Dette diagram viser komponenterne i WebSocket Agent Service, herunder:
 
