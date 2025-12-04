@@ -114,7 +114,7 @@ Navngiv tests i overensstemmelse med det valgte programmeringssprog og testbibli
 
 Vi benytter Test Pyramiden som ramme for fordelingen af tests, da vi primært udvikler service-baserede arkitekturer med løst koblet integration mellem services. Derfor lægger vi ikke stor vægt på integrationstests. I stedet prioriteres unit tests, så de individuelle services kan kvalitetssikres effektivt.
 
-![alt text](./img/test-pyramid.png)
+![alt text](./resources/test-pyramid.png)
 
 _Image Source: [https://software-tester.io/understanding-the-test-pyramid/](https://software-tester.io/understanding-the-test-pyramid/)_
 
@@ -138,7 +138,7 @@ Denne sektion identificerer strategiske parent-risici (R1-R10), der er relevante
 2. **Shared sub-risici (R1.1, R1.2, etc.)**: Detaljerede fælles risici defineret i et dokument for hver produkt.
 3. **Service-specifikke sub-risici**: Unikke risici for hver service, defineret i test planer med fortsættende nummerering.
 
-![alt text](./img/test-strategi-risk-assesment.png)
+![alt text](./resources/test-strategi-risk-assesment.png)
 
 _Vi har tilføjet R1-10 til det originale billede. Model over de strategiske risici og deres sandsynlighed/betydning. Image Source: [https://www.riskpal.com/risk-assessment-matrices/](https://www.riskpal.com/risk-assessment-matrices/)_
 

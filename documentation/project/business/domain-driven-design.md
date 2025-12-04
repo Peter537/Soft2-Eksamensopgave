@@ -2,6 +2,15 @@
 
 Dette dokument definerer de tre primære Bounded Contexts i MToGo systemet. Hver kontekst er indkapslet med sit eget ansvar, ubiquitous language, domain events og præcis ét aggregate.
 
+### Context Map
+
+![alt text](./resources/ddd-context-map.png)
+
+Vores tre Bounded Contexts hænger sammen som følger:
+
+- Order Context refererer til Partner og Agent Contexts for at hente nødvendige oplysninger om Partnere og Agenter.
+- Partner Context og Agent Context er uafhængige og kommunikerer ikke direkte med hinanden.
+
 ---
 
 ## 1. Order Context
