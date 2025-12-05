@@ -1,9 +1,9 @@
 using MToGo.OrderService.Entities;
-using MToGo.OrderService.Logging;
 using MToGo.OrderService.Models;
 using MToGo.OrderService.Repositories;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
+using MToGo.Shared.Logging;
 
 namespace MToGo.OrderService.Services
 {
@@ -86,11 +86,11 @@ namespace MToGo.OrderService.Services
 
         public async Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request)
         {
-            _logger.CreatingOrder(request.CustomerId, request.PartnerId);
+            _logger.LogInformation("Creating order for CustomerId: {CustomerId}, PartnerId: {PartnerId}", request.CustomerId, request.PartnerId);
 
             // Calculate order total
             decimal orderTotal = request.Items.Sum(item => item.Quantity * item.UnitPrice);
-            _logger.CalculatedOrderTotal(orderTotal, request.Items.Count);
+            _logger.LogDebug("Calculated order total: {OrderTotal} DKK for {ItemCount} items", orderTotal, request.Items.Count);
 
             // Calculate service fee: 6% for <=100 DKK, 3% for >=1000 DKK, sliding in between
             decimal serviceFee = CalculateServiceFee(orderTotal);
@@ -116,8 +116,14 @@ namespace MToGo.OrderService.Services
 
             var createdOrder = await _orderRepository.CreateOrderAsync(order);
 
-            // Audit log
-            _logger.OrderCreated(createdOrder.Id, createdOrder.CustomerId, createdOrder.PartnerId, createdOrder.TotalAmount);
+            _logger.LogAuditInformation(
+                action: "OrderCreated",
+                resource: "Order",
+                resourceId: createdOrder.Id.ToString(),
+                userId: createdOrder.CustomerId,
+                userRole: "Customer",
+                message: "Order created: OrderId={OrderId}, CustomerId={CustomerId}, PartnerId={PartnerId}, TotalAmount={TotalAmount} DKK",
+                args: new object[] { createdOrder.Id, createdOrder.CustomerId, createdOrder.PartnerId, createdOrder.TotalAmount });
 
             // Publish OrderCreatedEvent
             var orderEvent = new OrderCreatedEvent
@@ -134,26 +140,26 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderCreated, createdOrder.Id.ToString(), orderEvent);
-            _logger.PublishedOrderCreatedEvent(createdOrder.Id);
+            _logger.LogDebug("Published OrderCreatedEvent to Kafka for OrderId: {OrderId}", createdOrder.Id);
 
             return new OrderCreateResponse { Id = createdOrder.Id };
         }
 
         public async Task<bool> AcceptOrderAsync(int orderId, int estimatedMinutes)
         {
-            _logger.AcceptingOrder(orderId);
+            _logger.LogInformation("Accepting order: OrderId={OrderId}", orderId);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.CannotAcceptOrder(orderId, "Order not found");
+                _logger.LogWarning("Cannot accept order: OrderId={OrderId}, Reason={Reason}", orderId, "Order not found");
                 return false;
             }
 
             if (order.Status != OrderStatus.Placed)
             {
-                _logger.CannotAcceptOrder(orderId, $"Invalid status: {order.Status}");
+                _logger.LogWarning("Cannot accept order: OrderId={OrderId}, Reason={Reason}", orderId, $"Invalid status: {order.Status}");
                 return false;
             }
 
@@ -161,13 +167,19 @@ namespace MToGo.OrderService.Services
             order.EstimatedMinutes = estimatedMinutes;
             await _orderRepository.UpdateOrderAsync(order);
 
-            // Audit log
-            _logger.OrderAccepted(order.Id, order.CustomerId);
+            _logger.LogAuditInformation(
+                action: "OrderAccepted",
+                resource: "Order",
+                resourceId: order.Id.ToString(),
+                userId: order.PartnerId,
+                userRole: "Partner",
+                message: "Order accepted: OrderId={OrderId}, CustomerId={CustomerId}, PartnerId={PartnerId}",
+                args: new object[] { order.Id, order.CustomerId, order.PartnerId });
 
             // Fetch partner information
             var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
-            var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
-            var partnerAddress = partner?.Address ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerName = partner?.Name ?? string.Empty;
+            var partnerAddress = partner?.Address ?? string.Empty;
 
             // Publish OrderAcceptedEvent
             var orderEvent = new OrderAcceptedEvent
@@ -189,26 +201,26 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderAccepted, order.Id.ToString(), orderEvent);
-            _logger.PublishedOrderAcceptedEvent(order.Id);
+            _logger.LogDebug("Published OrderAcceptedEvent to Kafka for OrderId: {OrderId}", order.Id);
 
             return true;
         }
 
         public async Task<bool> RejectOrderAsync(int orderId, string? reason)
         {
-            _logger.RejectingOrder(orderId);
+            _logger.LogInformation("Rejecting order: OrderId={OrderId}", orderId);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.CannotRejectOrder(orderId, "Order not found");
+                _logger.LogWarning("Cannot reject order: OrderId={OrderId}, Reason={Reason}", orderId, "Order not found");
                 return false;
             }
 
             if (order.Status != OrderStatus.Placed)
             {
-                _logger.CannotRejectOrder(orderId, $"Invalid status: {order.Status}");
+                _logger.LogWarning("Cannot reject order: OrderId={OrderId}, Reason={Reason}", orderId, $"Invalid status: {order.Status}");
                 return false;
             }
 
@@ -220,8 +232,14 @@ namespace MToGo.OrderService.Services
                 .Replace("\r", "")
                 .Replace("\n", " ");
 
-            // Audit log
-            _logger.OrderRejected(order.Id, order.CustomerId, sanitizedReason);
+            _logger.LogAuditInformation(
+                action: "OrderRejected",
+                resource: "Order",
+                resourceId: order.Id.ToString(),
+                userId: order.PartnerId,
+                userRole: "Partner",
+                message: "Order rejected: OrderId={OrderId}, CustomerId={CustomerId}, Reason={Reason}",
+                args: new object[] { order.Id, order.CustomerId, sanitizedReason });
 
             // Publish OrderRejectedEvent
             var orderEvent = new OrderRejectedEvent
@@ -233,9 +251,7 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderRejected, order.Id.ToString(), orderEvent);
-            _logger.PublishedOrderRejectedEvent(order.Id);
-
-            // TODO: Måske Refund Process logic her?
+            _logger.LogDebug("Published OrderRejectedEvent to Kafka for OrderId: {OrderId}", order.Id);
 
             return true;
         }
@@ -253,32 +269,38 @@ namespace MToGo.OrderService.Services
 
         public async Task<bool> SetReadyAsync(int orderId)
         {
-            _logger.SettingOrderReady(orderId);
+            _logger.LogInformation("Setting order ready: OrderId={OrderId}", orderId);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.CannotSetOrderReady(orderId, "Order not found");
+                _logger.LogWarning("Cannot set order ready: OrderId={OrderId}, Reason={Reason}", orderId, "Order not found");
                 return false;
             }
 
             if (order.Status != OrderStatus.Accepted)
             {
-                _logger.CannotSetOrderReady(orderId, $"Invalid status: {order.Status}");
+                _logger.LogWarning("Cannot set order ready: OrderId={OrderId}, Reason={Reason}", orderId, $"Invalid status: {order.Status}");
                 return false;
             }
 
             order.Status = OrderStatus.Ready;
             await _orderRepository.UpdateOrderAsync(order);
 
-            // Audit log
-            _logger.OrderSetReady(order.Id, order.CustomerId);
+            _logger.LogAuditInformation(
+                action: "OrderReady",
+                resource: "Order",
+                resourceId: order.Id.ToString(),
+                userId: order.PartnerId,
+                userRole: "Partner",
+                message: "Order set ready: OrderId={OrderId}, CustomerId={CustomerId}",
+                args: new object[] { order.Id, order.CustomerId });
 
             // Fetch partner information
             var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
-            var partnerName = partner?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
-            var partnerAddress = partner?.Address ?? string.Empty; // TODO: Null checks pga manglende Service
+            var partnerName = partner?.Name ?? string.Empty;
+            var partnerAddress = partner?.Address ?? string.Empty;
 
             // Publish OrderReadyEvent
             var orderEvent = new OrderReadyEvent
@@ -292,41 +314,47 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderReady, order.Id.ToString(), orderEvent);
-            _logger.PublishedOrderReadyEvent(order.Id);
+            _logger.LogDebug("Published OrderReadyEvent to Kafka for OrderId: {OrderId}", order.Id);
 
             return true;
         }
 
         public async Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId)
         {
-            _logger.AssigningAgent(orderId, agentId);
+            _logger.LogInformation("Assigning agent to order: OrderId={OrderId}, AgentId={AgentId}", orderId, agentId);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.CannotAssignAgent(orderId, "Order not found");
+                _logger.LogWarning("Cannot assign agent to order: OrderId={OrderId}, Reason={Reason}", orderId, "Order not found");
                 return AssignAgentResult.OrderNotFound;
             }
 
             // Allow agent assignment when order is Accepted OR Ready
             if (order.Status != OrderStatus.Accepted && order.Status != OrderStatus.Ready)
             {
-                _logger.CannotAssignAgent(orderId, $"Invalid status: {order.Status}");
+                _logger.LogWarning("Cannot assign agent to order: OrderId={OrderId}, Reason={Reason}", orderId, $"Invalid status: {order.Status}");
                 return AssignAgentResult.InvalidStatus;
             }
 
             if (order.AgentId != null)
             {
-                _logger.CannotAssignAgent(orderId, $"Agent already assigned: {order.AgentId}");
+                _logger.LogWarning("Cannot assign agent to order: OrderId={OrderId}, Reason={Reason}", orderId, $"Agent already assigned: {order.AgentId}");
                 return AssignAgentResult.AgentAlreadyAssigned;
             }
 
             order.AgentId = agentId;
             await _orderRepository.UpdateOrderAsync(order);
 
-            // Audit log
-            _logger.AgentAssigned(order.Id, order.PartnerId, agentId);
+            _logger.LogAuditInformation(
+                action: "AgentAssigned",
+                resource: "Order",
+                resourceId: order.Id.ToString(),
+                userId: agentId,
+                userRole: "Agent",
+                message: "Agent assigned to order: OrderId={OrderId}, PartnerId={PartnerId}, AgentId={AgentId}",
+                args: new object[] { order.Id, order.PartnerId, agentId });
 
             // Fetch partner information for the agent's view
             var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
@@ -352,32 +380,32 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.AgentAssigned, order.Id.ToString(), orderEvent);
-            _logger.PublishedAgentAssignedEvent(order.Id);
+            _logger.LogDebug("Published AgentAssignedEvent to Kafka for OrderId: {OrderId}", order.Id);
 
             return AssignAgentResult.Success;
         }
 
         public async Task<PickupResult> PickupOrderAsync(int orderId)
         {
-            _logger.PickingUpOrder(orderId);
+            _logger.LogInformation("Picking up order: OrderId={OrderId}", orderId);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.CannotPickupOrder(orderId, "Order not found");
+                _logger.LogWarning("Cannot pickup order: OrderId={OrderId}, Reason={Reason}", orderId, "Order not found");
                 return PickupResult.OrderNotFound;
             }
 
             if (order.Status != OrderStatus.Ready)
             {
-                _logger.CannotPickupOrder(orderId, $"Invalid status: {order.Status}");
+                _logger.LogWarning("Cannot pickup order: OrderId={OrderId}, Reason={Reason}", orderId, $"Invalid status: {order.Status}");
                 return PickupResult.InvalidStatus;
             }
 
             if (order.AgentId == null)
             {
-                _logger.CannotPickupOrder(orderId, "No agent assigned");
+                _logger.LogWarning("Cannot pickup order: OrderId={OrderId}, Reason={Reason}", orderId, "No agent assigned");
                 return PickupResult.NoAgentAssigned;
             }
 
@@ -386,10 +414,16 @@ namespace MToGo.OrderService.Services
 
             // Fetch agent information
             var agent = await _agentServiceClient.GetAgentByIdAsync(order.AgentId.Value);
-            var agentName = agent?.Name ?? string.Empty; // TODO: Null checks pga manglende Service
+            var agentName = agent?.Name ?? string.Empty;
 
-            // Audit log
-            _logger.OrderPickedUp(order.Id, order.CustomerId, agentName);
+            _logger.LogAuditInformation(
+                action: "OrderPickedUp",
+                resource: "Order",
+                resourceId: order.Id.ToString(),
+                userId: order.AgentId.Value,
+                userRole: "Agent",
+                message: "Order picked up: OrderId={OrderId}, CustomerId={CustomerId}, AgentId={AgentId}, AgentName={AgentName}",
+                args: new object[] { order.Id, order.CustomerId, order.AgentId.Value, agentName });
 
             // Publish OrderPickedUpEvent
             var orderEvent = new OrderPickedUpEvent
@@ -402,40 +436,46 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderPickedUp, order.Id.ToString(), orderEvent);
-            _logger.PublishedOrderPickedUpEvent(order.Id);
+            _logger.LogDebug("Published OrderPickedUpEvent to Kafka for OrderId: {OrderId}", order.Id);
 
             return PickupResult.Success;
         }
 
         public async Task<DeliveryResult> CompleteDeliveryAsync(int orderId)
         {
-            _logger.CompletingDelivery(orderId);
+            _logger.LogInformation("Completing delivery: OrderId={OrderId}", orderId);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.CannotCompleteDelivery(orderId, "Order not found");
+                _logger.LogWarning("Cannot complete delivery: OrderId={OrderId}, Reason={Reason}", orderId, "Order not found");
                 return DeliveryResult.OrderNotFound;
             }
 
             if (order.Status != OrderStatus.PickedUp)
             {
-                _logger.CannotCompleteDelivery(orderId, $"Invalid status: {order.Status}");
+                _logger.LogWarning("Cannot complete delivery: OrderId={OrderId}, Reason={Reason}", orderId, $"Invalid status: {order.Status}");
                 return DeliveryResult.InvalidStatus;
             }
 
             if (order.AgentId == null)
             {
-                _logger.CannotCompleteDelivery(orderId, "No agent assigned");
+                _logger.LogWarning("Cannot complete delivery: OrderId={OrderId}, Reason={Reason}", orderId, "No agent assigned");
                 return DeliveryResult.NoAgentAssigned;
             }
 
             order.Status = OrderStatus.Delivered;
             await _orderRepository.UpdateOrderAsync(order);
 
-            // Audit log
-            _logger.OrderDelivered(order.Id, order.CustomerId);
+            _logger.LogAuditInformation(
+                action: "OrderDelivered",
+                resource: "Order",
+                resourceId: order.Id.ToString(),
+                userId: order.AgentId.Value,
+                userRole: "Agent",
+                message: "Order delivered: OrderId={OrderId}, CustomerId={CustomerId}, AgentId={AgentId}",
+                args: new object[] { order.Id, order.CustomerId, order.AgentId.Value });
 
             // Publish OrderDeliveredEvent
             var orderEvent = new OrderDeliveredEvent
@@ -446,18 +486,18 @@ namespace MToGo.OrderService.Services
             };
 
             await _kafkaProducer.PublishAsync(KafkaTopics.OrderDelivered, order.Id.ToString(), orderEvent);
-            _logger.PublishedOrderDeliveredEvent(order.Id);
+            _logger.LogDebug("Published OrderDeliveredEvent to Kafka for OrderId: {OrderId}", order.Id);
 
             return DeliveryResult.Success;
         }
 
         public async Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null)
         {
-            _logger.GettingOrderHistory(customerId, startDate, endDate);
+            _logger.LogInformation("Getting order history for CustomerId: {CustomerId}, StartDate: {StartDate}, EndDate: {EndDate}", customerId, startDate, endDate);
 
             var orders = await _orderRepository.GetOrdersByCustomerIdAsync(customerId, startDate, endDate);
 
-            _logger.OrderHistoryRetrieved(customerId, orders.Count);
+            _logger.LogInformation("Order history retrieved: CustomerId={CustomerId}, OrderCount={OrderCount}", customerId, orders.Count);
 
             return orders.Select(o => new CustomerOrderResponse
             {
@@ -481,11 +521,11 @@ namespace MToGo.OrderService.Services
 
         public async Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null)
         {
-            _logger.GettingAgentDeliveryHistory(agentId, startDate, endDate);
+            _logger.LogInformation("Getting delivery history for AgentId: {AgentId}, StartDate: {StartDate}, EndDate: {EndDate}", agentId, startDate, endDate);
 
             var orders = await _orderRepository.GetOrdersByAgentIdAsync(agentId, startDate, endDate);
 
-            _logger.AgentDeliveryHistoryRetrieved(agentId, orders.Count);
+            _logger.LogInformation("Agent delivery history retrieved: AgentId={AgentId}, DeliveryCount={DeliveryCount}", agentId, orders.Count);
 
             return orders.Select(o => new AgentDeliveryResponse
             {
@@ -509,11 +549,11 @@ namespace MToGo.OrderService.Services
 
         public async Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null)
         {
-            _logger.GettingPartnerOrderHistory(partnerId, startDate, endDate);
+            _logger.LogInformation("Getting order history for PartnerId: {PartnerId}, StartDate: {StartDate}, EndDate: {EndDate}", partnerId, startDate, endDate);
 
             var orders = await _orderRepository.GetOrdersByPartnerIdAsync(partnerId, startDate, endDate);
 
-            _logger.PartnerOrderHistoryRetrieved(partnerId, orders.Count);
+            _logger.LogInformation("Partner order history retrieved: PartnerId={PartnerId}, OrderCount={OrderCount}", partnerId, orders.Count);
 
             return orders.Select(o => new PartnerOrderResponse
             {
@@ -537,13 +577,13 @@ namespace MToGo.OrderService.Services
 
         public async Task<GetOrderDetailResult> GetOrderDetailAsync(int orderId, int userId, string userRole)
         {
-            _logger.GettingOrderDetail(orderId, userId, userRole);
+            _logger.LogInformation("Getting order detail: OrderId={OrderId}, UserId={UserId}, Role={Role}", orderId, userId, userRole);
 
             var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
             if (order == null)
             {
-                _logger.OrderDetailNotFound(orderId);
+                _logger.LogWarning("Order detail not found: OrderId={OrderId}", orderId);
                 return new GetOrderDetailResult
                 {
                     Success = false,
@@ -562,7 +602,14 @@ namespace MToGo.OrderService.Services
 
             if (!hasAccess)
             {
-                _logger.OrderDetailAccessDenied(orderId, userId, userRole);
+                _logger.LogAuditWarning(
+                    action: "OrderAccessDenied",
+                    resource: "Order",
+                    resourceId: orderId.ToString(),
+                    userId: userId,
+                    userRole: userRole,
+                    message: "Order access denied: OrderId={OrderId}, UserId={UserId}, Role={Role}",
+                    args: new object[] { orderId, userId, userRole });
                 return new GetOrderDetailResult
                 {
                     Success = false,
@@ -570,7 +617,7 @@ namespace MToGo.OrderService.Services
                 };
             }
 
-            _logger.OrderDetailRetrieved(orderId, userId, userRole);
+            _logger.LogInformation("Order detail retrieved: OrderId={OrderId}, UserId={UserId}, Role={Role}", orderId, userId, userRole);
 
             return new GetOrderDetailResult
             {
@@ -599,11 +646,11 @@ namespace MToGo.OrderService.Services
 
         public async Task<List<CustomerOrderResponse>> GetActiveOrdersByCustomerIdAsync(int customerId)
         {
-            _logger.GettingActiveCustomerOrders(customerId);
+            _logger.LogInformation("Getting active orders for CustomerId: {CustomerId}", customerId);
 
             var orders = await _orderRepository.GetActiveOrdersByCustomerIdAsync(customerId);
 
-            _logger.ActiveCustomerOrdersRetrieved(customerId, orders.Count);
+            _logger.LogInformation("Active customer orders retrieved: CustomerId={CustomerId}, OrderCount={OrderCount}", customerId, orders.Count);
 
             return orders.Select(o => new CustomerOrderResponse
             {
@@ -627,11 +674,11 @@ namespace MToGo.OrderService.Services
 
         public async Task<List<PartnerOrderResponse>> GetActiveOrdersByPartnerIdAsync(int partnerId)
         {
-            _logger.GettingActivePartnerOrders(partnerId);
+            _logger.LogInformation("Getting active orders for PartnerId: {PartnerId}", partnerId);
 
             var orders = await _orderRepository.GetActiveOrdersByPartnerIdAsync(partnerId);
 
-            _logger.ActivePartnerOrdersRetrieved(partnerId, orders.Count);
+            _logger.LogInformation("Active partner orders retrieved: PartnerId={PartnerId}, OrderCount={OrderCount}", partnerId, orders.Count);
 
             return orders.Select(o => new PartnerOrderResponse
             {
@@ -655,11 +702,11 @@ namespace MToGo.OrderService.Services
 
         public async Task<List<AgentDeliveryResponse>> GetActiveOrdersByAgentIdAsync(int agentId)
         {
-            _logger.GettingActiveAgentOrders(agentId);
+            _logger.LogInformation("Getting active orders for AgentId: {AgentId}", agentId);
 
             var orders = await _orderRepository.GetActiveOrdersByAgentIdAsync(agentId);
 
-            _logger.ActiveAgentOrdersRetrieved(agentId, orders.Count);
+            _logger.LogInformation("Active agent orders retrieved: AgentId={AgentId}, OrderCount={OrderCount}", agentId, orders.Count);
 
             return orders.Select(o => new AgentDeliveryResponse
             {
