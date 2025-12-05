@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MToGo.LogCollectorService.BackgroundServices;
 using MToGo.LogCollectorService.Entities;
 using MToGo.LogCollectorService.Services;
 using MToGo.Shared.Kafka;
