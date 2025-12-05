@@ -156,8 +156,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.AgentBonusService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.AgentBonusService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -238,8 +238,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.AgentService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.AgentService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.AgentService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.AgentService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -320,8 +320,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.CustomerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.CustomerService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.CustomerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.CustomerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -402,8 +402,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.FeedbackHubService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.FeedbackHubService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -484,8 +484,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.Gateway.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.Gateway.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -566,8 +566,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.NotificationService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.NotificationService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.NotificationService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.NotificationService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -648,8 +648,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.OrderService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.OrderService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.OrderService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.OrderService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -730,8 +730,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.PartnerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.PartnerService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.PartnerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.PartnerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -812,8 +812,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.Website.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.Website.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.Website.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.Website.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -894,8 +894,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.WebSocketAgentService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.WebSocketAgentService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -976,8 +976,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.WebSocketCustomerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.WebSocketCustomerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -1058,8 +1058,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.WebSocketPartnerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.WebSocketPartnerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
@@ -1140,8 +1140,8 @@ jobs:
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:../tests/MToGo.ManagementService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:../tests/MToGo.ManagementService.Tests/TestResults/CoverageReport" \
+            "-reports:tests/MToGo.ManagementService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.ManagementService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
 
