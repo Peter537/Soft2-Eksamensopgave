@@ -136,8 +136,8 @@ public class PartnerService : IPartnerService
             resourceId: createdMenuItem.Id.ToString(),
             userId: partnerId,
             userRole: "Partner",
-            message: "Menu item added: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Name={Name}",
-            args: new object[] { partnerId, createdMenuItem.Id, request.Name });
+            message: "Menu item added: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+            args: new object[] { partnerId, createdMenuItem.Id });
 
         return new CreateMenuItemResponse { Id = createdMenuItem.Id };
     }
