@@ -4,6 +4,18 @@ using MToGo.Shared.Security.Authentication;
 using MToGo.Shared.Security.Authorization;
 using System.Security.Claims;
 
+public interface IUserContext
+{
+    int? Id { get; }
+    string Role { get; }
+    string Email { get; }
+    bool IsAuthenticated { get; }
+    bool IsCustomer { get; }
+    bool IsAgent { get; }
+    bool IsPartner { get; }
+    bool IsManagement { get; }
+}
+
 public class UserContext : IUserContext
 {
     public int? Id { get; }

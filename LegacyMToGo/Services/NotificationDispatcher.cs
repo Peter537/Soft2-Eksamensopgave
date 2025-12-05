@@ -3,6 +3,11 @@ using LegacyMToGo.Services.Notifications;
 
 namespace LegacyMToGo.Services;
 
+public interface INotificationDispatcher
+{
+    Task DispatchAsync(NotificationMethod method, string destination, string message, CancellationToken cancellationToken = default);
+}
+
 /// <summary>
 /// Dispatches notifications using the Factory pattern.
 /// Delegates the actual sending to the appropriate notification sender created by the factory.
