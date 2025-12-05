@@ -30,6 +30,7 @@ namespace MToGo.Shared.Kafka
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true,
                 WriteIndented = false
             };
 
