@@ -394,5 +394,19 @@ namespace MToGo.OrderService.Controllers
 
             return Ok(result.Order);
         }
+
+        [HttpGet("available")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [ProducesResponseType(typeof(List<AvailableJobResponse>), 200)]
+        public async Task<IActionResult> GetAvailableOrders()
+        {
+            _logger.LogInformation("Received GetAvailableOrders request");
+
+            var availableJobs = await _orderService.GetAvailableOrdersAsync();
+
+            _logger.LogInformation("GetAvailableOrders completed: JobCount={JobCount}", availableJobs.Count);
+
+            return Ok(availableJobs);
+        }
     }
 }

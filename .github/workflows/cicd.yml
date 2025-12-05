@@ -138,8 +138,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.AgentBonusService.Tests/MToGo.AgentBonusService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.AgentBonusService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.AgentBonusService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.AgentBonusService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.AgentBonusService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-agentbonus
+          path: MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -193,8 +223,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.AgentService.Tests/MToGo.AgentService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.AgentService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.AgentService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.AgentService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.AgentService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.AgentService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.AgentService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-agentservice
+          path: MToGo/tests/MToGo.AgentService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -248,8 +308,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.CustomerService.Tests/MToGo.CustomerService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.CustomerService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.CustomerService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.CustomerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.CustomerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.CustomerService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.CustomerService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-customerservice
+          path: MToGo/tests/MToGo.CustomerService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -303,8 +393,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.FeedbackHubService.Tests/MToGo.FeedbackHubService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.FeedbackHubService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.FeedbackHubService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.FeedbackHubService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-feedbackhub
+          path: MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -358,8 +478,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.Gateway.Tests/MToGo.Gateway.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.Gateway.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.Gateway.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.Gateway.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.Gateway.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.Gateway.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-gateway
+          path: MToGo/tests/MToGo.Gateway.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -413,8 +563,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.NotificationService.Tests/MToGo.NotificationService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.NotificationService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.NotificationService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.NotificationService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.NotificationService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.NotificationService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.NotificationService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-notification
+          path: MToGo/tests/MToGo.NotificationService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -468,11 +648,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.OrderService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.OrderService.Tests
 
-      - name: Run EP & BVA Tests
-        run: dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release  --filter "ServiceFeeCalculationTests" --logger "console;verbosity=normal"
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.OrderService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.OrderService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.OrderService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.OrderService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-order
+          path: MToGo/tests/MToGo.OrderService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -526,8 +733,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.PartnerService.Tests/MToGo.PartnerService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.PartnerService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.PartnerService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.PartnerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.PartnerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.PartnerService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.PartnerService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-partner
+          path: MToGo/tests/MToGo.PartnerService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -581,8 +818,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.Website/MToGo.Website.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.Website.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.Website.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.Website.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.Website.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.Website.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.Website.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-website
+          path: MToGo/tests/MToGo.Website.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -636,8 +903,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.WebSocketAgentService.Tests/MToGo.WebSocketAgentService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.WebSocketAgentService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.WebSocketAgentService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.WebSocketAgentService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-websocketagent
+          path: MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -691,8 +988,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.WebSocketCustomerService.Tests/MToGo.WebSocketCustomerService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.WebSocketCustomerService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.WebSocketCustomerService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.WebSocketCustomerService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-websocketcustomer
+          path: MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -746,8 +1073,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.WebSocketPartnerService.Tests/MToGo.WebSocketPartnerService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.WebSocketPartnerService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.WebSocketPartnerService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.WebSocketPartnerService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-websocketpartner
+          path: MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
@@ -801,8 +1158,38 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj -c Release --no-restore
 
-      - name: Test
-        run: dotnet test MToGo/tests/MToGo.ManagementService.Tests/MToGo.ManagementService.Tests.csproj -c Release 
+      - name: Test with coverage
+        run: |
+          dotnet test MToGo.ManagementService.Tests.csproj -c Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        working-directory: MToGo/tests/MToGo.ManagementService.Tests
+
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        working-directory: MToGo
+
+      - name: Verify coverage file
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.ManagementService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.ManagementService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool run reportgenerator \
+            "-reports:tests/MToGo.ManagementService.Tests/TestResults/**/coverage.opencover.xml" \
+            "-targetdir:tests/MToGo.ManagementService.Tests/TestResults/CoverageReport" \
+            -reporttypes:Html
+        working-directory: MToGo
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-management
+          path: MToGo/tests/MToGo.ManagementService.Tests/TestResults/CoverageReport
+          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV

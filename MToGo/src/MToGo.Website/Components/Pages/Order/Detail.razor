@@ -139,8 +139,8 @@
                                                 <tr>
                                                     <td>@item.Name</td>
                                                     <td class="text-center">@item.Quantity</td>
-                                                    <td class="text-end">@item.UnitPrice.ToString("C")</td>
-                                                    <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                                                    <td class="text-end">@item.UnitPrice.FormatDKK()</td>
+                                                    <td class="text-end">@((item.Quantity * item.UnitPrice).FormatDKK())</td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -156,16 +156,16 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between mb-2">
                                             <span>@L["Pages.Order.Detail.ItemsSubtotal"]</span>
-                                            <span>@CalculateItemsSubtotal().ToString("C")</span>
+                                            <span>@CalculateItemsSubtotal().FormatDKK()</span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
                                             <span>@L["Pages.Order.Detail.DeliveryFee"]</span>
-                                            <span>@order.DeliveryFee.ToString("C")</span>
+                                            <span>@order.DeliveryFee.FormatDKK()</span>
                                         </div>
                                         <hr />
                                         <div class="d-flex justify-content-between">
                                             <strong>@L["Pages.Order.Detail.Total"]</strong>
-                                            <strong>@CalculateTotal().ToString("C")</strong>
+                                            <strong>@CalculateTotal().FormatDKK()</strong>
                                         </div>
                                     </div>
                                 </div>

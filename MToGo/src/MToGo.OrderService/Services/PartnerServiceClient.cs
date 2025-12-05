@@ -22,11 +22,21 @@ namespace MToGo.OrderService.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"/api/v1/partners/partners/{partnerId}");
+                // Use the /menu endpoint which is AllowAnonymous
+                var response = await _httpClient.GetAsync($"/api/v1/partners/{partnerId}/menu");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadFromJsonAsync<PartnerResponse>();
+                    var menuResponse = await response.Content.ReadFromJsonAsync<PartnerMenuResponse>();
+                    if (menuResponse != null)
+                    {
+                        return new PartnerResponse
+                        {
+                            Id = menuResponse.PartnerId,
+                            Name = menuResponse.PartnerName,
+                            Address = menuResponse.PartnerAddress
+                        };
+                    }
                 }
 
                 _logger.LogWarning("Failed to get partner {PartnerId}: {StatusCode}", partnerId, response.StatusCode);
@@ -38,5 +48,16 @@ namespace MToGo.OrderService.Services
                 return null;
             }
         }
+    }
+
+    /// <summary>
+    /// Internal DTO for deserializing the partner menu response
+    /// </summary>
+    internal class PartnerMenuResponse
+    {
+        public int PartnerId { get; set; }
+        public string PartnerName { get; set; } = string.Empty;
+        public string PartnerAddress { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
     }
 }

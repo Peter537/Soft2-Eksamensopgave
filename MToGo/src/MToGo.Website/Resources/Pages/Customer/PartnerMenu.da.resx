@@ -60,4 +60,10 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>Der opstod en fejl: {0}</value>
   </data>
+  <data name="GoToCheckout" xml:space="preserve">
+    <value>Gå til betaling</value>
+  </data>
+  <data name="YourCart" xml:space="preserve">
+    <value>Din indkøbskurv</value>
+  </data>
 </root>

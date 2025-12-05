@@ -165,7 +165,7 @@
                             <h6 class="card-subtitle mb-2 opacity-75">
                                 <i class="bi bi-cash-stack"></i> @L["Pages.Management.AgentBonus.TotalBonus"]
                             </h6>
-                            <h2 class="display-4 fw-bold mb-0">@bonusResult.BonusAmount.ToString("C")</h2>
+                            <h2 class="display-4 fw-bold mb-0">@bonusResult.BonusAmount.FormatDKK()</h2>
                             <small class="opacity-75">@L["Pages.Management.AgentBonus.EarnedThisPeriod"]</small>
                         </div>
                     </div>
@@ -311,7 +311,7 @@
                             <tbody>
                                 <tr>
                                     <td class="w-50"><strong>@L["Pages.Management.AgentBonus.ContributionBase"]</strong> <small class="text-muted">@L["Pages.Management.AgentBonus.ContributionBaseDesc"]</small></td>
-                                    <td class="text-end">@bonusResult.Contribution.ToString("C")</td>
+                                    <td class="text-end">@bonusResult.Contribution.FormatDKK()</td>
                                 </tr>
                                 <tr>
                                     <td><strong>@L["Pages.Management.AgentBonus.TimeScore"]</strong> <small class="text-muted">@L["Pages.Management.AgentBonus.TimeScoreDesc"]</small></td>
@@ -327,7 +327,7 @@
                                 </tr>
                                 <tr class="table-success">
                                     <td><strong>@L["Pages.Management.AgentBonus.FinalBonus"]</strong> <small class="text-muted">@L["Pages.Management.AgentBonus.FinalBonusDesc"]</small></td>
-                                    <td class="text-end fw-bold fs-5 text-success">@bonusResult.BonusAmount.ToString("C")</td>
+                                    <td class="text-end fw-bold fs-5 text-success">@bonusResult.BonusAmount.FormatDKK()</td>
                                 </tr>
                             </tbody>
                         </table>

@@ -94,7 +94,7 @@
                                                         <ul class="list-unstyled mb-0">
                                                             @foreach (var item in order.Items)
                                                             {
-                                                                <li>@item.Quantity x @item.Name (@item.UnitPrice.ToString("C"))</li>
+                                                                <li>@item.Quantity x @item.Name (@item.UnitPrice.FormatDKK())</li>
                                                             }
                                                         </ul>
                                                     </td>
@@ -102,9 +102,9 @@
                                                         <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
                                                     </td>
                                                     <td class="text-end">
-                                                        <div>@L["Pages.Customer.Orders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
+                                                        <div>@L["Pages.Customer.Orders.DeliveryFee"]: @order.DeliveryFee.FormatDKK()</div>
                                                         <hr class="my-1" />
-                                                        <strong>@CalculateTotal(order).ToString("C")</strong>
+                                                        <strong>@CalculateTotal(order).FormatDKK()</strong>
                                                     </td>
                                                     <td class="text-center">
                                                         <a href="/order/@order.Id" class="btn btn-sm btn-outline-primary">

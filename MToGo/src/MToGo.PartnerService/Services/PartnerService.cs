@@ -260,6 +260,7 @@ public class PartnerService : IPartnerService
         {
             PartnerId = partner.Id,
             PartnerName = partner.Name,
+            PartnerAddress = partner.Address,
             IsActive = partner.IsActive,
             Items = partner.MenuItems.Select(m => new PublicMenuItemResponse
             {

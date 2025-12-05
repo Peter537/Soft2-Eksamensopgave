@@ -60,4 +60,10 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>An error occurred: {0}</value>
   </data>
+  <data name="GoToCheckout" xml:space="preserve">
+    <value>Go to Checkout</value>
+  </data>
+  <data name="YourCart" xml:space="preserve">
+    <value>Your Cart</value>
+  </data>
 </root>

@@ -124,7 +124,7 @@
                                                 <tr>
                                                     <td>@item.Id</td>
                                                     <td>@item.Name</td>
-                                                    <td class="text-end">@item.Price.ToString("C")</td>
+                                                    <td class="text-end">@item.Price.FormatDKK()</td>
                                                     <td class="text-center">
                                                         <button type="button" class="btn btn-sm btn-outline-primary me-1" @onclick="() => ShowEditForm(item)">
                                                             <i class="bi bi-pencil"></i> @L["Pages.Partner.Menu.EditButton"]
