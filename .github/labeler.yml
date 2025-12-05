@@ -106,6 +106,7 @@ docs:
 devops:
   - changed-files:
       - any-glob-to-any-file:
+          - .config/**
           - .github/**
           - terraform/**
 
