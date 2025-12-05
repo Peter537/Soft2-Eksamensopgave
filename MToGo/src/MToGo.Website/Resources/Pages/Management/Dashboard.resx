@@ -87,4 +87,22 @@
   <data name="AgentBonusButton" xml:space="preserve">
     <value>Calculate Bonus</value>
   </data>
+  <data name="AuditLogsTitle" xml:space="preserve">
+    <value>Audit Logs</value>
+  </data>
+  <data name="AuditLogsDescription" xml:space="preserve">
+    <value>View business-critical audit logs for tracking user actions, orders, and system events.</value>
+  </data>
+  <data name="ViewAuditLogsButton" xml:space="preserve">
+    <value>View Audit Logs</value>
+  </data>
+  <data name="SystemLogsTitle" xml:space="preserve">
+    <value>System Logs</value>
+  </data>
+  <data name="SystemLogsDescription" xml:space="preserve">
+    <value>Browse daily system log files for debugging, monitoring, and troubleshooting.</value>
+  </data>
+  <data name="ViewSystemLogsButton" xml:space="preserve">
+    <value>View System Logs</value>
+  </data>
 </root>

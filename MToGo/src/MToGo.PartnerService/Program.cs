@@ -3,6 +3,7 @@ using MToGo.PartnerService.Data;
 using MToGo.PartnerService.Metrics;
 using MToGo.PartnerService.Repositories;
 using MToGo.PartnerService.Services;
+using MToGo.Shared.Logging;
 using MToGo.Shared.Metrics;
 using MToGo.Shared.Security;
 
@@ -30,6 +31,9 @@ builder.Services.AddDbContext<PartnerDbContext>(options =>
 // Add Repository and Service
 builder.Services.AddScoped<IPartnerRepository, PartnerRepository>();
 builder.Services.AddScoped<IPartnerService, PartnerService>();
+
+// Add Kafka logging for centralized log collection
+builder.Services.AddKafkaLogging("PartnerService", LogLevel.Information);
 
 var app = builder.Build();
 
