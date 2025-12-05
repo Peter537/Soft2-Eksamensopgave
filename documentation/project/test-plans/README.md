@@ -22,7 +22,7 @@ Denne mappe indeholder testplaner for alle MToGo services.
 
 | Dokument                                       | Beskrivelse                            |
 | ---------------------------------------------- | -------------------------------------- |
-| [project-test-plan.md](./project-test-plan.md)   | Overordnet testplan for hele projektet |
+| [project-test-plan.md](./project-test-plan.md) | Overordnet testplan for hele projektet |
 | [shared-risks.md](./shared-risks.md)           | Delte risici på tværs af services      |
 
 ## Relateret Dokumentation
