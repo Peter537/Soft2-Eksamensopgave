@@ -5,6 +5,8 @@ namespace MToGo.OrderService.Models
         public int Id { get; set; }
         public int CustomerId { get; set; }
         public int PartnerId { get; set; }
+        public string PartnerName { get; set; } = string.Empty;
+        public string PartnerAddress { get; set; } = string.Empty;
         public string DeliveryAddress { get; set; } = string.Empty;
         public decimal ServiceFee { get; set; }
         public decimal DeliveryFee { get; set; }

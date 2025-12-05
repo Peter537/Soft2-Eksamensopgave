@@ -709,24 +709,36 @@ namespace MToGo.OrderService.Services
 
             _logger.LogInformation("Active agent orders retrieved: AgentId={AgentId}, OrderCount={OrderCount}", agentId, orders.Count);
 
-            return orders.Select(o => new AgentDeliveryResponse
+            var results = new List<AgentDeliveryResponse>();
+
+            foreach (var o in orders)
             {
-                Id = o.Id,
-                CustomerId = o.CustomerId,
-                PartnerId = o.PartnerId,
-                DeliveryAddress = o.DeliveryAddress,
-                ServiceFee = o.ServiceFee,
-                DeliveryFee = o.DeliveryFee,
-                Status = o.Status.ToString(),
-                OrderCreatedTime = o.CreatedAt.ToString("O"),
-                Items = o.Items.Select(i => new AgentDeliveryItemResponse
+                // Fetch partner information
+                var partner = await _partnerServiceClient.GetPartnerByIdAsync(o.PartnerId);
+
+                results.Add(new AgentDeliveryResponse
                 {
-                    FoodItemId = i.FoodItemId,
-                    Name = i.Name,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice
-                }).ToList()
-            }).ToList();
+                    Id = o.Id,
+                    CustomerId = o.CustomerId,
+                    PartnerId = o.PartnerId,
+                    PartnerName = partner?.Name ?? "Unknown Partner",
+                    PartnerAddress = partner?.Address ?? string.Empty,
+                    DeliveryAddress = o.DeliveryAddress,
+                    ServiceFee = o.ServiceFee,
+                    DeliveryFee = o.DeliveryFee,
+                    Status = o.Status.ToString(),
+                    OrderCreatedTime = o.CreatedAt.ToString("O"),
+                    Items = o.Items.Select(i => new AgentDeliveryItemResponse
+                    {
+                        FoodItemId = i.FoodItemId,
+                        Name = i.Name,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice
+                    }).ToList()
+                });
+            }
+
+            return results;
         }
 
         public async Task<List<AvailableJobResponse>> GetAvailableOrdersAsync()
