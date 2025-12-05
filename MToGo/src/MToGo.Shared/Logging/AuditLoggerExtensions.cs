@@ -9,6 +9,41 @@ namespace MToGo.Shared.Logging
     public static class AuditLoggerExtensions
     {
         /// <summary>
+        /// Sanitizes a string value to prevent log injection attacks.
+        /// Removes or escapes characters that could be used for log forging.
+        /// </summary>
+        private static string SanitizeLogValue(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            // Remove newlines, carriage returns, and tabs that could forge log entries
+            // Also escape any potential format string markers
+            return value
+                .Replace("\r", "")
+                .Replace("\n", " ")
+                .Replace("\t", " ")
+                .Replace("{", "{{")
+                .Replace("}", "}}");
+        }
+
+        /// <summary>
+        /// Sanitizes all arguments to prevent log injection attacks.
+        /// </summary>
+        private static object?[] SanitizeArgs(object?[] args)
+        {
+            if (args == null || args.Length == 0)
+                return args ?? Array.Empty<object?>();
+
+            var sanitized = new object?[args.Length];
+            for (int i = 0; i < args.Length; i++)
+            {
+                sanitized[i] = args[i] is string strValue ? SanitizeLogValue(strValue) : args[i];
+            }
+            return sanitized;
+        }
+
+        /// <summary>
         /// Logs an audit entry with Debug level.
         /// </summary>
         public static void LogAuditDebug(this ILogger logger, string action, string resource, string? resourceId, string message, params object?[] args)
@@ -87,27 +122,29 @@ namespace MToGo.Shared.Logging
                 ["AuditUserRole"] = userRole
             }))
             {
+                // Sanitize user-provided args to prevent log injection
+                var sanitizedArgs = SanitizeArgs(args);
                 var formattedMessage = $"[AUDIT] {action}: {message}";
                 
                 switch (level)
                 {
                     case LogLevel.Debug:
-                        logger.LogDebug(formattedMessage, args);
+                        logger.LogDebug(formattedMessage, sanitizedArgs);
                         break;
                     case LogLevel.Information:
-                        logger.LogInformation(formattedMessage, args);
+                        logger.LogInformation(formattedMessage, sanitizedArgs);
                         break;
                     case LogLevel.Warning:
-                        logger.LogWarning(formattedMessage, args);
+                        logger.LogWarning(formattedMessage, sanitizedArgs);
                         break;
                     case LogLevel.Error:
-                        logger.LogError(exception, formattedMessage, args);
+                        logger.LogError(exception, formattedMessage, sanitizedArgs);
                         break;
                     case LogLevel.Critical:
-                        logger.LogCritical(exception, formattedMessage, args);
+                        logger.LogCritical(exception, formattedMessage, sanitizedArgs);
                         break;
                     default:
-                        logger.LogInformation(formattedMessage, args);
+                        logger.LogInformation(formattedMessage, sanitizedArgs);
                         break;
                 }
             }
