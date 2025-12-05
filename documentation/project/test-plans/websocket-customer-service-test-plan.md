@@ -3,7 +3,8 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Dato: 21. november 2025  
+Projekt-testplan-version: 1.0  
+Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
 ## **Indholdsfortegnelse**
@@ -11,66 +12,49 @@ Forfattere: Oskar, Peter og Yusuf
 - [Indledning](#indledning)
 - [Risikoanalyse](#risikoanalyse)
 - [Test fremgangsmåde](#test-fremgangsmåde)
-- [Tidsplan og prioriteringsliste](#tidsplan-og-prioriteringsliste)
-- [Exit Criteria](#exit-criteria)
 - [Test deliverables](#test-deliverables)
 
 ## **Indledning**
 
 **WebSocketCustomerService** fungerer som en realtidskommunikationstjeneste, der videresender Kafka-begivenheder til kunder via WebSocket-forbindelser.
 
+**Modenhedsniveau:** Level 3 (Event Consumers) - Se [projekt-testplan.md](projekt-testplan.md#level-3-event-consumers)
+
 Projektet skal:
 
-- Validere at WebSocket-forbindelser etableres og vedligeholdes korrekt.
-- Verificere at order events forwardes med det samme og pålideligt til de korrekte kunder.
-- Bekræfte at connection management (connect, disconnect, reconnect) fungerer robust.
-- Sikre korrekt routing af events til rigtige kunder baseret på kunde ID.
-- Teste at simultane connections fra flere kunder håndteres effektivt.
+- Validere at WebSocket-forbindelser etableres og vedligeholdes korrekt
+- Verificere at order events forwardes med det samme og pålideligt til de korrekte kunder
+- Bekræfte at connection management (connect, disconnect, reconnect) fungerer robust
+- Sikre korrekt routing af events til rigtige kunder baseret på kunde ID
+- Teste at simultane connections fra flere kunder håndteres effektivt
 
 ### Målgruppe
 
-- **Udvikler**: Implementerer og vedligeholder tests/kvalitet.
-- **QA Manager/Test Lead**: Udfører og overvåger tests, validerer test deliverables.
-- **DevOps**: Opsætter miljøer og pipelines.
-- **Security Expert**: Gennemfører sikkerhedsvurderinger og validerer sikkerhedstests.
-- **Product Owner / Arkitekt**: Validerer acceptance tests.
-- **Compliance Officer**: Sikrer overholdelse af databeskyttelsesregler.
+- **Udvikler**: Implementerer og vedligeholder tests/kvalitet
+- **QA Manager/Test Lead**: Udfører og overvåger tests, validerer test deliverables
+- **DevOps**: Opsætter miljøer og pipelines
+- **Security Expert**: Gennemfører sikkerhedsvurderinger og validerer sikkerhedstests
+- **Product Owner / Arkitekt**: Validerer acceptance tests
+- **Compliance Officer**: Sikrer overholdelse af databeskyttelsesregler
 
 ### Assumptions
 
-Dette er de forudsætninger, vi antager er sande for at denne testplan kan være gyldig og gennemføres:
-
-1. Stabilt udviklingsmiljø og lokal testopsætning.
-2. Testdata er tilgængeligt eller kan genereres (ingen produktionsdata).
-3. API-kontrakter og event-schemaer ændres ikke under testplanen.
-
-### Entry Criteria
-
-- Teststrategi og security plan godkendt.
-- CI/CD pipeline opsat med testdatabaser.
-- DDD-model godkendt.
-- Generelle produkt risici identificeret.
-- Preliminary arkitekturdesign.
-- Branch protection-regler opsat.
+1. Stabilt udviklingsmiljø og lokal testopsætning
+2. Testdata er tilgængeligt eller kan genereres (ingen produktionsdata)
+3. API-kontrakter og event-schemaer ændres ikke under testplanen
 
 ## **Risikoanalyse**
 
-Denne sektion identificerer risici for denne service baseret på de 10 parent-risici fra teststrategien.
+### Shared Risks
 
-### Shared Risks Oversigt
+Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R1-R10).
 
-Denne sektion refererer til de shared risks defineret i [shared-risks.md](shared-risks.md), hvor de relevante shared-risks for denne service er:
+### WebSocket Customer-specifikke Risici
 
-- R1 (Performance & Skalering): R1.1-R1.7 kan ses i [shared-risks.md](shared-risks.md#performance--skalering-parent-r1)
-- R2 (Sikkerhed & Compliance): R2.1-R2.5 kan ses i [shared-risks.md](shared-risks.md#sikkerhed--compliance-parent-r2)
-- R3 (Sikkerhed & Compliance): R3.1-R3.5 kan ses i [shared-risks.md](shared-risks.md#sikkerhed--compliance-parent-r3)
-- R4 (Team & Ressource): R4.1-R4.7 kan ses i [shared-risks.md](shared-risks.md#team--ressource-parent-r4)
-- R5 (Udvikling & Kvalitet): R5.1-R5.3 kan ses i [shared-risks.md](shared-risks.md#udvikling--kvalitet-parent-r5)
-- R6 (Infrastruktur & Miljø): R6.1-R6.6 kan ses i [shared-risks.md](shared-risks.md#infrastruktur--miljø-parent-r6)
-- R7 (Infrastruktur & Miljø): R7.1-R7.5 kan ses i [shared-risks.md](shared-risks.md#infrastruktur--miljø-parent-r7)
-- R8 (Integration & Deployment): R8.1-R8.5 kan ses i [shared-risks.md](shared-risks.md#integration--deployment-parent-r8)
-- R9 (Integration & Deployment): R9.1-R9.2 kan ses i [shared-risks.md](shared-risks.md#integration--deployment-parent-r9)
-- R10 (Udvikling & Kvalitet): R10.1-R10.5 kan ses i [shared-risks.md](shared-risks.md#udvikling--kvalitet-parent-r10)
+| Risk ID | Risk | Mitigation | Severity | Likelihood |
+|:--------|:-----|:-----------|:---------|:-----------|
+| R1.10 | WebSocket connection overload ved mange simultane kunder | Implementer connection pooling; load test med realistisk antal connections; implementer graceful degradation | Significant | Possible |
+| R6.8 | WebSocket connections droppes ved netværksproblemer | Implementer auto-reconnect logik i client; test reconnection scenarios; implementer heartbeat/ping-pong | Moderate | Likely |
 
 ## **Test fremgangsmåde**
 
@@ -80,47 +64,28 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Omfanget inkluderer følgende testtyper, tilpasset fra strategien til denne service:
+Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
 
-- **Unit-tests**: Individuelle komponenter. Størrelse: Én metode.
-- **Integrationstests**: Samspil mellem WebSocket Customer Servicen og gateway.
-- **Acceptance Tests**: Kafka Consumere og WebSockets.
-- **Specificationsbaserede tests**: Baseret på user stories.
-- **Sikkerhedstests**: OWASP-checks.
+**Service-specifikke tilføjelser:**
+- Kafka consumer tests med real Kafka container
+- WebSocket connection management tests
+- Multi-client broadcast tests
 
-Servicen indgår derudover i de system-wide **system tests** og **end-to-end tests**, hvor hele platformens flow valideres samlet.
+**Kafka Topics Konsumeret:**
 
-### Code Coverage krav
+| Topic | Handling |
+|-------|----------|
+| `order-accepted` | Notificér kunde om ordre accepteret |
+| `agent-assigned` | Notificér kunde om agent tildelt |
+| `order-ready` | Notificér kunde om ordre klar til afhentning |
+| `order-pickedup` | Notificér kunde om ordre afhentet |
+| `order-delivered` | Notificér kunde om ordre leveret |
 
-| Metrik | Controller | Service-layer | Repository | Øvrige komponenter |
-| ------ | ---------- | ------------- | ---------- | ------------------ |
-| Line   | >70%       | >70%          | >70%       | >60%               |
-| Branch | >70%       | >70%          | >70%       | >60%               |
-| Method | >70%       | >70%          | >70%       | >60%               |
+Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platformens flow valideres samlet.
 
 ### Værktøjer
 
-- xUnit: Test framework
-- Moq: Mocks
-- Coverlet & reportgenerator: Code coverage
-- StyleCop & SonarQube: Static analysis
-- GitHub Actions: CI/CD-pipeline
-- Docker: Container
-
-## **Tidsplan og prioriteringsliste**
-
-1. Unit tests og specifikationsbaserede tests
-2. Acceptance tests
-3. Integrationstests
-4. Sikkerhedstests
-
-## **Exit Criteria**
-
-- Code Coverage krav er opfyldt
-- Alle prioriteringer er opnået
-- Intet kritisk fra sikkerheds scan
-- Alle tests skal være succesfulde
-- Alle user stories og funktionelle stories er testet
+Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
 
 ## **Test deliverables**
 
