@@ -1,0 +1,470 @@
+@page "/management/audit-logs"
+@inject HttpClient Http
+@inject AuthService Auth
+@inject NavigationManager Navigation
+@inject CultureService CultureService
+@inject ILocalizerService L
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@L["Pages.Management.AuditLogs.PageTitle"]</PageTitle>
+
+<div class="container mt-4">
+    @if (!isInitialized)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">@L["Pages.Management.AuditLogs.Loading"]</span>
+            </div>
+        </div>
+    }
+    else if (!Auth.IsManagement)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="alert alert-warning">
+                    <h5 class="alert-heading">@L["Pages.Management.AuditLogs.AccessDeniedTitle"]</h5>
+                    <p class="mb-0">@L["Pages.Management.AuditLogs.LoginRequired"] <a href="/management/login">@L["Pages.Management.AuditLogs.LoginLink"]</a></p>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/management">@L["Pages.Management.AuditLogs.BreadcrumbDashboard"]</a></li>
+                <li class="breadcrumb-item active">@L["Pages.Management.AuditLogs.BreadcrumbAuditLogs"]</li>
+            </ol>
+        </nav>
+
+        <h2 class="mb-4"><i class="bi bi-shield-check me-2"></i>@L["Pages.Management.AuditLogs.Title"]</h2>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>@L["Pages.Management.AuditLogs.Filters"]</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterService"]</label>
+                        <select class="form-select" @bind="filterService">
+                            <option value="">@L["Pages.Management.AuditLogs.FilterAll"]</option>
+                            <option value="OrderService">Order Service</option>
+                            <option value="CustomerService">Customer Service</option>
+                            <option value="PartnerService">Partner Service</option>
+                            <option value="AgentService">Agent Service</option>
+                            <option value="AgentBonusService">Agent Bonus Service</option>
+                            <option value="FeedbackHubService">Feedback Hub Service</option>
+                            <option value="NotificationService">Notification Service</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterLevel"]</label>
+                        <select class="form-select" @bind="filterLevel">
+                            <option value="">@L["Pages.Management.AuditLogs.FilterAll"]</option>
+                            <option value="Information">Information</option>
+                            <option value="Warning">Warning</option>
+                            <option value="Error">Error</option>
+                            <option value="Critical">Critical</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterUserId"]</label>
+                        <input type="text" class="form-control" @bind="filterUserId" placeholder="User ID" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterStartDate"]</label>
+                        <input type="date" class="form-control" @bind="startDate" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterEndDate"]</label>
+                        <input type="date" class="form-control" @bind="endDate" />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" @onclick="LoadAuditLogs" disabled="@isLoading">
+                            @if (isLoading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-search me-2"></i>
+                            }
+                            @L["Pages.Management.AuditLogs.SearchButton"]
+                        </button>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterSearch"]</label>
+                        <input type="text" class="form-control" @bind="searchQuery" placeholder="@L["Pages.Management.AuditLogs.FilterSearchPlaceholder"]" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">@L["Pages.Management.AuditLogs.FilterPageSize"]</label>
+                        <select class="form-select" @bind="pageSize">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+            </div>
+        }
+        else if (auditLogs.Count == 0 && hasSearched)
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>@L["Pages.Management.AuditLogs.NoLogsFound"]
+            </div>
+        }
+        else if (auditLogs.Count > 0)
+        {
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>@L["Pages.Management.AuditLogs.LogsTitle"]</h5>
+                    <div>
+                        <span class="badge bg-primary me-2">@L.GetString("Pages.Management.AuditLogs.LogCount", auditLogs.Count)</span>
+                        <span class="badge bg-secondary">@L.GetString("Pages.Management.AuditLogs.TotalCount", totalCount)</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 160px;">@L["Pages.Management.AuditLogs.TableTimestamp"]</th>
+                                    <th style="width: 80px;">@L["Pages.Management.AuditLogs.TableLevel"]</th>
+                                    <th style="width: 140px;">@L["Pages.Management.AuditLogs.TableService"]</th>
+                                    <th style="width: 100px;">@L["Pages.Management.AuditLogs.TableUserId"]</th>
+                                    <th>@L["Pages.Management.AuditLogs.TableMessage"]</th>
+                                    <th style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in auditLogs)
+                                {
+                                    <tr class="@GetRowClass(log.Level)">
+                                        <td class="text-nowrap small">@FormatTimestamp(log.Timestamp)</td>
+                                        <td>@RenderLevelBadge(log.Level)</td>
+                                        <td class="text-truncate small" style="max-width: 140px;" title="@log.ServiceName">@log.ServiceName</td>
+                                        <td class="small">@(log.UserId?.ToString() ?? "-")</td>
+                                        <td class="text-truncate" style="max-width: 400px;" title="@log.Message">@log.Message</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => ShowDetails(log)" title="@L["Pages.Management.AuditLogs.ViewDetails"]">
+                                                <i class="bi bi-eye me-1"></i>@L["Pages.Management.AuditLogs.ViewDetails"]
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center">
+                    <div>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="PreviousPage" disabled="@(currentPage <= 1)">
+                            <i class="bi bi-chevron-left"></i> @L["Pages.Management.AuditLogs.Previous"]
+                        </button>
+                        <span class="mx-3">@L.GetString("Pages.Management.AuditLogs.PageInfo", currentPage, totalPages)</span>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="NextPage" disabled="@(currentPage >= totalPages)">
+                            @L["Pages.Management.AuditLogs.Next"] <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Log Details Modal -->
+        @if (selectedLog != null)
+        {
+            <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">@L["Pages.Management.AuditLogs.ModalTitle"]</h5>
+                            <button type="button" class="btn-close" @onclick="CloseDetails"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.TableTimestamp"]:</strong><br/>
+                                    <span class="text-muted">@FormatTimestamp(selectedLog.Timestamp)</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.TableLevel"]:</strong><br/>
+                                    @RenderLevelBadge(selectedLog.Level)
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.TableService"]:</strong><br/>
+                                    <span class="text-muted">@selectedLog.ServiceName</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.ModalCategory"]:</strong><br/>
+                                    <span class="text-muted">@(selectedLog.Category ?? "-")</span>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.TableUserId"]:</strong><br/>
+                                    <span class="text-muted">@(selectedLog.UserId?.ToString() ?? "-")</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.ModalCorrelationId"]:</strong><br/>
+                                    <span class="text-muted small">@(selectedLog.CorrelationId ?? "-")</span>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="mb-3">
+                                <strong>@L["Pages.Management.AuditLogs.TableMessage"]:</strong>
+                                <p class="mt-2 p-3 bg-light rounded">@selectedLog.Message</p>
+                            </div>
+                            @if (!string.IsNullOrEmpty(selectedLog.Data))
+                            {
+                                <div class="mb-3">
+                                    <strong>@L["Pages.Management.AuditLogs.ModalData"]:</strong>
+                                    <pre class="mt-2 p-3 bg-dark text-light rounded" style="max-height: 300px; overflow: auto;">@FormatJson(selectedLog.Data)</pre>
+                                </div>
+                            }
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>@L["Pages.Management.AuditLogs.ModalMachine"]:</strong><br/>
+                                    <span class="text-muted small">@(selectedLog.MachineName ?? "-")</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>ID:</strong><br/>
+                                    <span class="text-muted small">@selectedLog.Id</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseDetails">@L["Pages.Management.AuditLogs.Close"]</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool isInitialized;
+    private bool isLoading;
+    private bool hasSearched;
+    private string? errorMessage;
+
+    // Filters
+    private string filterService = "";
+    private string filterLevel = "";
+    private string filterUserId = "";
+    private string searchQuery = "";
+    private DateTime? startDate;
+    private DateTime? endDate;
+    private int pageSize = 50;
+    private int currentPage = 1;
+    private int totalCount;
+    private int totalPages => (int)Math.Ceiling((double)totalCount / pageSize);
+
+    // Data
+    private List<AuditLogDto> auditLogs = new();
+    private AuditLogDto? selectedLog;
+
+    protected override void OnInitialized()
+    {
+        CultureService.OnChange += OnCultureChanged;
+        startDate = DateTime.Today;
+        endDate = DateTime.Today;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            isInitialized = true;
+            StateHasChanged();
+
+            if (Auth.IsManagement)
+            {
+                await LoadAuditLogs();
+            }
+        }
+    }
+
+    private async Task LoadAuditLogs()
+    {
+        isLoading = true;
+        errorMessage = null;
+        hasSearched = true;
+        StateHasChanged();
+
+        try
+        {
+            var queryParams = new List<string>
+            {
+                $"page={currentPage}",
+                $"pageSize={pageSize}"
+            };
+
+            if (!string.IsNullOrEmpty(filterService))
+                queryParams.Add($"serviceName={Uri.EscapeDataString(filterService)}");
+            if (!string.IsNullOrEmpty(filterLevel))
+                queryParams.Add($"level={Uri.EscapeDataString(filterLevel)}");
+            if (!string.IsNullOrEmpty(filterUserId))
+                queryParams.Add($"userId={Uri.EscapeDataString(filterUserId)}");
+            if (startDate.HasValue)
+                queryParams.Add($"fromDate={startDate.Value:yyyy-MM-dd}");
+            if (endDate.HasValue)
+                queryParams.Add($"toDate={endDate.Value:yyyy-MM-dd}");
+            if (!string.IsNullOrEmpty(searchQuery))
+                queryParams.Add($"search={Uri.EscapeDataString(searchQuery)}");
+
+            var url = $"/api/v1/logs/audit?{string.Join("&", queryParams)}";
+            var response = await Http.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<AuditLogResponse>();
+                if (result != null)
+                {
+                    auditLogs = result.Logs;
+                    totalCount = result.TotalCount;
+                }
+            }
+            else
+            {
+                errorMessage = $"Failed to load audit logs: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading audit logs: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadAuditLogs();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            await LoadAuditLogs();
+        }
+    }
+
+    private void ShowDetails(AuditLogDto log)
+    {
+        selectedLog = log;
+    }
+
+    private void CloseDetails()
+    {
+        selectedLog = null;
+    }
+
+    private string FormatTimestamp(DateTime timestamp)
+    {
+        return timestamp.ToString("yyyy-MM-dd HH:mm:ss");
+    }
+
+    private string GetRowClass(string level)
+    {
+        return level switch
+        {
+            "Error" => "table-danger",
+            "Warning" => "table-warning",
+            "Critical" => "table-danger fw-bold",
+            _ => ""
+        };
+    }
+
+    private MarkupString RenderLevelBadge(string level)
+    {
+        var (badgeClass, icon) = level switch
+        {
+            "Information" => ("bg-info", "bi-info-circle"),
+            "Warning" => ("bg-warning text-dark", "bi-exclamation-triangle"),
+            "Error" => ("bg-danger", "bi-x-circle"),
+            "Critical" => ("bg-danger", "bi-exclamation-octagon"),
+            _ => ("bg-secondary", "bi-question-circle")
+        };
+
+        return new MarkupString($"<span class=\"badge {badgeClass}\"><i class=\"bi {icon} me-1\"></i>{level}</span>");
+    }
+
+    private string FormatJson(string json)
+    {
+        try
+        {
+            var parsed = System.Text.Json.JsonSerializer.Deserialize<object>(json);
+            return System.Text.Json.JsonSerializer.Serialize(parsed, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return json;
+        }
+    }
+
+    private void OnCultureChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CultureService.OnChange -= OnCultureChanged;
+    }
+
+    // DTOs
+    private class AuditLogResponse
+    {
+        public List<AuditLogDto> Logs { get; set; } = new();
+        public int TotalCount { get; set; }
+    }
+
+    private class AuditLogDto
+    {
+        public int Id { get; set; }
+        public string LogId { get; set; } = "";
+        public DateTime Timestamp { get; set; }
+        public string Level { get; set; } = "";
+        public string ServiceName { get; set; } = "";
+        public string? Category { get; set; }
+        public string Message { get; set; } = "";
+        public int? UserId { get; set; }
+        public string? UserRole { get; set; }
+        public string? Action { get; set; }
+        public string? Resource { get; set; }
+        public string? ResourceId { get; set; }
+        public string? TraceId { get; set; }
+        public string? PropertiesJson { get; set; }
+        public string? MachineName { get; set; }
+        
+        // Computed properties for display
+        public string? Data => PropertiesJson;
+        public string? CorrelationId => TraceId;
+    }
+}

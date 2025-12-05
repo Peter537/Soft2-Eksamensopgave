@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MToGo.PartnerService.Exceptions;
-using MToGo.PartnerService.Logging;
 using MToGo.PartnerService.Models;
 using MToGo.PartnerService.Services;
+using MToGo.Shared.Logging;
 using MToGo.Shared.Security.Authorization;
 
 namespace MToGo.PartnerService.Controllers;
@@ -105,25 +105,34 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddMenuItem(int id, [FromBody] CreateMenuItemRequest request)
     {
-        _logger.ReceivedAddMenuItemRequest(id);
+        _logger.LogInformation("Received AddMenuItem request for PartnerId: {PartnerId}", id);
 
         // Verify the authenticated user is the partner
         var userIdClaim = User.FindFirst("id")?.Value;
         if (!int.TryParse(userIdClaim, out var userId) || userId != id)
         {
-            _logger.AddMenuItemFailed(id, "Unauthorized access");
+            _logger.LogWarning("AddMenuItem failed: PartnerId={PartnerId}, Reason=Unauthorized access", id);
             return Forbid();
         }
 
         try
         {
             var result = await _partnerService.AddMenuItemAsync(id, request);
-            _logger.AddMenuItemCompleted(id, result.Id);
+            
+            _logger.LogAuditInformation(
+                action: "AddMenuItemCompleted",
+                resource: "MenuItem",
+                resourceId: result.Id.ToString(),
+                userId: id,
+                userRole: "Partner",
+                message: "AddMenuItem completed: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+                args: new object[] { id, result.Id });
+            
             return Created($"/api/v1/partners/{id}/menu/items/{result.Id}", result);
         }
         catch (PartnerNotFoundException ex)
         {
-            _logger.AddMenuItemFailed(id, ex.Message);
+            _logger.LogWarning("AddMenuItem failed: PartnerId={PartnerId}, Reason={Reason}", id, ex.Message);
             return NotFound(new { error = ex.Message });
         }
     }
@@ -140,49 +149,58 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateMenuItem(int id, int foodItemId, [FromBody] UpdateMenuItemRequest request)
     {
-        _logger.ReceivedUpdateMenuItemRequest(id, foodItemId);
+        _logger.LogInformation("Received UpdateMenuItem request for PartnerId: {PartnerId}, MenuItemId: {MenuItemId}", id, foodItemId);
 
         // Verify the authenticated user is the partner
         var userIdClaim = User.FindFirst("id")?.Value;
         if (!int.TryParse(userIdClaim, out var userId) || userId != id)
         {
-            _logger.UpdateMenuItemFailed(id, foodItemId, "Unauthorized access");
+            _logger.LogWarning("UpdateMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason=Unauthorized access", id, foodItemId);
             return Forbid();
         }
 
         // Validate that at least one field is provided
         if (string.IsNullOrWhiteSpace(request.Name) && !request.Price.HasValue)
         {
-            _logger.UpdateMenuItemFailed(id, foodItemId, "No fields to update");
+            _logger.LogWarning("UpdateMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason=No fields to update", id, foodItemId);
             return BadRequest(new { error = "At least one field (name or price) must be provided." });
         }
 
         // Validate price if provided
         if (request.Price.HasValue && request.Price.Value <= 0)
         {
-            _logger.UpdateMenuItemFailed(id, foodItemId, "Invalid price");
+            _logger.LogWarning("UpdateMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason=Invalid price", id, foodItemId);
             return BadRequest(new { error = "Price must be greater than 0." });
         }
 
         try
         {
             await _partnerService.UpdateMenuItemAsync(id, foodItemId, request);
-            _logger.UpdateMenuItemCompleted(id, foodItemId);
+            
+            _logger.LogAuditInformation(
+                action: "UpdateMenuItemCompleted",
+                resource: "MenuItem",
+                resourceId: foodItemId.ToString(),
+                userId: id,
+                userRole: "Partner",
+                message: "UpdateMenuItem completed: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+                args: new object[] { id, foodItemId });
+            
             return Ok();
         }
         catch (PartnerNotFoundException ex)
         {
-            _logger.UpdateMenuItemFailed(id, foodItemId, ex.Message);
+            _logger.LogWarning("UpdateMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}", id, foodItemId, ex.Message);
             return NotFound(new { error = ex.Message });
         }
         catch (MenuItemNotFoundException ex)
         {
-            _logger.UpdateMenuItemFailed(id, foodItemId, ex.Message);
+            _logger.LogWarning("UpdateMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}", id, foodItemId, ex.Message);
             return NotFound(new { error = ex.Message });
         }
         catch (UnauthorizedMenuItemAccessException ex)
         {
-            _logger.UpdateMenuItemFailed(id, foodItemId, ex.Message);
+            _logger.LogWarning("UpdateMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}", id, foodItemId, ex.Message);
             return Forbid();
         }
     }
@@ -198,35 +216,44 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteMenuItem(int id, int foodItemId)
     {
-        _logger.ReceivedDeleteMenuItemRequest(id, foodItemId);
+        _logger.LogInformation("Received DeleteMenuItem request for PartnerId: {PartnerId}, MenuItemId: {MenuItemId}", id, foodItemId);
 
         // Verify the authenticated user is the partner
         var userIdClaim = User.FindFirst("id")?.Value;
         if (!int.TryParse(userIdClaim, out var userId) || userId != id)
         {
-            _logger.DeleteMenuItemFailed(id, foodItemId, "Unauthorized access");
+            _logger.LogWarning("DeleteMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason=Unauthorized access", id, foodItemId);
             return Forbid();
         }
 
         try
         {
             await _partnerService.DeleteMenuItemAsync(id, foodItemId);
-            _logger.DeleteMenuItemCompleted(id, foodItemId);
+            
+            _logger.LogAuditInformation(
+                action: "DeleteMenuItemCompleted",
+                resource: "MenuItem",
+                resourceId: foodItemId.ToString(),
+                userId: id,
+                userRole: "Partner",
+                message: "DeleteMenuItem completed: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+                args: new object[] { id, foodItemId });
+            
             return Ok();
         }
         catch (PartnerNotFoundException ex)
         {
-            _logger.DeleteMenuItemFailed(id, foodItemId, ex.Message);
+            _logger.LogWarning("DeleteMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}", id, foodItemId, ex.Message);
             return NotFound(new { error = ex.Message });
         }
         catch (MenuItemNotFoundException ex)
         {
-            _logger.DeleteMenuItemFailed(id, foodItemId, ex.Message);
+            _logger.LogWarning("DeleteMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}", id, foodItemId, ex.Message);
             return NotFound(new { error = ex.Message });
         }
         catch (UnauthorizedMenuItemAccessException ex)
         {
-            _logger.DeleteMenuItemFailed(id, foodItemId, ex.Message);
+            _logger.LogWarning("DeleteMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason={Reason}", id, foodItemId, ex.Message);
             return Forbid();
         }
     }
@@ -239,11 +266,11 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<PublicPartnerResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllPartners()
     {
-        _logger.ReceivedGetAllPartnersRequest();
+        _logger.LogInformation("Received GetAllPartners request");
 
         var result = await _partnerService.GetAllActivePartnersAsync();
         
-        _logger.GetAllPartnersCompleted(result.Count());
+        _logger.LogInformation("GetAllPartners completed: Count={Count}", result.Count());
 
         return Ok(result);
     }
@@ -257,16 +284,16 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetPartnerMenu(int id)
     {
-        _logger.ReceivedGetPartnerMenuRequest(id);
+        _logger.LogInformation("Received GetPartnerMenu request: PartnerId={PartnerId}", id);
 
         var result = await _partnerService.GetPartnerMenuAsync(id);
         if (result == null)
         {
-            _logger.GetPartnerMenuFailed(id, "Partner not found");
+            _logger.LogWarning("GetPartnerMenu failed: PartnerId={PartnerId}, Reason=Partner not found", id);
             return NotFound(new { error = $"Partner with ID {id} not found." });
         }
 
-        _logger.GetPartnerMenuCompleted(id);
+        _logger.LogInformation("GetPartnerMenu completed: PartnerId={PartnerId}", id);
 
         return Ok(result);
     }
@@ -280,16 +307,16 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMenuItem(int id, int foodItemId)
     {
-        _logger.ReceivedGetMenuItemRequest(id, foodItemId);
+        _logger.LogInformation("Received GetMenuItem request: PartnerId={PartnerId}, MenuItemId={MenuItemId}", id, foodItemId);
 
         var result = await _partnerService.GetMenuItemAsync(id, foodItemId);
         if (result == null)
         {
-            _logger.GetMenuItemFailed(id, foodItemId, "Partner or menu item not found");
+            _logger.LogWarning("GetMenuItem failed: PartnerId={PartnerId}, MenuItemId={MenuItemId}, Reason=Partner or menu item not found", id, foodItemId);
             return NotFound(new { error = $"Menu item with ID {foodItemId} not found for partner {id}." });
         }
 
-        _logger.GetMenuItemCompleted(id, foodItemId);
+        _logger.LogInformation("GetMenuItem completed: PartnerId={PartnerId}, MenuItemId={MenuItemId}", id, foodItemId);
 
         return Ok(result);
     }
@@ -305,24 +332,31 @@ public class PartnersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SetActiveStatus(int id, [FromBody] UpdatePartnerActiveRequest request)
     {
-        _logger.ReceivedSetActiveStatusRequest(id, request.Active);
+        _logger.LogInformation("Received SetActiveStatus request for PartnerId: {PartnerId}, Active: {Active}", id, request.Active);
 
         // Verify the authenticated user is the partner
         var userIdClaim = User.FindFirst("id")?.Value;
         if (!int.TryParse(userIdClaim, out var userId) || userId != id)
         {
-            _logger.SetActiveStatusFailed(id, "Unauthorized access");
+            _logger.LogWarning("SetActiveStatus failed: PartnerId={PartnerId}, Reason=Unauthorized access", id);
             return Forbid();
         }
 
         var success = await _partnerService.SetPartnerActiveStatusAsync(id, request.Active);
         if (!success)
         {
-            _logger.SetActiveStatusFailed(id, "Partner not found");
+            _logger.LogWarning("SetActiveStatus failed: PartnerId={PartnerId}, Reason=Partner not found", id);
             return NotFound(new { error = $"Partner with ID {id} not found." });
         }
 
-        _logger.SetActiveStatusCompleted(id, request.Active);
+        _logger.LogAuditInformation(
+            action: "SetActiveStatusCompleted",
+            resource: "Partner",
+            resourceId: id.ToString(),
+            userId: id,
+            userRole: "Partner",
+            message: "SetActiveStatus completed: PartnerId={PartnerId}, Active={Active}",
+            args: new object[] { id, request.Active });
 
         return NoContent();
     }

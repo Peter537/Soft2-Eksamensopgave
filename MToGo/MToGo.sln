@@ -61,6 +61,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.Gateway.Tests", "tests\MToGo.Gateway.Tests\MToGo.Gateway.Tests.csproj", "{957F870C-9F9A-47DF-92C8-0343A5A4373C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.LogCollectorService", "src\MToGo.LogCollectorService\MToGo.LogCollectorService.csproj", "{E8C7B5A1-2F3D-4E5C-A6B9-8D0F1E2C3A4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
