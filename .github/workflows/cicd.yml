@@ -141,9 +141,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.AgentBonusService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.AgentBonusService.Tests
 
       - name: Restore dotnet tools
@@ -151,12 +151,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.AgentBonusService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.AgentBonusService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.AgentBonusService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -223,9 +226,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.AgentService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.AgentService.Tests
 
       - name: Restore dotnet tools
@@ -233,12 +236,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.AgentService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.AgentService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.AgentService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.AgentService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.AgentService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.AgentService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -305,9 +311,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.CustomerService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.CustomerService.Tests
 
       - name: Restore dotnet tools
@@ -315,12 +321,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.CustomerService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.CustomerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.CustomerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.CustomerService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.CustomerService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.CustomerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -387,9 +396,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.FeedbackHubService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.FeedbackHubService.Tests
 
       - name: Restore dotnet tools
@@ -397,12 +406,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.FeedbackHubService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.FeedbackHubService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -469,9 +481,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.Gateway.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.Gateway.Tests
 
       - name: Restore dotnet tools
@@ -479,12 +491,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.Gateway.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.Gateway.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.Gateway.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.Gateway.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.Gateway.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -551,9 +566,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.NotificationService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.NotificationService.Tests
 
       - name: Restore dotnet tools
@@ -561,12 +576,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.NotificationService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.NotificationService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.NotificationService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.NotificationService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.NotificationService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.NotificationService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -633,9 +651,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.OrderService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.OrderService.Tests
 
       - name: Restore dotnet tools
@@ -643,12 +661,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.OrderService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.OrderService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.OrderService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.OrderService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.OrderService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.OrderService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -715,9 +736,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.PartnerService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.PartnerService.Tests
 
       - name: Restore dotnet tools
@@ -725,12 +746,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.PartnerService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.PartnerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.PartnerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.PartnerService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.PartnerService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.PartnerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -797,9 +821,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.Website.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.Website.Tests
 
       - name: Restore dotnet tools
@@ -807,12 +831,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.Website.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.Website.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.Website.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.Website.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.Website.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.Website.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -879,9 +906,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.WebSocketAgentService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.WebSocketAgentService.Tests
 
       - name: Restore dotnet tools
@@ -889,12 +916,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.WebSocketAgentService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.WebSocketAgentService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -961,9 +991,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.WebSocketCustomerService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.WebSocketCustomerService.Tests
 
       - name: Restore dotnet tools
@@ -971,12 +1001,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.WebSocketCustomerService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.WebSocketCustomerService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -1043,9 +1076,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.WebSocketPartnerService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.WebSocketPartnerService.Tests
 
       - name: Restore dotnet tools
@@ -1053,12 +1086,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.WebSocketPartnerService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.WebSocketPartnerService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
@@ -1125,9 +1161,9 @@ jobs:
       - name: Test with coverage
         run: |
           dotnet test MToGo.ManagementService.Tests.csproj -c Release \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/ \
-            /p:CoverletOutputFormat=opencover
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.ManagementService.Tests
 
       - name: Restore dotnet tools
@@ -1135,12 +1171,15 @@ jobs:
         working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.ManagementService.Tests/TestResults/ || echo "Directory not found"
+        run: |
+          echo "Looking for coverage files..."
+          find MToGo/tests/MToGo.ManagementService.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
+          ls -laR MToGo/tests/MToGo.ManagementService.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.ManagementService.Tests/TestResults/coverage.opencover.xml" \
+            "-reports:tests/MToGo.ManagementService.Tests/TestResults/**/coverage.opencover.xml" \
             "-targetdir:tests/MToGo.ManagementService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
         working-directory: MToGo
