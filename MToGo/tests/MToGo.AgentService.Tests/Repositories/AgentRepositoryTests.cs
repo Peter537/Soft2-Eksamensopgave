@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.AgentService.Data;
 using MToGo.AgentService.Entities;
 using MToGo.AgentService.Repositories;
 

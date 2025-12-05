@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.FeedbackHubService.Data;
 using MToGo.FeedbackHubService.Entities;
 
 namespace MToGo.FeedbackHubService.Repositories;
@@ -17,9 +16,9 @@ public interface IReviewRepository
 
 public class ReviewRepository : IReviewRepository
 {
-    private readonly FeedbackDbContext _context;
+    private readonly FeedbackHubDbContext _context;
 
-    public ReviewRepository(FeedbackDbContext context)
+    public ReviewRepository(FeedbackHubDbContext context)
     {
         _context = context;
     }

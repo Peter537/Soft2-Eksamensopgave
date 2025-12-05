@@ -1,4 +1,4 @@
-using LegacyMToGo.Data;
+using LegacyMToGo.Entities;
 using LegacyMToGo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +7,7 @@ namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/customers")]
-public class CustomersController(LegacyContext dbContext) : ControllerBase
+public class CustomersController(LegacyDbContext dbContext) : ControllerBase
 {
     [HttpPost("post")]
     public async Task<ActionResult<object>> Create(CustomerCreateRequest request, CancellationToken cancellationToken)

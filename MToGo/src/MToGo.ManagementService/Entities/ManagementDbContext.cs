@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.ManagementService.Entities;
 
-namespace MToGo.ManagementService.Data;
+namespace MToGo.ManagementService.Entities;
 
 public class ManagementDbContext : DbContext
 {

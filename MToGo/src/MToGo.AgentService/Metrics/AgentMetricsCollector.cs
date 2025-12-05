@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MToGo.AgentService.Data;
+using MToGo.AgentService.Entities;
 using Prometheus;
 
 namespace MToGo.AgentService.Metrics;

@@ -1,4 +1,4 @@
-using LegacyMToGo.Models;
+using LegacyMToGo.Entities;
 using LegacyMToGo.Services.Notifications;
 
 namespace LegacyMToGo.Services;

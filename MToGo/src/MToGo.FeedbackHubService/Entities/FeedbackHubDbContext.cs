@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.FeedbackHubService.Entities;
 
-namespace MToGo.FeedbackHubService.Data;
+namespace MToGo.FeedbackHubService.Entities;
 
-public class FeedbackDbContext : DbContext
+public class FeedbackHubDbContext : DbContext
 {
-    public FeedbackDbContext(DbContextOptions<FeedbackDbContext> options) : base(options)
+    public FeedbackHubDbContext(DbContextOptions<FeedbackHubDbContext> options) : base(options)
     {
     }
 

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.PartnerService.Data;
+using MToGo.PartnerService.Entities;
 using MToGo.PartnerService.Metrics;
 using MToGo.PartnerService.Repositories;
 using MToGo.PartnerService.Services;

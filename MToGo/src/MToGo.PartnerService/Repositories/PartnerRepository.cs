@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.PartnerService.Data;
 using MToGo.PartnerService.Entities;
 
 namespace MToGo.PartnerService.Repositories;
