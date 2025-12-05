@@ -8,10 +8,25 @@ namespace MToGo.CustomerService.Services;
 
 public interface ICustomerService
 {
+    /// <summary>
+    /// Registers a customer via the legacy API after hashing the password.
+    /// </summary>
     Task<CreateCustomerResponse> RegisterCustomerAsync(Customer request);
+    /// <summary>
+    /// Authenticates a customer and returns a JWT on success.
+    /// </summary>
     Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request);
+    /// <summary>
+    /// Retrieves a customer profile by id.
+    /// </summary>
     Task<CustomerProfileResponse> GetCustomerAsync(int id);
+    /// <summary>
+    /// Updates mutable customer fields.
+    /// </summary>
     Task<CustomerProfileResponse> UpdateCustomerAsync(int id, CustomerUpdateRequest request);
+    /// <summary>
+    /// Removes a customer through the legacy API.
+    /// </summary>
     Task DeleteCustomerAsync(int id);
 }
 
@@ -31,6 +46,9 @@ public class CustomerService : ICustomerService
         _jwtTokenService = jwtTokenService;
     }
 
+    /// <summary>
+    /// Hashes the password and forwards customer creation to the legacy system.
+    /// </summary>
     public async Task<CreateCustomerResponse> RegisterCustomerAsync(Customer request)
     {
         // Hash the password before sending to Legacy system
@@ -49,6 +67,9 @@ public class CustomerService : ICustomerService
         return await _legacyApiClient.CreateCustomerAsync(customerWithHashedPassword);
     }
 
+    /// <summary>
+    /// Verifies credentials against legacy data and issues a JWT.
+    /// </summary>
     public async Task<CustomerLoginResponse> LoginAsync(CustomerLoginRequest request)
     {
         // Get customer data from Legacy system
@@ -71,16 +92,25 @@ public class CustomerService : ICustomerService
         return new CustomerLoginResponse(jwt);
     }
 
+    /// <summary>
+    /// Fetches customer details from the legacy API.
+    /// </summary>
     public async Task<CustomerProfileResponse> GetCustomerAsync(int id)
     {
         return await _legacyApiClient.GetCustomerAsync(id);
     }
 
+    /// <summary>
+    /// Forwards profile updates to the legacy API and returns the updated customer.
+    /// </summary>
     public async Task<CustomerProfileResponse> UpdateCustomerAsync(int id, CustomerUpdateRequest request)
     {
         return await _legacyApiClient.UpdateCustomerAsync(id, request);
     }
 
+    /// <summary>
+    /// Deletes the customer through the legacy API.
+    /// </summary>
     public async Task DeleteCustomerAsync(int id)
     {
         await _legacyApiClient.DeleteCustomerAsync(id);

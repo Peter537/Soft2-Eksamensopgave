@@ -7,6 +7,9 @@ namespace MToGo.NotificationService.Clients;
 
 public interface ILegacyNotificationApiClient
 {
+    /// <summary>
+    /// Calls the legacy API to send a customer notification.
+    /// </summary>
     Task<NotificationResponse> SendNotificationAsync(NotificationRequest request);
 }
 
@@ -21,6 +24,9 @@ public class LegacyNotificationApiClient : ILegacyNotificationApiClient
         _logger = logger;
     }
 
+    /// <summary>
+    /// Posts the notification request to the legacy endpoint and maps failures to domain exceptions.
+    /// </summary>
     public async Task<NotificationResponse> SendNotificationAsync(NotificationRequest request)
     {
         _logger.LogInformation("Sending notification to customer {CustomerId}", request.CustomerId);

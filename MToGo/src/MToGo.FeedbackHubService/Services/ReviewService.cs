@@ -8,12 +8,33 @@ namespace MToGo.FeedbackHubService.Services;
 
 public interface IReviewService
 {
+    /// <summary>
+    /// Creates a review after validating ratings and comments.
+    /// </summary>
     Task<ReviewResponse> CreateReviewAsync(CreateReviewRequest request);
+    /// <summary>
+    /// Retrieves a review by order id if it exists.
+    /// </summary>
     Task<ReviewResponse?> GetReviewByOrderIdAsync(int orderId);
+    /// <summary>
+    /// Checks if an order already has a review.
+    /// </summary>
     Task<bool> HasReviewForOrderAsync(int orderId);
+    /// <summary>
+    /// Returns reviews across all orders with optional filters.
+    /// </summary>
     Task<IEnumerable<OrderReviewResponse>> GetAllReviewsAsync(DateTime? startDate = null, DateTime? endDate = null, int? amount = null);
+    /// <summary>
+    /// Returns reviews for a specific agent with optional filters.
+    /// </summary>
     Task<IEnumerable<AgentReviewResponse>> GetReviewsByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null);
+    /// <summary>
+    /// Returns reviews for a specific customer with optional filters.
+    /// </summary>
     Task<IEnumerable<CustomerReviewResponse>> GetReviewsByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null);
+    /// <summary>
+    /// Returns reviews for a specific partner with optional filters.
+    /// </summary>
     Task<IEnumerable<PartnerReviewResponse>> GetReviewsByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null);
 }
 
@@ -26,6 +47,9 @@ public partial class ReviewService : IReviewService
         _repository = repository;
     }
 
+    /// <summary>
+    /// Validates ratings/comments, prevents duplicates, saves the review, and returns it.
+    /// </summary>
     public async Task<ReviewResponse> CreateReviewAsync(CreateReviewRequest request)
     {
         // Check if review already exists for this order
@@ -73,41 +97,62 @@ public partial class ReviewService : IReviewService
         return MapToResponse(created);
     }
 
+    /// <summary>
+    /// Looks up a review by order id and maps it to a response.
+    /// </summary>
     public async Task<ReviewResponse?> GetReviewByOrderIdAsync(int orderId)
     {
         var review = await _repository.GetByOrderIdAsync(orderId);
         return review != null ? MapToResponse(review) : null;
     }
 
+    /// <summary>
+    /// Returns true if a review exists for the order.
+    /// </summary>
     public async Task<bool> HasReviewForOrderAsync(int orderId)
     {
         return await _repository.ExistsForOrderAsync(orderId);
     }
 
+    /// <summary>
+    /// Retrieves all reviews within optional date/amount limits.
+    /// </summary>
     public async Task<IEnumerable<OrderReviewResponse>> GetAllReviewsAsync(DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
     {
         var reviews = await _repository.GetAllAsync(startDate, endDate, amount);
         return reviews.Select(MapToOrderReviewResponse);
     }
 
+    /// <summary>
+    /// Retrieves reviews for an agent within optional date/amount limits.
+    /// </summary>
     public async Task<IEnumerable<AgentReviewResponse>> GetReviewsByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
     {
         var reviews = await _repository.GetByAgentIdAsync(agentId, startDate, endDate, amount);
         return reviews.Select(MapToAgentReviewResponse);
     }
 
+    /// <summary>
+    /// Retrieves reviews for a customer within optional date/amount limits.
+    /// </summary>
     public async Task<IEnumerable<CustomerReviewResponse>> GetReviewsByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
     {
         var reviews = await _repository.GetByCustomerIdAsync(customerId, startDate, endDate, amount);
         return reviews.Select(MapToCustomerReviewResponse);
     }
 
+    /// <summary>
+    /// Retrieves reviews for a partner within optional date/amount limits.
+    /// </summary>
     public async Task<IEnumerable<PartnerReviewResponse>> GetReviewsByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null, int? amount = null)
     {
         var reviews = await _repository.GetByPartnerIdAsync(partnerId, startDate, endDate, amount);
         return reviews.Select(MapToPartnerReviewResponse);
     }
 
+    /// <summary>
+    /// Ensures optional ratings are either 0 or between 1 and 5.
+    /// </summary>
     private static void ValidateOptionalRating(string ratingType, int value)
     {
         // 0 means not rated (allowed), 1-5 are valid ratings
@@ -117,6 +162,9 @@ public partial class ReviewService : IReviewService
         }
     }
 
+    /// <summary>
+    /// Enforces maximum length on comments.
+    /// </summary>
     private static void ValidateCommentLength(string commentType, string? comment)
     {
         if (comment != null && comment.Length > 500)
@@ -125,6 +173,9 @@ public partial class ReviewService : IReviewService
         }
     }
 
+    /// <summary>
+    /// Trims, strips HTML/control chars, and normalizes whitespace in comments.
+    /// </summary>
     private static string? SanitizeComment(string? comment)
     {
         if (string.IsNullOrWhiteSpace(comment))

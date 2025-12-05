@@ -10,6 +10,9 @@ namespace LegacyMToGo.Controllers;
 [Route("api/v1/notifications")]
 public class NotificationsController(LegacyDbContext dbContext, INotificationDispatcher dispatcher, ILogger<NotificationsController> logger) : ControllerBase
 {
+    /// <summary>
+    /// Sends a notification to a customer using their preferred channel.
+    /// </summary>
     [HttpPost("notify")]
     public async Task<IActionResult> Notify(NotificationRequest request, CancellationToken cancellationToken)
     {

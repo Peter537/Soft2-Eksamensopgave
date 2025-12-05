@@ -11,16 +11,49 @@ namespace MToGo.PartnerService.Services;
 
 public interface IPartnerService
 {
+    /// <summary>
+    /// Registers a partner with initial menu and hashed password.
+    /// </summary>
     Task<CreatePartnerResponse> RegisterPartnerAsync(PartnerRegisterRequest request);
+    /// <summary>
+    /// Authenticates a partner and issues a JWT.
+    /// </summary>
     Task<PartnerLoginResponse> LoginAsync(PartnerLoginRequest request);
+    /// <summary>
+    /// Retrieves partner details if active.
+    /// </summary>
     Task<PartnerDetailsResponse?> GetPartnerByIdAsync(int partnerId);
+    /// <summary>
+    /// Retrieves partner details including inactive partners.
+    /// </summary>
     Task<PartnerDetailsResponse?> GetPartnerByIdIncludeInactiveAsync(int partnerId);
+    /// <summary>
+    /// Adds a new menu item for a partner.
+    /// </summary>
     Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request);
+    /// <summary>
+    /// Updates an existing menu item owned by the partner.
+    /// </summary>
     Task UpdateMenuItemAsync(int partnerId, int menuItemId, UpdateMenuItemRequest request);
+    /// <summary>
+    /// Deletes a menu item owned by the partner.
+    /// </summary>
     Task DeleteMenuItemAsync(int partnerId, int menuItemId);
+    /// <summary>
+    /// Lists all active partners for customers.
+    /// </summary>
     Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync();
+    /// <summary>
+    /// Returns the public menu for a partner.
+    /// </summary>
     Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId);
+    /// <summary>
+    /// Returns a specific menu item for a partner.
+    /// </summary>
     Task<PublicMenuItemResponse?> GetMenuItemAsync(int partnerId, int menuItemId);
+    /// <summary>
+    /// Activates or deactivates a partner.
+    /// </summary>
     Task<bool> SetPartnerActiveStatusAsync(int partnerId, bool isActive);
 }
 
@@ -43,6 +76,9 @@ public class PartnerService : IPartnerService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Validates input, enforces unique email, hashes the password, seeds menu items, and saves the partner.
+    /// </summary>
     public async Task<CreatePartnerResponse> RegisterPartnerAsync(PartnerRegisterRequest request)
     {
         // Validate menu is not empty
@@ -77,6 +113,9 @@ public class PartnerService : IPartnerService
         return new CreatePartnerResponse { Id = createdPartner.Id };
     }
 
+    /// <summary>
+    /// Verifies partner credentials and issues a JWT.
+    /// </summary>
     public async Task<PartnerLoginResponse> LoginAsync(PartnerLoginRequest request)
     {
         var partner = await _partnerRepository.GetByEmailAsync(request.Email);
@@ -101,6 +140,9 @@ public class PartnerService : IPartnerService
         return new PartnerLoginResponse { Jwt = token };
     }
 
+    /// <summary>
+    /// Returns partner details when the partner exists and is active.
+    /// </summary>
     public async Task<PartnerDetailsResponse?> GetPartnerByIdAsync(int partnerId)
     {
         var partner = await _partnerRepository.GetByIdAsync(partnerId);
@@ -124,6 +166,9 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Adds a new menu item for the partner and audits the creation.
+    /// </summary>
     public async Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request)
     {
         _logger.LogInformation("Adding menu item for PartnerId: {PartnerId}", partnerId);
@@ -157,6 +202,9 @@ public class PartnerService : IPartnerService
         return new CreateMenuItemResponse { Id = createdMenuItem.Id };
     }
 
+    /// <summary>
+    /// Updates a partner-owned menu item and audits the change.
+    /// </summary>
     public async Task UpdateMenuItemAsync(int partnerId, int menuItemId, UpdateMenuItemRequest request)
     {
         _logger.LogInformation("Updating menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
@@ -204,6 +252,9 @@ public class PartnerService : IPartnerService
             args: new object[] { partnerId, menuItemId });
     }
 
+    /// <summary>
+    /// Deletes a partner-owned menu item and audits the removal.
+    /// </summary>
     public async Task DeleteMenuItemAsync(int partnerId, int menuItemId)
     {
         _logger.LogInformation("Deleting menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
@@ -240,6 +291,9 @@ public class PartnerService : IPartnerService
             args: new object[] { partnerId, menuItemId });
     }
 
+    /// <summary>
+    /// Retrieves all active partners for public listing.
+    /// </summary>
     public async Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync()
     {
         _logger.LogInformation("Getting all active partners");
@@ -258,6 +312,9 @@ public class PartnerService : IPartnerService
         return result;
     }
 
+    /// <summary>
+    /// Returns the public menu for a partner if found.
+    /// </summary>
     public async Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId)
     {
         _logger.LogInformation("Getting partner menu: PartnerId={PartnerId}", partnerId);
@@ -286,6 +343,9 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Returns a specific menu item for a partner if it exists.
+    /// </summary>
     public async Task<PublicMenuItemResponse?> GetMenuItemAsync(int partnerId, int menuItemId)
     {
         _logger.LogInformation("Getting menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
@@ -314,6 +374,9 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Retrieves partner details even when inactive.
+    /// </summary>
     public async Task<PartnerDetailsResponse?> GetPartnerByIdIncludeInactiveAsync(int partnerId)
     {
         var partner = await _partnerRepository.GetByIdIncludeInactiveAsync(partnerId);
@@ -337,6 +400,9 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Updates partner active status and audits the change.
+    /// </summary>
     public async Task<bool> SetPartnerActiveStatusAsync(int partnerId, bool isActive)
     {
         _logger.LogInformation("Setting partner active status: PartnerId={PartnerId}, Active={Active}", partnerId, isActive);
