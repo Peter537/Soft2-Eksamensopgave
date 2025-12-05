@@ -23,6 +23,7 @@ namespace MToGo.OrderService.Services
         Task<List<CustomerOrderResponse>> GetActiveOrdersByCustomerIdAsync(int customerId);
         Task<List<PartnerOrderResponse>> GetActiveOrdersByPartnerIdAsync(int partnerId);
         Task<List<AgentDeliveryResponse>> GetActiveOrdersByAgentIdAsync(int agentId);
+        Task<List<AvailableJobResponse>> GetAvailableOrdersAsync();
     }
 
     public enum AssignAgentResult
@@ -726,6 +727,42 @@ namespace MToGo.OrderService.Services
                     UnitPrice = i.UnitPrice
                 }).ToList()
             }).ToList();
+        }
+
+        public async Task<List<AvailableJobResponse>> GetAvailableOrdersAsync()
+        {
+            _logger.LogInformation("Getting available orders for delivery agents");
+
+            var orders = await _orderRepository.GetAvailableOrdersAsync();
+
+            _logger.LogInformation("Available orders retrieved: OrderCount={OrderCount}", orders.Count);
+
+            var results = new List<AvailableJobResponse>();
+
+            foreach (var order in orders)
+            {
+                // Fetch partner information
+                var partner = await _partnerServiceClient.GetPartnerByIdAsync(order.PartnerId);
+
+                results.Add(new AvailableJobResponse
+                {
+                    OrderId = order.Id,
+                    PartnerName = partner?.Name ?? "Unknown",
+                    PartnerAddress = partner?.Address ?? string.Empty,
+                    DeliveryAddress = order.DeliveryAddress,
+                    DeliveryFee = order.DeliveryFee,
+                    Distance = order.Distance,
+                    EstimatedMinutes = order.EstimatedMinutes,
+                    CreatedAt = order.CreatedAt.ToString("O"),
+                    Items = order.Items.Select(i => new AvailableJobItemResponse
+                    {
+                        Name = i.Name,
+                        Quantity = i.Quantity
+                    }).ToList()
+                });
+            }
+
+            return results;
         }
     }
 }

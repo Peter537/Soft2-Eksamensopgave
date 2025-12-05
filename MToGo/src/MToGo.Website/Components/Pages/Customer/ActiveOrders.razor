@@ -97,7 +97,7 @@
                                     
                                     <div class="d-flex justify-content-between align-items-center">
                                         <span class="text-muted">@string.Format(L["Pages.Customer.ActiveOrders.ItemCount"], order.Items.Count)</span>
-                                        <span class="fw-bold fs-5">@CalculateTotal(order).ToString("C")</span>
+                                        <span class="fw-bold fs-5">@CalculateTotal(order).FormatDKK()</span>
                                     </div>
                                 </div>
                                 <div class="card-footer bg-transparent">

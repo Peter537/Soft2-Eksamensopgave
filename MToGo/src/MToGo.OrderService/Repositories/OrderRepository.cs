@@ -14,6 +14,7 @@ namespace MToGo.OrderService.Repositories
         Task<List<Order>> GetActiveOrdersByCustomerIdAsync(int customerId);
         Task<List<Order>> GetActiveOrdersByAgentIdAsync(int agentId);
         Task<List<Order>> GetActiveOrdersByPartnerIdAsync(int partnerId);
+        Task<List<Order>> GetAvailableOrdersAsync();
     }
 
     public class OrderRepository : IOrderRepository
@@ -135,6 +136,15 @@ namespace MToGo.OrderService.Repositories
             return await _context.Orders
                 .Include(o => o.Items)
                 .Where(o => o.PartnerId == partnerId && o.Status != OrderStatus.Delivered && o.Status != OrderStatus.Rejected)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Order>> GetAvailableOrdersAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.Items)
+                .Where(o => o.Status == OrderStatus.Accepted && o.AgentId == null)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }

@@ -5,6 +5,7 @@
 @inject NavigationManager Navigation
 @inject ILocalizerService L
 @inject PaymentContext PaymentContext
+@inject CartService Cart
 @implements IDisposable
 @rendermode InteractiveServer
 @using MToGo.Website.Services.Payment
@@ -87,8 +88,8 @@
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td class="text-end">@item.UnitPrice.ToString("C")</td>
-                                            <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                                            <td class="text-end">@item.UnitPrice.FormatDKK()</td>
+                                            <td class="text-end">@((item.Quantity * item.UnitPrice).FormatDKK())</td>
                                             <td class="text-center">
                                                 <button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveItem(item)">
                                                     <i class="bi bi-trash">@L["Pages.Order.Create.Remove"]</i>
@@ -120,16 +121,16 @@
                                 <h5 class="card-title">@L["Pages.Order.Create.OrderSummary"]</h5>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>@L["Pages.Order.Create.ItemsSubtotal"]</span>
-                                    <span>@CalculateItemsSubtotal().ToString("C")</span>
+                                    <span>@CalculateItemsSubtotal().FormatDKK()</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>@L["Pages.Order.Create.DeliveryFee"]</span>
-                                    <span>@deliveryFee.ToString("C")</span>
+                                    <span>@deliveryFee.FormatDKK()</span>
                                 </div>
                                 <hr />
                                 <div class="d-flex justify-content-between">
                                     <strong>@L["Pages.Order.Create.Total"]</strong>
-                                    <strong>@CalculateTotal().ToString("C")</strong>
+                                    <strong>@CalculateTotal().FormatDKK()</strong>
                                 </div>
                             </div>
                         </div>
@@ -256,15 +257,34 @@
 
         try
         {
-            // Load partner menu
-            var response = await Http.GetAsync($"/api/v1/partners/{PartnerId}/menu");
+            // Load partner menu and customer profile in parallel
+            var partnerTask = Http.GetAsync($"/api/v1/partners/{PartnerId}/menu");
+            var customerTask = LoadCustomerProfile();
+            
+            await Task.WhenAll(partnerTask, customerTask);
+
+            var response = partnerTask.Result;
 
             if (response.IsSuccessStatusCode)
             {
                 partner = await response.Content.ReadFromJsonAsync<MenuResponse>();
 
-                // Find the selected item and add to order
-                if (partner != null && ItemId > 0)
+                // Load items from cart service first
+                if (Cart.HasItems && Cart.PartnerId == PartnerId)
+                {
+                    foreach (var cartItem in Cart.Items)
+                    {
+                        orderItems.Add(new OrderItemModel
+                        {
+                            FoodItemId = cartItem.FoodItemId,
+                            Name = cartItem.Name,
+                            Quantity = cartItem.Quantity,
+                            UnitPrice = cartItem.UnitPrice
+                        });
+                    }
+                }
+                // Fallback: If no cart items but we have ItemId from query, add that single item
+                else if (partner != null && ItemId > 0)
                 {
                     var item = partner.Items.FirstOrDefault(i => i.Id == ItemId);
                     if (item != null)
@@ -298,6 +318,33 @@
         }
     }
 
+    private async Task LoadCustomerProfile()
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/customers/{Auth.Id}");
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+            
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var profile = await response.Content.ReadFromJsonAsync<CustomerProfile>();
+                if (profile != null && !string.IsNullOrWhiteSpace(profile.DeliveryAddress))
+                {
+                    deliveryAddress = profile.DeliveryAddress;
+                }
+            }
+        }
+        catch
+        {
+            // Silently fail - the customer can still enter the address manually
+        }
+    }
+
     private void SelectPaymentMethod(string paymentMethodId)
     {
         selectedPaymentMethod = paymentMethodId;
@@ -307,6 +354,7 @@
     private void IncreaseQuantity(OrderItemModel item)
     {
         item.Quantity++;
+        Cart.IncreaseQuantity(item.FoodItemId);
     }
 
     private void DecreaseQuantity(OrderItemModel item)
@@ -314,12 +362,14 @@
         if (item.Quantity > 1)
         {
             item.Quantity--;
+            Cart.DecreaseQuantity(item.FoodItemId);
         }
     }
 
     private void RemoveItem(OrderItemModel item)
     {
         orderItems.Remove(item);
+        Cart.RemoveItem(item.FoodItemId);
     }
 
     private void AddMoreItems()
@@ -400,6 +450,8 @@
                 var orderResponse = await response.Content.ReadFromJsonAsync<OrderCreateResponse>();
                 if (orderResponse != null)
                 {
+                    // Clear the cart after successful order
+                    Cart.Clear();
                     // Navigate to customer order tracking page
                     Navigation.NavigateTo($"/customer/orders/{orderResponse.Id}");
                 }
@@ -466,5 +518,15 @@
     public class OrderCreateResponse
     {
         public int Id { get; set; }
+    }
+
+    public class CustomerProfile
+    {
+        public string Email { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string DeliveryAddress { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public string NotificationMethod { get; set; } = string.Empty;
+        public string? LanguagePreference { get; set; }
     }
 }

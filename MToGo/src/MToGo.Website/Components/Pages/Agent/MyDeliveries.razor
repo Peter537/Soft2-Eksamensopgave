@@ -106,7 +106,7 @@
                                 </p>
                                 <p class="mb-2">
                                     <span class="badge bg-primary me-2">@string.Format(L["Pages.Agent.MyDeliveries.OrderNumber"], delivery.OrderId)</span>
-                                    <span class="text-success fw-bold">@delivery.DeliveryFee.ToString("C")</span>
+                                    <span class="text-success fw-bold">@delivery.DeliveryFee.FormatDKK()</span>
                                 </p>
                                 
                                 @* Collapsible items *@

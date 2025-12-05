@@ -84,7 +84,7 @@
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
                                                 <h5 class="card-title">@L["Pages.Partner.Orders.TotalRevenue"]</h5>
-                                                <p class="card-text display-6">@CalculateTotalRevenue().ToString("C")</p>
+                                                <p class="card-text display-6">@CalculateTotalRevenue().FormatDKK()</p>
                                             </div>
                                         </div>
                                     </div>
@@ -92,7 +92,7 @@
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
                                                 <h5 class="card-title">@L["Pages.Partner.Orders.AverageOrderValue"]</h5>
-                                                <p class="card-text display-6">@CalculateAverageOrderValue().ToString("C")</p>
+                                                <p class="card-text display-6">@CalculateAverageOrderValue().FormatDKK()</p>
                                             </div>
                                         </div>
                                     </div>
@@ -122,7 +122,7 @@
                                                         <ul class="list-unstyled mb-0">
                                                             @foreach (var item in order.Items)
                                                             {
-                                                                <li>@item.Quantity x @item.Name (@item.UnitPrice.ToString("C"))</li>
+                                                                <li>@item.Quantity x @item.Name (@item.UnitPrice.FormatDKK())</li>
                                                             }
                                                         </ul>
                                                     </td>
@@ -130,9 +130,9 @@
                                                         <span class="badge @GetStatusBadgeClass(order.Status)">@order.Status</span>
                                                     </td>
                                                     <td class="text-end">
-                                                        <div>@L["Pages.Partner.Orders.DeliveryFee"]: @order.DeliveryFee.ToString("C")</div>
+                                                        <div>@L["Pages.Partner.Orders.DeliveryFee"]: @order.DeliveryFee.FormatDKK()</div>
                                                         <hr class="my-1" />
-                                                        <strong>@CalculateOrderTotal(order).ToString("C")</strong>
+                                                        <strong>@CalculateOrderTotal(order).FormatDKK()</strong>
                                                     </td>
                                                     <td class="text-center">
                                                         <a href="/order/@order.Id" class="btn btn-sm btn-outline-primary">

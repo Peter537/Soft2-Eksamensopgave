@@ -15,6 +15,7 @@ builder.Services.AddLocalization(options => options.ResourcesPath = "Resources")
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CultureService>();
 builder.Services.AddScoped<ILocalizerService, LocalizerService>();
+builder.Services.AddScoped<CartService>();
 
 // Register Payment Strategies (Strategy Pattern)
 builder.Services.AddScoped<IPaymentStrategy, CreditCardPaymentStrategy>();

@@ -85,7 +85,7 @@
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
                                                 <h5 class="card-title">@L["Pages.Agent.Orders.TotalEarnings"]</h5>
-                                                <p class="card-text display-6">@CalculateTotalEarnings().ToString("C")</p>
+                                                <p class="card-text display-6">@CalculateTotalEarnings().FormatDKK()</p>
                                             </div>
                                         </div>
                                     </div>
@@ -93,7 +93,7 @@
                                         <div class="card bg-light">
                                             <div class="card-body text-center">
                                                 <h5 class="card-title">@L["Pages.Agent.Orders.AverageDeliveryFee"]</h5>
-                                                <p class="card-text display-6">@CalculateAverageDeliveryFee().ToString("C")</p>
+                                                <p class="card-text display-6">@CalculateAverageDeliveryFee().FormatDKK()</p>
                                             </div>
                                         </div>
                                     </div>
@@ -133,7 +133,7 @@
                                                         <span class="badge @GetStatusBadgeClass(delivery.Status)">@delivery.Status</span>
                                                     </td>
                                                     <td class="text-end">
-                                                        <strong>@delivery.DeliveryFee.ToString("C")</strong>
+                                                        <strong>@delivery.DeliveryFee.FormatDKK()</strong>
                                                     </td>
                                                     <td class="text-center">
                                                         <a href="/order/@delivery.Id" class="btn btn-sm btn-outline-primary">
