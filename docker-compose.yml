@@ -102,6 +102,7 @@ services:
       ReverseProxy__Clusters__feedback-cluster__Destinations__feedbackhub-destination__Address: http://feedback-hub-service:8080
       ReverseProxy__Clusters__partners-cluster__Destinations__partners-destination__Address: http://partner-service:8080
       ReverseProxy__Clusters__management-cluster__Destinations__management-destination__Address: http://management-service:8080
+      ReverseProxy__Clusters__logs-cluster__Destinations__logs-destination__Address: http://log-collector-service:8080
       ReverseProxy__Clusters__wsagents-cluster__Destinations__wsagents-destination__Address: http://websocket-agent-service:8080
       ReverseProxy__Clusters__wscustomers-cluster__Destinations__wscustomers-destination__Address: http://websocket-customer-service:8080
       ReverseProxy__Clusters__wspartners-cluster__Destinations__wspartners-destination__Address: http://websocket-partner-service:8080
@@ -252,6 +253,27 @@ services:
       Management__Password: ${MANAGEMENT_PASSWORD}
     depends_on:
       postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  log-collector-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.LogCollectorService/Dockerfile
+    container_name: mtogo-log-collector-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_logs;Username=mtogo;Password=mtogo_password
+      Kafka__BootstrapServers: kafka:9092
+      Logging__SystemLogsDirectory: /var/log/mtogo
+    volumes:
+      - log_collector_data:/var/log/mtogo
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - mtogo-network
@@ -430,4 +452,6 @@ volumes:
   alertmanager_data:
     driver: local
   grafana_data:
+    driver: local
+  log_collector_data:
     driver: local
