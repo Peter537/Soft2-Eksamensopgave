@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace MToGo.Shared.Logging
 {
@@ -10,19 +11,17 @@ namespace MToGo.Shared.Logging
     {
         /// <summary>
         /// Sanitizes a string value to prevent log injection attacks.
-        /// Removes or escapes characters that could be used for log forging.
+        /// Removes all control characters (Unicode category Cc) and escapes format string markers.
         /// </summary>
         private static string SanitizeLogValue(string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return string.Empty;
 
-            // Remove newlines, carriage returns, and tabs that could forge log entries
-            // Also escape any potential format string markers
-            return value
-                .Replace("\r", "")
-                .Replace("\n", " ")
-                .Replace("\t", " ")
+            // Remove all control characters to prevent log forging,
+            // and escape any potential format string markers.
+            var withoutControls = new string(value.Where(c => !char.IsControl(c)).ToArray());
+            return withoutControls
                 .Replace("{", "{{")
                 .Replace("}", "}}");
         }
