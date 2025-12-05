@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **WebsiteService** fungerer som frontend-service for **MToGo** platformen, den håndterer brugerinteraktioner via webapplikationen og kommunikerer med backend API services samt WebSockets for realtidsopdateringer.
 
-**Modenhedsniveau:** Level 5 (System Integration) - Se [projekt-testplan.md](projekt-testplan.md#level-5-system-integration--quality)
+**Modenhedsniveau:** Level 5 (System Integration) - Se [project-test-plan.md](project-test-plan.md#level-5-system-integration--quality)
 
 Projektet skal:
 
@@ -64,7 +64,7 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
 - UI/UX tests via Selenium
@@ -76,7 +76,7 @@ Website indgår som central del af **E2E tests** på Level 5, hvor hele platform
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 **Service-specifikke tilføjelser:**
 - **Selenium**: UI automation og cross-browser testing

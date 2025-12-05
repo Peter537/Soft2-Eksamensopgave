@@ -86,7 +86,7 @@ Dette er en bevidst arkitekturbeslutning - da Kafka og PostgreSQL er fundamental
 | **BDD Tests (Reqnroll)** | Gherkin-scenarier for business-kritisk logik | OrderService | Level 2+ |
 | **Mutation Testing (Stryker.NET)** | Test af test-kvalitet for kritisk logik | OrderService | Level 2+ |
 | **E2E Tests** | Fulde brugerflows gennem hele systemet | Alle (via Website) | Level 5 |
-| **Performance Tests (k6)** | Load og stress testing | Gateway, OrderService | Level 5 |
+| **Performance Tests (JMeter)** | Load og stress testing | Gateway, OrderService | Level 5 |
 | **Contract Testing** | Validering af Kafka event schemas | Producers ↔ Consumers | Level 4+ |
 
 ---
@@ -297,7 +297,7 @@ AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fo
 
 | Værktøj | Formål | Anvendelse |
 |---------|--------|------------|
-| k6 | Performance testing | Load tests (Level 5) |
+| JMeter | Performance testing | Load tests (Level 5) |
 | Prometheus | Metrics collection | Runtime metrics |
 | Grafana | Visualization | Dashboards |
 

@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **WebSocketPartnerService** fungerer som en realtidskommunikationstjeneste, der videresender Kafka-begivenheder til restaurantpartnere via WebSocket-forbindelser.
 
-**Modenhedsniveau:** Level 3 (Event Consumers) - Se [projekt-testplan.md](projekt-testplan.md#level-3-event-consumers)
+**Modenhedsniveau:** Level 3 (Event Consumers) - Se [project-test-plan.md](project-test-plan.md#level-3-event-consumers)
 
 Projektet skal:
 
@@ -64,7 +64,7 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
 - Kafka consumer tests med real Kafka container
@@ -83,7 +83,7 @@ Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platforme
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 ## **Test deliverables**
 

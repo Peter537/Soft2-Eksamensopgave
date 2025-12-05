@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **PartnerService** håndterer onboarding og administration af restauranter på **MToGo** platformen, inklusive menu management.
 
-**Modenhedsniveau:** Level 1 (Foundation) - Se [projekt-testplan.md](projekt-testplan.md#level-1-foundation-services)
+**Modenhedsniveau:** Level 1 (Foundation) - Se [project-test-plan.md](project-test-plan.md#level-1-foundation-services)
 
 Projektet skal:
 
@@ -59,13 +59,13 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platformens flow valideres samlet.
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 ## **Test deliverables**
 

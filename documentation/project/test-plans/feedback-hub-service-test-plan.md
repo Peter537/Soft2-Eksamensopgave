@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **Feedback Hub Servicen** er en service i systemet som tager imod reviews fra kunder efter levering af mad.
 
-**Modenhedsniveau:** Level 4 (Aggregation & Support) - Se [projekt-testplan.md](projekt-testplan.md#level-4-aggregation--support-services)
+**Modenhedsniveau:** Level 4 (Aggregation & Support) - Se [project-test-plan.md](project-test-plan.md#level-4-aggregation--support-services)
 
 Projektet skal:
 
@@ -59,13 +59,13 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platformens flow valideres samlet.
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 ## **Test deliverables**
 

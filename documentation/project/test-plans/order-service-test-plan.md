@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **OrderService** er kernefunktionalitet i **MToGo** og sikrer at en Customer kan bruge en app til at bestille mad som en Local Agent bringer ud til kunden. Denne service orkestrerer hele ordreflowet og publicerer Kafka events der driver resten af platformen.
 
-**Modenhedsniveau:** Level 2 (Core Flow) - Se [projekt-testplan.md](projekt-testplan.md#level-2-core-order-flow)
+**Modenhedsniveau:** Level 2 (Core Flow) - Se [project-test-plan.md](project-test-plan.md#level-2-core-order-flow)
 
 Projektet skal:
 
@@ -65,7 +65,7 @@ Vi anvender **BDD (Behavior-Driven Development)** til Controllers og Service-lag
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
 
@@ -89,12 +89,12 @@ Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-t
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 **Service-specifikke tilføjelser:**
 - **Reqnroll**: BDD framework for Gherkin-scenarier
 - **Stryker.NET**: Mutation testing for OrderAggregate
-- **k6**: Performance testing af order creation flow
+- **JMeter**: Performance testing af order creation flow
 
 ## **Test deliverables**
 

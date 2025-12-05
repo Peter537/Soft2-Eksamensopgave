@@ -63,10 +63,10 @@ Dette dokument indeholder technical stories (TS) for implementering af forskelli
 
 **Size:** L  
 **Priority:** Medium  
-**TS-6:** Set Up Performance Tests with k6  
+**TS-6:** Set Up Performance Tests with JMeter  
 **As a** DevOps  
-**I want** to set up performance tests using k6 so that load scenarios validate SLOs under stress.  
-**AC-1:** Write k6 scripts for key user flows.  
+**I want** to set up performance tests using JMeter so that load scenarios validate SLOs under stress.  
+**AC-1:** Write JMeter scripts for key user flows.  
 **AC-2:** Integrate into workflow for automated runs.  
 **AC-3:** Validate correct performance-tool in documentation.
 

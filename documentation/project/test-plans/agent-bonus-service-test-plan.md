@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **AgentBonusService** håndterer beregning af bonusser til Agents baseret på deres performance. Servicen aggregerer data fra andre services via Gateway.
 
-**Modenhedsniveau:** Level 4 (Aggregation & Support) - Se [projekt-testplan.md](projekt-testplan.md#level-4-aggregation--support-services)
+**Modenhedsniveau:** Level 4 (Aggregation & Support) - Se [project-test-plan.md](project-test-plan.md#level-4-aggregation--support-services)
 
 Projektet skal:
 
@@ -63,7 +63,7 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
 
@@ -77,7 +77,7 @@ Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platforme
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 ## **Test deliverables**
 

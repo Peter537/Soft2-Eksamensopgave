@@ -3,7 +3,7 @@
 Version: 1.0  
 Teststrategi-version: 1.0  
 Security-plan-version: 1.0  
-Projekt-testplan-version: 1.0  
+Project-test-plan-version: 1.0  
 Dato: 5. december 2025  
 Forfattere: Oskar, Peter og Yusuf
 
@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **CustomerService** fungerer som adapter/facade til **LegacyMToGo** og sikrer oprettelse, opdatering og søgning af kundekonti uden datatab eller afvigelser fra legacy systemet.
 
-**Modenhedsniveau:** Level 1 (Foundation) - Se [projekt-testplan.md](projekt-testplan.md#level-1-foundation-services)
+**Modenhedsniveau:** Level 1 (Foundation) - Se [project-test-plan.md](project-test-plan.md#level-1-foundation-services)
 
 Projektet skal:
 
@@ -62,7 +62,7 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 
 ### Scope
 
-Standard testtyper anvendes. Se [projekt-testplan.md](projekt-testplan.md#test-typer) for definitioner.
+Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
 - Legacy API adapter tests (mock LegacyMToGo responses)
@@ -71,7 +71,7 @@ Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platforme
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [projekt-testplan.md](projekt-testplan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
 
 ## **Test deliverables**
 
