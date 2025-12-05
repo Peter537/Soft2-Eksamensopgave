@@ -142,21 +142,23 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.AgentBonusService.Tests/MToGo.AgentBonusService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
+        working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.AgentBonusService.Tests/TestResults || true
+        run: ls -la MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/ || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.AgentBonusService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
+        working-directory: MToGo
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -221,21 +223,23 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.AgentService.Tests/MToGo.AgentService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.AgentService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.AgentService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
+        working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.AgentService.Tests/TestResults || true
+        run: ls -la MToGo/tests/MToGo.AgentService.Tests/TestResults/ || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.AgentService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.AgentService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.AgentService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.AgentService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
+        working-directory: MToGo
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -300,21 +304,23 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.CustomerService.Tests/MToGo.CustomerService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.CustomerService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.CustomerService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
+        working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.CustomerService.Tests/TestResults || true
+        run: ls -la MToGo/tests/MToGo.CustomerService.Tests/TestResults/ || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.CustomerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.CustomerService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.CustomerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.CustomerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
+        working-directory: MToGo
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -379,21 +385,23 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.FeedbackHubService.Tests/MToGo.FeedbackHubService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
+        working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults || true
+        run: ls -la MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/ || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.FeedbackHubService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
+        working-directory: MToGo
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -458,21 +466,23 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.Gateway.Tests/MToGo.Gateway.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.Gateway.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.Gateway.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
+        working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.Gateway.Tests/TestResults || true
+        run: ls -la MToGo/tests/MToGo.Gateway.Tests/TestResults/ || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.Gateway.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.Gateway.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
+        working-directory: MToGo
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -537,21 +547,23 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.NotificationService.Tests/MToGo.NotificationService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.NotificationService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.NotificationService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
+        working-directory: MToGo
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.NotificationService.Tests/TestResults || true
+        run: ls -la MToGo/tests/MToGo.NotificationService.Tests/TestResults/ || echo "Directory not found"
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.NotificationService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.NotificationService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.NotificationService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.NotificationService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
+        working-directory: MToGo
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
@@ -616,20 +628,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.OrderService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.OrderService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.OrderService.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.OrderService.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.OrderService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.OrderService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.OrderService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.OrderService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
@@ -695,20 +707,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.PartnerService.Tests/MToGo.PartnerService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.PartnerService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.PartnerService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.PartnerService.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.PartnerService.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.PartnerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.PartnerService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.PartnerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.PartnerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
@@ -774,20 +786,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.Website.Tests/MToGo.Website.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.Website.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.Website.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.Website.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.Website.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.Website.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.Website.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.Website.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.Website.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
@@ -853,20 +865,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.WebSocketAgentService.Tests/MToGo.WebSocketAgentService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.WebSocketAgentService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
@@ -932,20 +944,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.WebSocketCustomerService.Tests/MToGo.WebSocketCustomerService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.WebSocketCustomerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
@@ -1011,20 +1023,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.WebSocketPartnerService.Tests/MToGo.WebSocketPartnerService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.WebSocketPartnerService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
@@ -1090,20 +1102,20 @@ jobs:
         run: |
           dotnet test MToGo/tests/MToGo.ManagementService.Tests/MToGo.ManagementService.Tests.csproj -c Release \
             /p:CollectCoverage=true \
-            /p:CoverletOutput=MToGo/tests/MToGo.ManagementService.Tests/TestResults/ \
+            /p:CoverletOutput=${{ github.workspace }}/MToGo/tests/MToGo.ManagementService.Tests/TestResults/ \
             /p:CoverletOutputFormat=opencover
 
       - name: Restore dotnet tools
         run: dotnet tool restore
 
       - name: Verify coverage file
-        run: ls -la MToGo/tests/MToGo.ManagementService.Tests/TestResults || true
+        run: ls -la ${{ github.workspace }}/MToGo/tests/MToGo.ManagementService.Tests/TestResults || true
 
       - name: Generate coverage report
         run: |
           dotnet tool run reportgenerator \
-            "-reports:MToGo/tests/MToGo.ManagementService.Tests/TestResults/coverage.opencover.xml" \
-            "-targetdir:MToGo/tests/MToGo.ManagementService.Tests/TestResults/CoverageReport" \
+            "-reports:${{ github.workspace }}/MToGo/tests/MToGo.ManagementService.Tests/TestResults/coverage.opencover.xml" \
+            "-targetdir:${{ github.workspace }}/MToGo/tests/MToGo.ManagementService.Tests/TestResults/CoverageReport" \
             -reporttypes:Html
 
       - name: Upload coverage report
