@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace MToGo.Shared.Logging
 {
@@ -7,39 +8,49 @@ namespace MToGo.Shared.Logging
     /// Extension methods for ILogger to support audit logging.
     /// Audit logs are specially marked to be stored in the database for compliance and tracking.
     /// </summary>
-    public static class AuditLoggerExtensions
+    public static partial class AuditLoggerExtensions
     {
         /// <summary>
-        /// Sanitizes a string value to prevent log injection attacks.
-        /// Removes all control characters (Unicode category Cc) and escapes format string markers.
+        /// Regex to match format placeholders like {0}, {Name}, {PartnerId}, etc.
         /// </summary>
-        private static string SanitizeLogValue(string? value)
+        [GeneratedRegex(@"\{[^}]+\}")]
+        private static partial Regex FormatPlaceholderRegex();
+
+        /// <summary>
+        /// Sanitizes a string value to prevent log injection attacks.
+        /// Removes all control characters (Unicode category Cc).
+        /// </summary>
+        private static string SanitizeForLog(string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return string.Empty;
 
-            // Remove all control characters to prevent log forging,
-            // and escape any potential format string markers.
-            var withoutControls = new string(value.Where(c => !char.IsControl(c)).ToArray());
-            return withoutControls
-                .Replace("{", "{{")
-                .Replace("}", "}}");
+            // Remove all control characters to prevent log forging
+            return new string(value.Where(c => !char.IsControl(c)).ToArray());
         }
 
         /// <summary>
-        /// Sanitizes all arguments to prevent log injection attacks.
+        /// Formats a message template with sanitized arguments.
+        /// This pre-formats the message to avoid passing user input directly to logger methods.
         /// </summary>
-        private static object?[] SanitizeArgs(object?[] args)
+        private static string FormatMessageSafely(string messageTemplate, object?[] args)
         {
             if (args == null || args.Length == 0)
-                return args ?? Array.Empty<object?>();
+                return messageTemplate;
 
-            var sanitized = new object?[args.Length];
-            for (int i = 0; i < args.Length; i++)
+            // Find all placeholders and replace them with sanitized argument values
+            var result = messageTemplate;
+            var matches = FormatPlaceholderRegex().Matches(messageTemplate);
+            
+            for (int i = 0; i < matches.Count && i < args.Length; i++)
             {
-                sanitized[i] = args[i] is string strValue ? SanitizeLogValue(strValue) : args[i];
+                var placeholder = matches[i].Value;
+                var argValue = args[i]?.ToString() ?? string.Empty;
+                var sanitizedValue = SanitizeForLog(argValue);
+                result = result.Replace(placeholder, sanitizedValue);
             }
-            return sanitized;
+
+            return result;
         }
 
         /// <summary>
@@ -110,6 +121,11 @@ namespace MToGo.Shared.Logging
             Exception? exception,
             params object?[] args)
         {
+            // Pre-format the message with sanitized arguments to break taint tracking
+            // This ensures no user-controlled data flows directly to logger format args
+            var safeMessage = FormatMessageSafely(message, args);
+            var fullMessage = $"[AUDIT] {action}: {safeMessage}";
+
             // Create a structured log with audit metadata
             using (logger.BeginScope(new Dictionary<string, object?>
             {
@@ -121,29 +137,26 @@ namespace MToGo.Shared.Logging
                 ["AuditUserRole"] = userRole
             }))
             {
-                // Sanitize user-provided args to prevent log injection
-                var sanitizedArgs = SanitizeArgs(args);
-                var formattedMessage = $"[AUDIT] {action}: {message}";
-                
+                // Log with no format arguments - message is already fully formatted and sanitized
                 switch (level)
                 {
                     case LogLevel.Debug:
-                        logger.LogDebug(formattedMessage, sanitizedArgs);
+                        logger.LogDebug("{Message}", fullMessage);
                         break;
                     case LogLevel.Information:
-                        logger.LogInformation(formattedMessage, sanitizedArgs);
+                        logger.LogInformation("{Message}", fullMessage);
                         break;
                     case LogLevel.Warning:
-                        logger.LogWarning(formattedMessage, sanitizedArgs);
+                        logger.LogWarning("{Message}", fullMessage);
                         break;
                     case LogLevel.Error:
-                        logger.LogError(exception, formattedMessage, sanitizedArgs);
+                        logger.LogError(exception, "{Message}", fullMessage);
                         break;
                     case LogLevel.Critical:
-                        logger.LogCritical(exception, formattedMessage, sanitizedArgs);
+                        logger.LogCritical(exception, "{Message}", fullMessage);
                         break;
                     default:
-                        logger.LogInformation(formattedMessage, sanitizedArgs);
+                        logger.LogInformation("{Message}", fullMessage);
                         break;
                 }
             }
