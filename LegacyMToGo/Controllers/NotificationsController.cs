@@ -1,4 +1,5 @@
 using LegacyMToGo.Entities;
+using LegacyMToGo.Models;
 using LegacyMToGo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,4 @@ public class NotificationsController(LegacyDbContext dbContext, INotificationDis
         logger.LogInformation("Legacy notification dispatched to customer {CustomerId}", request.CustomerId);
         return Accepted();
     }
-
-    public record NotificationRequest(int CustomerId, string Message);
 }

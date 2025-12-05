@@ -1,3 +1,5 @@
+using MToGo.Website.Models;
+
 namespace MToGo.Website.Services;
 
 /// <summary>
@@ -108,12 +110,4 @@ public class CartService
     /// Gets the total number of items in the cart.
     /// </summary>
     public int TotalItems => _items.Sum(i => i.Quantity);
-}
-
-public class CartItem
-{
-    public int FoodItemId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Quantity { get; set; }
-    public decimal UnitPrice { get; set; }
 }

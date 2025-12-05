@@ -1,3 +1,4 @@
+using MToGo.LogCollectorService.Models;
 using MToGo.Shared.Logging;
 using System.Collections.Concurrent;
 using System.Text;
@@ -11,14 +12,6 @@ namespace MToGo.LogCollectorService.Services
         List<string> GetLogFiles();
         Task<string> ReadLogFileAsync(string filename);
         Task<SystemLogFileInfo?> GetLogFileInfoAsync(string filename);
-    }
-
-    public class SystemLogFileInfo
-    {
-        public string Date { get; set; } = string.Empty;
-        public string FileName { get; set; } = string.Empty;
-        public long Size { get; set; }
-        public DateTime LastModified { get; set; }
     }
 
     public class SystemLogService : ISystemLogService

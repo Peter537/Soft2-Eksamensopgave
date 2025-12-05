@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using LegacyMToGo.Entities;
-using LegacyMToGo.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +11,7 @@ using MToGo.NotificationService.Exceptions;
 using MToGo.NotificationService.Models;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
+using LegacyNotificationRequest = LegacyMToGo.Models.NotificationRequest;
 
 namespace MToGo.NotificationService.Tests.E2E;
 
