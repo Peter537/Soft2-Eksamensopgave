@@ -5,6 +5,11 @@ using System.Text.Json;
 
 namespace MToGo.Shared.Kafka
 {
+    public interface IKafkaConsumer
+    {
+        Task ConsumeAsync<T>(Func<T, Task> handler, CancellationToken cancellationToken = default);
+    }
+
     public class KafkaConsumerConfig
     {
         public string BootstrapServers { get; set; } = string.Empty;

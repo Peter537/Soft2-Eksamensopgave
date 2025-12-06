@@ -1,4 +1,4 @@
-using LegacyMToGo.Data;
+using LegacyMToGo.Entities;
 using LegacyMToGo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,8 +7,11 @@ namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/customers")]
-public class CustomersController(LegacyContext dbContext) : ControllerBase
+public class CustomersController(LegacyDbContext dbContext) : ControllerBase
 {
+    /// <summary>
+    /// Creates a new legacy customer and returns its identifier.
+    /// </summary>
     [HttpPost("post")]
     public async Task<ActionResult<object>> Create(CustomerCreateRequest request, CancellationToken cancellationToken)
     {
@@ -40,6 +43,9 @@ public class CustomersController(LegacyContext dbContext) : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = customer.Id }, new { id = customer.Id });
     }
 
+    /// <summary>
+    /// Returns customer data and hashed password so CustomerService can validate credentials.
+    /// </summary>
     [HttpPost("post/login")]
     public async Task<ActionResult<object>> Login(CustomerLoginRequest request, CancellationToken cancellationToken)
     {
@@ -58,6 +64,9 @@ public class CustomersController(LegacyContext dbContext) : ControllerBase
         ));
     }
 
+    /// <summary>
+    /// Retrieves a customer profile by id if it is not deleted.
+    /// </summary>
     [HttpGet("get/{id:int}")]
     public async Task<ActionResult<CustomerResponse>> Get(int id, CancellationToken cancellationToken)
     {
@@ -72,6 +81,9 @@ public class CustomersController(LegacyContext dbContext) : ControllerBase
                 customer.LanguagePreference.ToString().ToLowerInvariant());
     }
 
+    /// <summary>
+    /// Updates mutable customer fields and returns the latest profile snapshot.
+    /// </summary>
     [HttpPatch("patch/{id:int}")]
     public async Task<ActionResult<CustomerResponse>> Update(int id, CustomerUpdateRequest request, CancellationToken cancellationToken)
     {
@@ -123,6 +135,9 @@ public class CustomersController(LegacyContext dbContext) : ControllerBase
             customer.LanguagePreference.ToString().ToLowerInvariant());
     }
 
+    /// <summary>
+    /// Soft-deletes a customer record and timestamps the deletion.
+    /// </summary>
     [HttpDelete("delete/{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {

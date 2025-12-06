@@ -51,18 +51,38 @@ jobs:
           SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           echo "Looking for CI/CD workflow run for commit: $SHA"
 
-          RUN_ID=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            "/repos/${{ github.repository }}/actions/workflows/cicd.yml/runs?head_sha=$SHA&status=completed" \
-            --jq '.workflow_runs[0].id')
+          MAX_ATTEMPTS=20
+          SLEEP_SECONDS=3
+          ATTEMPT=1
+          RUN_ID=""
+
+          # Retry fetching the CI/CD run ID because the GitHub API can lag behind completed runs
+          while [[ $ATTEMPT -le $MAX_ATTEMPTS ]]; do
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: querying GitHub API for CI/CD run ID..."
+
+            RUN_ID=$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${{ github.repository }}/actions/workflows/cicd.yml/runs?head_sha=$SHA&status=completed" \
+              --jq '.workflow_runs[0].id')
+
+            if [[ -n "$RUN_ID" && "$RUN_ID" != "null" ]]; then
+              echo "Found CI/CD workflow run ID: $RUN_ID"
+              echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+              break
+            fi
+
+            if [[ $ATTEMPT -lt $MAX_ATTEMPTS ]]; then
+              echo "Run ID not available yet; waiting $SLEEP_SECONDS seconds before retrying..."
+              sleep $SLEEP_SECONDS
+            fi
+
+            ((ATTEMPT++))
+          done
 
           if [[ -z "$RUN_ID" || "$RUN_ID" == "null" ]]; then
-            echo "Error: Could not find CI/CD workflow run for SHA $SHA"
+            echo "Error: Could not find CI/CD workflow run for SHA $SHA after $MAX_ATTEMPTS attempts"
             exit 1
           fi
-
-          echo "Found CI/CD workflow run ID: $RUN_ID"
-          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
 
   detect_changed_services:
     name: Detect changed services

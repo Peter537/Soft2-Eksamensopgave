@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using LegacyMToGo.Data;
-using LegacyMToGo.Models;
+using LegacyMToGo.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +11,7 @@ using MToGo.NotificationService.Exceptions;
 using MToGo.NotificationService.Models;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
+using LegacyNotificationRequest = LegacyMToGo.Models.NotificationRequest;
 
 namespace MToGo.NotificationService.Tests.E2E;
 
@@ -43,14 +43,14 @@ public class NotificationE2ETests : IAsyncLifetime
                 {
                     // Remove existing DbContext
                     var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<LegacyContext>));
+                        d => d.ServiceType == typeof(DbContextOptions<LegacyDbContext>));
                     if (descriptor != null)
                     {
                         services.Remove(descriptor);
                     }
 
                     // Add test database
-                    services.AddDbContext<LegacyContext>(options =>
+                    services.AddDbContext<LegacyDbContext>(options =>
                         options.UseNpgsql(_postgresContainer.GetConnectionString()));
                 });
             });
@@ -58,7 +58,7 @@ public class NotificationE2ETests : IAsyncLifetime
         // Ensure database is created
         using (var scope = _legacyApiFactory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
             await dbContext.Database.EnsureCreatedAsync();
         }
 
@@ -128,7 +128,7 @@ public class NotificationE2ETests : IAsyncLifetime
     private async Task<int> CreateTestCustomerAsync(string email, NotificationMethod notificationMethod = NotificationMethod.Email)
     {
         using var scope = _legacyApiFactory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
 
         var customer = new Customer
         {

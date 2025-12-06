@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.FeedbackHubService.Data;
+using MToGo.FeedbackHubService.Entities;
 using MToGo.FeedbackHubService.Repositories;
 using MToGo.FeedbackHubService.Services;
 using MToGo.Shared.Security;
@@ -19,7 +19,7 @@ builder.Services.AddMToGoSecurity(builder.Configuration);
 
 // Add Database Context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<FeedbackDbContext>(options =>
+builder.Services.AddDbContext<FeedbackHubDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Add Repositories
@@ -33,7 +33,7 @@ var app = builder.Build();
 // Apply migrations and ensure database exists
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<FeedbackDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<FeedbackHubDbContext>();
     dbContext.Database.EnsureCreated();
 }
 

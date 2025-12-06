@@ -7,6 +7,11 @@ using MToGo.Shared.Security.Authorization;
 
 namespace MToGo.Shared.Security.Authentication;
 
+public interface IJwtTokenService
+{
+    string GenerateToken(int userId, string email, string role, string? name = null);
+}
+
 public class JwtTokenService : IJwtTokenService
 {
     private readonly JwtSettings _jwtSettings;

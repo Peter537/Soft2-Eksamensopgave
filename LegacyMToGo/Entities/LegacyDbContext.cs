@@ -1,9 +1,8 @@
-using LegacyMToGo.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace LegacyMToGo.Data;
+namespace LegacyMToGo.Entities;
 
-public class LegacyContext(DbContextOptions<LegacyContext> options) : DbContext(options)
+public class LegacyDbContext(DbContextOptions<LegacyDbContext> options) : DbContext(options)
 {
     public DbSet<Customer> Customers => Set<Customer>();
 

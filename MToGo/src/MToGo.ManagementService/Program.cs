@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.ManagementService.Data;
 using MToGo.ManagementService.Entities;
 using MToGo.ManagementService.Repositories;
 using MToGo.ManagementService.Services;

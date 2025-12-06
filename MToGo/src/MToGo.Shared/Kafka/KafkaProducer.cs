@@ -5,6 +5,11 @@ using System.Text.Json;
 
 namespace MToGo.Shared.Kafka
 {
+    public interface IKafkaProducer
+    {
+        Task PublishAsync<T>(string topic, string key, T eventData);
+    }
+
     public class KafkaProducerConfig
     {
         public string BootstrapServers { get; set; } = string.Empty;

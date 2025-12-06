@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.FeedbackHubService.Data;
 using MToGo.FeedbackHubService.Entities;
 using MToGo.FeedbackHubService.Repositories;
 
@@ -7,16 +6,16 @@ namespace MToGo.FeedbackHubService.Tests.Repositories;
 
 public class ReviewRepositoryTests : IDisposable
 {
-    private readonly FeedbackDbContext _context;
+    private readonly FeedbackHubDbContext _context;
     private readonly ReviewRepository _repository;
 
     public ReviewRepositoryTests()
     {
-        var options = new DbContextOptionsBuilder<FeedbackDbContext>()
+        var options = new DbContextOptionsBuilder<FeedbackHubDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        _context = new FeedbackDbContext(options);
+        _context = new FeedbackHubDbContext(options);
         _repository = new ReviewRepository(_context);
     }
 

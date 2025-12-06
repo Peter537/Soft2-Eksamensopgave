@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.AgentService.Entities;
 
-namespace MToGo.AgentService.Data;
+namespace MToGo.AgentService.Entities;
 
 public class AgentDbContext : DbContext
 {
