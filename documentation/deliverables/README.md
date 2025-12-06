@@ -4,7 +4,9 @@ Denne mappe indeholder test strategy deliverables, guides og manualer.
 
 ## Indhold
 
-_(Tilføj dokumenter efter behov)_
+| Dokument                                       | Beskrivelse                         |
+| ---------------------------------------------- | ----------------------------------- |
+| [deployment-guide.md](./deployment-guide.md)   | Guide til deployment af MToGo       |
 
 ## Formål
 
