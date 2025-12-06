@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using MToGo.PartnerService.Data;
 using MToGo.PartnerService.Entities;
 using MToGo.PartnerService.Models;
 using MToGo.PartnerService.Tests.Fixtures;

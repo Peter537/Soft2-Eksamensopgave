@@ -2,6 +2,13 @@ namespace MToGo.Shared.Security.Password;
 
 using BCrypt.Net;
 
+public interface IPasswordHasher
+{
+    string HashPassword(string password);
+    
+    bool VerifyPassword(string password, string hashedPassword);
+}
+
 public class PasswordHasher : IPasswordHasher
 {
     private const int WorkFactor = 12;

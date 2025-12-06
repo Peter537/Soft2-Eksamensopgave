@@ -9,58 +9,66 @@ namespace MToGo.OrderService.Services
 {
     public interface IOrderService
     {
+        /// <summary>
+        /// Creates an order, calculates fees, persists it, and publishes an OrderCreated event.
+        /// </summary>
         Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request);
+        /// <summary>
+        /// Accepts an order for preparation with an estimated ready time.
+        /// </summary>
         Task<bool> AcceptOrderAsync(int orderId, int estimatedMinutes);
+        /// <summary>
+        /// Rejects an order with an optional reason and notifies downstream consumers.
+        /// </summary>
         Task<bool> RejectOrderAsync(int orderId, string? reason);
+        /// <summary>
+        /// Marks an order as ready for pickup.
+        /// </summary>
         Task<bool> SetReadyAsync(int orderId);
+        /// <summary>
+        /// Assigns a delivery agent and emits assignment events.
+        /// </summary>
         Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId);
+        /// <summary>
+        /// Marks pickup by the assigned agent and publishes pickup events.
+        /// </summary>
         Task<PickupResult> PickupOrderAsync(int orderId);
+        /// <summary>
+        /// Completes delivery and triggers completion events.
+        /// </summary>
         Task<DeliveryResult> CompleteDeliveryAsync(int orderId);
+        /// <summary>
+        /// Lists orders for a customer within an optional date range.
+        /// </summary>
         Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null);
+        /// <summary>
+        /// Lists deliveries handled by an agent within an optional date range.
+        /// </summary>
         Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null);
+        /// <summary>
+        /// Lists orders for a partner within an optional date range.
+        /// </summary>
         Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null);
+        /// <summary>
+        /// Returns detailed order information with access control on user and role.
+        /// </summary>
         Task<GetOrderDetailResult> GetOrderDetailAsync(int orderId, int userId, string userRole);
+        /// <summary>
+        /// Lists active (in-progress) orders for a customer.
+        /// </summary>
         Task<List<CustomerOrderResponse>> GetActiveOrdersByCustomerIdAsync(int customerId);
+        /// <summary>
+        /// Lists active (in-progress) orders for a partner.
+        /// </summary>
         Task<List<PartnerOrderResponse>> GetActiveOrdersByPartnerIdAsync(int partnerId);
+        /// <summary>
+        /// Lists active (in-progress) deliveries for an agent.
+        /// </summary>
         Task<List<AgentDeliveryResponse>> GetActiveOrdersByAgentIdAsync(int agentId);
+        /// <summary>
+        /// Returns unassigned orders available for agents.
+        /// </summary>
         Task<List<AvailableJobResponse>> GetAvailableOrdersAsync();
-    }
-
-    public enum AssignAgentResult
-    {
-        Success,
-        OrderNotFound,
-        InvalidStatus,
-        AgentAlreadyAssigned
-    }
-
-    public enum PickupResult
-    {
-        Success,
-        OrderNotFound,
-        InvalidStatus,
-        NoAgentAssigned
-    }
-
-    public enum DeliveryResult
-    {
-        Success,
-        OrderNotFound,
-        InvalidStatus,
-        NoAgentAssigned
-    }
-
-    public class GetOrderDetailResult
-    {
-        public bool Success { get; init; }
-        public OrderDetailResponse? Order { get; init; }
-        public GetOrderDetailError? Error { get; init; }
-    }
-
-    public enum GetOrderDetailError
-    {
-        NotFound,
-        Forbidden
     }
 
     public class OrderService : IOrderService
@@ -85,6 +93,9 @@ namespace MToGo.OrderService.Services
             _logger = logger;
         }
 
+        /// <summary>
+        /// Creates and persists an order, calculates fees, audits, and publishes the OrderCreated event.
+        /// </summary>
         public async Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request)
         {
             _logger.LogInformation("Creating order for CustomerId: {CustomerId}, PartnerId: {PartnerId}", request.CustomerId, request.PartnerId);
@@ -146,6 +157,9 @@ namespace MToGo.OrderService.Services
             return new OrderCreateResponse { Id = createdOrder.Id };
         }
 
+        /// <summary>
+        /// Accepts an order for preparation and records the estimated ready time.
+        /// </summary>
         public async Task<bool> AcceptOrderAsync(int orderId, int estimatedMinutes)
         {
             _logger.LogInformation("Accepting order: OrderId={OrderId}", orderId);
@@ -207,6 +221,9 @@ namespace MToGo.OrderService.Services
             return true;
         }
 
+        /// <summary>
+        /// Rejects an order, records the reason, and emits rejection events.
+        /// </summary>
         public async Task<bool> RejectOrderAsync(int orderId, string? reason)
         {
             _logger.LogInformation("Rejecting order: OrderId={OrderId}", orderId);
@@ -268,6 +285,9 @@ namespace MToGo.OrderService.Services
             return orderTotal * rate;
         }
 
+        /// <summary>
+        /// Marks an order as ready for pickup and publishes readiness events.
+        /// </summary>
         public async Task<bool> SetReadyAsync(int orderId)
         {
             _logger.LogInformation("Setting order ready: OrderId={OrderId}", orderId);
@@ -320,6 +340,9 @@ namespace MToGo.OrderService.Services
             return true;
         }
 
+        /// <summary>
+        /// Assigns an agent to an order, updates status, and publishes assignment events.
+        /// </summary>
         public async Task<AssignAgentResult> AssignAgentAsync(int orderId, int agentId)
         {
             _logger.LogInformation("Assigning agent to order: OrderId={OrderId}, AgentId={AgentId}", orderId, agentId);
@@ -386,6 +409,9 @@ namespace MToGo.OrderService.Services
             return AssignAgentResult.Success;
         }
 
+        /// <summary>
+        /// Confirms agent pickup, timestamps the pickup, and publishes pickup events.
+        /// </summary>
         public async Task<PickupResult> PickupOrderAsync(int orderId)
         {
             _logger.LogInformation("Picking up order: OrderId={OrderId}", orderId);
@@ -442,6 +468,9 @@ namespace MToGo.OrderService.Services
             return PickupResult.Success;
         }
 
+        /// <summary>
+        /// Completes delivery, records metrics, and publishes delivery-completed events.
+        /// </summary>
         public async Task<DeliveryResult> CompleteDeliveryAsync(int orderId)
         {
             _logger.LogInformation("Completing delivery: OrderId={OrderId}", orderId);
@@ -492,6 +521,9 @@ namespace MToGo.OrderService.Services
             return DeliveryResult.Success;
         }
 
+        /// <summary>
+        /// Returns a customer's orders filtered by optional date range.
+        /// </summary>
         public async Task<List<CustomerOrderResponse>> GetOrdersByCustomerIdAsync(int customerId, DateTime? startDate = null, DateTime? endDate = null)
         {
             _logger.LogInformation("Getting order history for CustomerId: {CustomerId}, StartDate: {StartDate}, EndDate: {EndDate}", customerId, startDate, endDate);
@@ -520,6 +552,9 @@ namespace MToGo.OrderService.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Returns deliveries handled by an agent filtered by optional date range.
+        /// </summary>
         public async Task<List<AgentDeliveryResponse>> GetOrdersByAgentIdAsync(int agentId, DateTime? startDate = null, DateTime? endDate = null)
         {
             _logger.LogInformation("Getting delivery history for AgentId: {AgentId}, StartDate: {StartDate}, EndDate: {EndDate}", agentId, startDate, endDate);
@@ -548,6 +583,9 @@ namespace MToGo.OrderService.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Returns a partner's orders filtered by optional date range.
+        /// </summary>
         public async Task<List<PartnerOrderResponse>> GetOrdersByPartnerIdAsync(int partnerId, DateTime? startDate = null, DateTime? endDate = null)
         {
             _logger.LogInformation("Getting order history for PartnerId: {PartnerId}, StartDate: {StartDate}, EndDate: {EndDate}", partnerId, startDate, endDate);
@@ -576,6 +614,9 @@ namespace MToGo.OrderService.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Retrieves detailed order info with authorization checks for the requesting user.
+        /// </summary>
         public async Task<GetOrderDetailResult> GetOrderDetailAsync(int orderId, int userId, string userRole)
         {
             _logger.LogInformation("Getting order detail: OrderId={OrderId}, UserId={UserId}, Role={Role}", orderId, userId, userRole);
@@ -645,6 +686,9 @@ namespace MToGo.OrderService.Services
             };
         }
 
+        /// <summary>
+        /// Lists active orders belonging to a customer.
+        /// </summary>
         public async Task<List<CustomerOrderResponse>> GetActiveOrdersByCustomerIdAsync(int customerId)
         {
             _logger.LogInformation("Getting active orders for CustomerId: {CustomerId}", customerId);
@@ -673,6 +717,9 @@ namespace MToGo.OrderService.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Lists active orders belonging to a partner.
+        /// </summary>
         public async Task<List<PartnerOrderResponse>> GetActiveOrdersByPartnerIdAsync(int partnerId)
         {
             _logger.LogInformation("Getting active orders for PartnerId: {PartnerId}", partnerId);
@@ -701,6 +748,9 @@ namespace MToGo.OrderService.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Lists active deliveries assigned to an agent.
+        /// </summary>
         public async Task<List<AgentDeliveryResponse>> GetActiveOrdersByAgentIdAsync(int agentId)
         {
             _logger.LogInformation("Getting active orders for AgentId: {AgentId}", agentId);
@@ -741,6 +791,9 @@ namespace MToGo.OrderService.Services
             return results;
         }
 
+        /// <summary>
+        /// Returns open orders that are not yet assigned to an agent.
+        /// </summary>
         public async Task<List<AvailableJobResponse>> GetAvailableOrdersAsync()
         {
             _logger.LogInformation("Getting available orders for delivery agents");

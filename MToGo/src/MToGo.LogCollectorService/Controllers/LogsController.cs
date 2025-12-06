@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MToGo.LogCollectorService.Models;
 using MToGo.LogCollectorService.Services;
 using MToGo.Shared.Security.Authorization;
 

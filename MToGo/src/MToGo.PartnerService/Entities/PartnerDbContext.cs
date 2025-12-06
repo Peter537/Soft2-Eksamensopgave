@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.PartnerService.Entities;
 
-namespace MToGo.PartnerService.Data;
+namespace MToGo.PartnerService.Entities;
 
 public class PartnerDbContext : DbContext
 {

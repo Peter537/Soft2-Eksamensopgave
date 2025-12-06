@@ -1,4 +1,4 @@
-namespace LegacyMToGo.Models;
+namespace LegacyMToGo.Entities;
 
 public enum NotificationMethod
 {

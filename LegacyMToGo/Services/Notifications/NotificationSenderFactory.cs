@@ -1,6 +1,11 @@
-using LegacyMToGo.Models;
+using LegacyMToGo.Entities;
 
 namespace LegacyMToGo.Services.Notifications;
+
+public interface INotificationSenderFactory
+{
+    INotificationSender CreateSender(NotificationMethod method);
+}
 
 /// <summary>
 /// Factory for creating notification senders based on the notification method.

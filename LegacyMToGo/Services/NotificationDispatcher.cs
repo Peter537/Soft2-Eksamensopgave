@@ -1,7 +1,15 @@
-using LegacyMToGo.Models;
+using LegacyMToGo.Entities;
 using LegacyMToGo.Services.Notifications;
 
 namespace LegacyMToGo.Services;
+
+public interface INotificationDispatcher
+{
+    /// <summary>
+    /// Routes a message to the correct sender based on the notification method.
+    /// </summary>
+    Task DispatchAsync(NotificationMethod method, string destination, string message, CancellationToken cancellationToken = default);
+}
 
 /// <summary>
 /// Dispatches notifications using the Factory pattern.

@@ -1,8 +1,23 @@
 using Microsoft.EntityFrameworkCore;
-using MToGo.PartnerService.Data;
 using MToGo.PartnerService.Entities;
 
 namespace MToGo.PartnerService.Repositories;
+
+public interface IPartnerRepository
+{
+    Task<Partner> CreateAsync(Partner partner);
+    Task<bool> EmailExistsAsync(string email);
+    Task<Partner?> GetByEmailAsync(string email);
+    Task<Partner?> GetByIdAsync(int partnerId);
+    Task<Partner?> GetByIdIncludeInactiveAsync(int partnerId);
+    Task<MenuItem?> GetMenuItemByIdAsync(int menuItemId);
+    Task<MenuItem> AddMenuItemAsync(MenuItem menuItem);
+    Task<MenuItem> UpdateMenuItemAsync(MenuItem menuItem);
+    Task DeleteMenuItemAsync(MenuItem menuItem);
+    Task<IEnumerable<Partner>> GetAllActivePartnersAsync();
+    Task<Partner?> GetPartnerWithMenuAsync(int partnerId);
+    Task UpdatePartnerActiveStatusAsync(int partnerId, bool isActive);
+}
 
 public class PartnerRepository : IPartnerRepository
 {
@@ -28,20 +43,20 @@ public class PartnerRepository : IPartnerRepository
     public async Task<Partner?> GetByEmailAsync(string email)
     {
         return await _context.Partners
-            .FirstOrDefaultAsync(p => p.Email == email && !p.IsDeleted && p.IsActive);
+            .FirstOrDefaultAsync(p => p.Email == email && !p.IsDeleted);
     }
 
     public async Task<Partner?> GetByIdAsync(int partnerId)
     {
         return await _context.Partners
             .Include(p => p.MenuItems.Where(m => m.IsActive))
-            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted && p.IsActive);
+            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
     }
 
     public async Task<MenuItem?> GetMenuItemByIdAsync(int menuItemId)
     {
         return await _context.MenuItems
-            .FirstOrDefaultAsync(m => m.Id == menuItemId && m.IsActive);
+            .FirstOrDefaultAsync(m => m.Id == menuItemId);
     }
 
     public async Task<MenuItem> AddMenuItemAsync(MenuItem menuItem)
