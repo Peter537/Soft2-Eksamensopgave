@@ -40,6 +40,7 @@ Individuelle service-testplaner refererer til dette dokument for fælles definit
 ![alt text](../architecture/resources/plan-hierarchy.png)
 
 **Anvendelse:**
+
 - Service-testplaner **arver** alle definitioner fra denne fil
 - Service-testplaner dokumenterer kun **afvigelser** og **service-specifikke risici**
 
@@ -60,6 +61,7 @@ MToGo-platformen anvender en **event-driven arkitektur** hvor services kommunike
 > Vores services er fuldt afkoblet via Kafka.
 
 **Konsekvens:** Det vi kalder "unit tests" inkluderer infrastrukturafhængigheder:
+
 - **PostgreSQL testcontainers** for database-tests
 - **Kafka testcontainers** for producer/consumer tests
 
@@ -71,23 +73,23 @@ Dette er en bevidst arkitekturbeslutning - da Kafka og PostgreSQL er fundamental
 
 ### Standard Test Typer (gælder alle services medmindre andet er angivet)
 
-| Test Type | Beskrivelse | Størrelse | Infrastruktur |
-|-----------|-------------|-----------|---------------|
-| **Unit Tests** | Individuelle komponenter og metoder | Én metode/klasse | PostgreSQL + Kafka containers |
-| **Acceptance Tests** | API endpoints og Kafka producers | Service endpoint | Containers + mocked auth |
-| **Specificationsbaserede Tests** | Baseret på user stories og krav | User story scope | Varierer |
-| **Sikkerhedstests** | OWASP checks og security scanning | Service scope | CI/CD pipeline |
-| **System Tests** | Smoke tests for service health | Service startup | Docker Compose |
+| Test Type                        | Beskrivelse                         | Størrelse        | Infrastruktur                 |
+| -------------------------------- | ----------------------------------- | ---------------- | ----------------------------- |
+| **Unit Tests**                   | Individuelle komponenter og metoder | Én metode/klasse | PostgreSQL + Kafka containers |
+| **Acceptance Tests**             | API endpoints og Kafka producers    | Service endpoint | Containers + mocked auth      |
+| **Specificationsbaserede Tests** | Baseret på user stories og krav     | User story scope | Varierer                      |
+| **Sikkerhedstests**              | OWASP checks og security scanning   | Service scope    | CI/CD pipeline                |
+| **System Tests**                 | Smoke tests for service health      | Service startup  | Docker Compose                |
 
 ### Avancerede Test Typer (kun relevante services)
 
-| Test Type | Beskrivelse | Relevante Services | Hvornår |
-|-----------|-------------|-------------------|---------|
-| **BDD Tests (Reqnroll)** | Gherkin-scenarier for business-kritisk logik | OrderService | Level 2+ |
-| **Mutation Testing (Stryker.NET)** | Test af test-kvalitet for kritisk logik | OrderService | Level 2+ |
-| **E2E Tests** | Fulde brugerflows gennem hele systemet | Alle (via Website) | Level 5 |
-| **Performance Tests (JMeter)** | Load og stress testing | Gateway, OrderService | Level 5 |
-| **Contract Testing** | Validering af Kafka event schemas | Producers ↔ Consumers | Level 4+ |
+| Test Type                          | Beskrivelse                                  | Relevante Services    | Hvornår  |
+| ---------------------------------- | -------------------------------------------- | --------------------- | -------- |
+| **BDD Tests (Reqnroll)**           | Gherkin-scenarier for business-kritisk logik | OrderService          | Level 2+ |
+| **Mutation Testing (Stryker.NET)** | Test af test-kvalitet for kritisk logik      | OrderService          | Level 2+ |
+| **E2E Tests**                      | Fulde brugerflows gennem hele systemet       | Alle (via Website)    | Level 5  |
+| **Performance Tests (JMeter)**     | Load og stress testing                       | Gateway, OrderService | Level 5  |
+| **Contract Testing**               | Validering af Kafka event schemas            | Producers ↔ Consumers | Level 4+ |
 
 ---
 
@@ -97,13 +99,13 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 
 ### Oversigt
 
-| Level | Navn | Services | Primære Testaktiviteter |
-|-------|------|----------|------------------------|
-| 1 | Foundation | Customer, Partner, Agent | Unit tests med containers |
-| 2 | Core Flow | Order | Unit tests, BDD, Mutation testing |
-| 3 | Event Consumers | WebSocket services, Notification | Kafka consumer tests |
-| 4 | Aggregation & Support | FeedbackHub, AgentBonus, Management | Contract testing, Integration tests (kun AgentBonus) |
-| 5 | System Maturity | Gateway, Website, Full system | E2E tests, Performance tests |
+| Level | Navn                  | Services                            | Primære Testaktiviteter                              |
+| ----- | --------------------- | ----------------------------------- | ---------------------------------------------------- |
+| 1     | Foundation            | Customer, Partner, Agent            | Unit tests med containers                            |
+| 2     | Core Flow             | Order                               | Unit tests, BDD, Mutation testing                    |
+| 3     | Event Consumers       | WebSocket services, Notification    | Kafka consumer tests                                 |
+| 4     | Aggregation & Support | FeedbackHub, AgentBonus, Management | Contract testing, Integration tests (kun AgentBonus) |
+| 5     | System Maturity       | Gateway, Website, Full system       | E2E tests, Performance tests                         |
 
 ---
 
@@ -114,12 +116,14 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 **Beskrivelse:** Disse services udgør fundamentet for platformen. De håndterer brugerkonti og skal eksistere før ordreflow kan fungere.
 
 **Testaktiviteter:**
+
 - ✅ Unit tests med PostgreSQL container
 - ✅ API acceptance tests
 - ✅ Sikkerhedstests (OWASP)
 - ✅ CI/CD pipeline med code coverage
 
 **Forventninger ved afslutning:**
+
 - Alle services har >70% code coverage på core komponenter
 - Ingen kritiske sikkerhedsfund
 - CI/CD pipeline kører automatisk ved PR
@@ -135,6 +139,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 **Beskrivelse:** OrderService er kernen i platformen og orkestrerer hele ordreflowet via Kafka events.
 
 **Testaktiviteter:**
+
 - ✅ Unit tests med PostgreSQL + Kafka containers
 - ✅ BDD tests (Reqnroll) for order state transitions
 - ✅ Kafka producer tests (OrderCreated, OrderAccepted, etc.)
@@ -153,6 +158,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 | `order-delivered` | OrderDeliveredEvent | Ordre leveret til kunde |
 
 **Forventninger ved afslutning:**
+
 - Alle order state transitions testet via BDD
 - Mutation score >60% for OrderAggregate
 - Kafka producers verificeret
@@ -168,6 +174,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 **Beskrivelse:** Disse services consumer Kafka events og leverer real-time updates til brugere via WebSocket eller notifikationer.
 
 **Testaktiviteter:**
+
 - ✅ Kafka consumer tests med real Kafka container
 - ✅ WebSocket connection management tests
 - ✅ Unit tests for message routing logic
@@ -182,6 +189,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 | NotificationService | `order-accepted`, `agent-assigned`, `order-delivered` |
 
 **Forventninger ved afslutning:**
+
 - Consumer tests verificerer korrekt event håndtering
 - WebSocket broadcast logic testet
 - End-to-end event flow kan demonstreres manuelt
@@ -197,6 +205,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 **Beskrivelse:** Disse services aggregerer data på tværs af platformen og understøtter analytics og management funktionalitet.
 
 **Testaktiviteter:**
+
 - ✅ Unit tests med containers
 - ✅ **Integration tests for AgentBonusService** (kalder Gateway → andre services)
 - ✅ Contract testing overvejelser (event schemas)
@@ -205,6 +214,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 **Særligt for AgentBonusService:**
 
 AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fordi den aggregerer data fra:
+
 - OrderService (delivery count, fees)
 - AgentService (agent info)
 - FeedbackHubService (reviews, ratings)
@@ -212,6 +222,7 @@ AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fo
 ![alt text](../architecture/resources/agentbonus-calculation.png)
 
 **Forventninger ved afslutning:**
+
 - AgentBonusService kan beregne bonus med mocked + real service responses
 - Contract tests defineret for kritiske event schemas
 - Analytics data kan aggregeres korrekt
@@ -227,6 +238,7 @@ AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fo
 **Beskrivelse:** Ved dette niveau er alle services implementeret og testet individuelt. Nu valideres hele systemet som en enhed.
 
 **Testaktiviteter:**
+
 - ✅ E2E tests (fulde brugerflows)
 - ✅ Performance tests
 - ✅ Load testing
@@ -249,6 +261,7 @@ AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fo
 | Peak load | Simuler 18 millioner ordrer/år kapacitet |
 
 **Forventninger ved afslutning:**
+
 - E2E tests dækker kritiske brugerflows
 - Performance baselines etableret
 - Monitoring dashboards operational
@@ -268,46 +281,44 @@ AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fo
 
 ### Test Frameworks & Libraries
 
-| Værktøj | Formål | Anvendelse |
-|---------|--------|------------|
-| xUnit | Test framework | Alle unit tests |
-| Moq | Mocking library | Mocking af dependencies |
-| FluentAssertions | Assertion library | Læsbare assertions |
-| Reqnroll | BDD framework | Gherkin-scenarier (OrderService) |
-| Coverlet | Code coverage | Coverage collection |
-| ReportGenerator | Coverage rapporter | HTML/XML coverage reports |
+| Værktøj          | Formål             | Anvendelse                       |
+| ---------------- | ------------------ | -------------------------------- |
+| xUnit            | Test framework     | Alle unit tests                  |
+| Moq              | Mocking library    | Mocking af dependencies          |
+| FluentAssertions | Assertion library  | Læsbare assertions               |
+| Reqnroll         | BDD framework      | Gherkin-scenarier (OrderService) |
+| Coverlet         | Code coverage      | Coverage collection              |
+| ReportGenerator  | Coverage rapporter | HTML/XML coverage reports        |
 
 ### Static Analysis & Quality
 
-| Værktøj | Formål | Anvendelse |
-|---------|--------|------------|
-| StyleCop | Code style | Konsistent kode stil |
-| SonarQube | Static analysis | Code quality metrics |
+| Værktøj     | Formål           | Anvendelse                   |
+| ----------- | ---------------- | ---------------------------- |
+| StyleCop    | Code style       | Konsistent kode stil         |
+| SonarQube   | Static analysis  | Code quality metrics         |
 | Stryker.NET | Mutation testing | Test kvalitet (OrderService) |
 
 ### Security
 
-| Værktøj | Formål | Anvendelse |
-|---------|--------|------------|
-| CodeQL | SAST | Security vulnerabilities |
-| Trivy | Vulnerability scanning | Container + filesystem |
-| Gitleaks | Secret detection | Credentials i kode |
+| Værktøj  | Formål                 | Anvendelse               |
+| -------- | ---------------------- | ------------------------ |
+| CodeQL   | SAST                   | Security vulnerabilities |
+| Trivy    | Vulnerability scanning | Container + filesystem   |
+| Gitleaks | Secret detection       | Credentials i kode       |
 
 ### Performance & Monitoring
 
-| Værktøj | Formål | Anvendelse |
-|---------|--------|------------|
-| JMeter | Performance testing | Load tests (Level 5) |
-| Prometheus | Metrics collection | Runtime metrics |
-| Grafana | Visualization | Dashboards |
+| Værktøj | Formål              | Anvendelse           |
+| ------- | ------------------- | -------------------- |
+| JMeter  | Performance testing | Load tests (Level 5) |
 
 ### Infrastructure
 
-| Værktøj | Formål | Anvendelse |
-|---------|--------|------------|
-| Docker | Containerization | Test containers |
-| Docker Compose | Multi-container | Local test environment |
-| GitHub Actions | CI/CD | Automated pipelines |
+| Værktøj        | Formål              | Anvendelse                    |
+| -------------- | ------------------- | ----------------------------- |
+| Docker         | Containerization    | Test containers               |
+| Docker Compose | Multi-container     | Local test environment        |
+| GitHub Actions | CI/CD               | Automated pipelines           |
 | Testcontainers | Test infrastructure | PostgreSQL + Kafka containers |
 
 ---
@@ -317,12 +328,13 @@ AgentBonusService er den **eneste service med reelle HTTP-integrationstests** fo
 Disse krav gælder for **alle services** medmindre andet er specificeret i service-testplanen.
 
 | Metrik | Controller | Service-layer | Repository | Øvrige komponenter |
-|--------|------------|---------------|------------|-------------------|
-| Line   | >70%       | >70%          | >70%       | >60%              |
-| Branch | >70%       | >70%          | >70%       | >60%              |
-| Method | >70%       | >70%          | >70%       | >60%              |
+| ------ | ---------- | ------------- | ---------- | ------------------ |
+| Line   | >70%       | >70%          | >70%       | >60%               |
+| Branch | >70%       | >70%          | >70%       | >60%               |
+| Method | >70%       | >70%          | >70%       | >60%               |
 
 **Undtagelser:**
+
 - Auto-genereret kode (migrations, scaffolding)
 - Triviel kode (DTOs, simple mappers)
 - Infrastructure kode der kræver external dependencies
@@ -363,6 +375,7 @@ Risikoanalysen for MToGo-platformen er dokumenteret i et separat dokument for at
 **→ Se [shared-risks.md](shared-risks.md) for den komplette risikokatalog.**
 
 Dokumentet indeholder:
+
 - **Severity & Likelihood definitioner** - hvordan vi vurderer risici
 - **Shared risks** organiseret efter kategori (R1-R10)
 - **Mitigationsstrategier** for hver identificeret risiko
@@ -376,26 +389,31 @@ Individuelle service-testplaner refererer til `shared-risks.md` og tilføjer kun
 Følgende service-specifikke testplaner er tilgængelige. Hver plan refererer til dette dokument for fælles definitioner og dokumenterer kun service-specifikke afvigelser og risici.
 
 ### Level 1: Foundation Services
+
 - [customer-service-test-plan.md](customer-service-test-plan.md)
 - [partner-service-test-plan.md](partner-service-test-plan.md)
 - [agent-service-test-plan.md](agent-service-test-plan.md)
 
 ### Level 2: Core Flow
+
 - [order-service-test-plan.md](order-service-test-plan.md)
 
 ### Level 3: Event Consumers
+
 - [websocket-agent-service-test-plan.md](websocket-agent-service-test-plan.md)
 - [websocket-customer-service-test-plan.md](websocket-customer-service-test-plan.md)
 - [websocket-partner-service-test-plan.md](websocket-partner-service-test-plan.md)
 - [notification-service-test-plan.md](notification-service-test-plan.md)
 
 ### Level 4: Aggregation & Support
+
 - [feedback-hub-service-test-plan.md](feedback-hub-service-test-plan.md)
-- [agent-bonus-service-test-plan.md](agent-bonus-service-test-plan.md) *(har egne integrationstests)*
+- [agent-bonus-service-test-plan.md](agent-bonus-service-test-plan.md) _(har egne integrationstests)_
 
 ### Level 5: System
+
 - [website-service-test-plan.md](website-service-test-plan.md)
 
 ---
 
-*Dette dokument opdateres løbende baseret på projektets progression og erfaringer.*
+_Dette dokument opdateres løbende baseret på projektets progression og erfaringer._
