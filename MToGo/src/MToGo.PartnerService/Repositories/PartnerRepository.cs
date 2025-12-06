@@ -43,20 +43,20 @@ public class PartnerRepository : IPartnerRepository
     public async Task<Partner?> GetByEmailAsync(string email)
     {
         return await _context.Partners
-            .FirstOrDefaultAsync(p => p.Email == email && !p.IsDeleted && p.IsActive);
+            .FirstOrDefaultAsync(p => p.Email == email && !p.IsDeleted);
     }
 
     public async Task<Partner?> GetByIdAsync(int partnerId)
     {
         return await _context.Partners
             .Include(p => p.MenuItems.Where(m => m.IsActive))
-            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted && p.IsActive);
+            .FirstOrDefaultAsync(p => p.Id == partnerId && !p.IsDeleted);
     }
 
     public async Task<MenuItem?> GetMenuItemByIdAsync(int menuItemId)
     {
         return await _context.MenuItems
-            .FirstOrDefaultAsync(m => m.Id == menuItemId && m.IsActive);
+            .FirstOrDefaultAsync(m => m.Id == menuItemId);
     }
 
     public async Task<MenuItem> AddMenuItemAsync(MenuItem menuItem)
