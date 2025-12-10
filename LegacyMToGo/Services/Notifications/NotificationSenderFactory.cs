@@ -32,7 +32,6 @@ public class NotificationSenderFactory : INotificationSenderFactory
         {
             NotificationMethod.Email => _serviceProvider.GetRequiredService<EmailNotificationSender>(),
             NotificationMethod.Sms => _serviceProvider.GetRequiredService<SmsNotificationSender>(),
-            NotificationMethod.Push => _serviceProvider.GetRequiredService<PushNotificationSender>(),
             _ => throw new ArgumentException($"Unsupported notification method: {method}", nameof(method))
         };
     }

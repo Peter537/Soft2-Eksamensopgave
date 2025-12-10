@@ -61,25 +61,6 @@ public class NotificationSenderFactoryTests
     }
 
     [Fact]
-    public void CreateSender_WithPushMethod_ReturnsPushNotificationSender()
-    {
-        // Arrange
-        var mockLogger = new Mock<ILogger<PushNotificationSender>>();
-        var pushSender = new PushNotificationSender(mockLogger.Object);
-        
-        _mockServiceProvider
-            .Setup(x => x.GetService(typeof(PushNotificationSender)))
-            .Returns(pushSender);
-
-        // Act
-        var result = _sut.CreateSender(NotificationMethod.Push);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.IsType<PushNotificationSender>(result);
-    }
-
-    [Fact]
     public void CreateSender_WithInvalidMethod_ThrowsArgumentException()
     {
         // Arrange
@@ -93,7 +74,6 @@ public class NotificationSenderFactoryTests
     [Theory]
     [InlineData(NotificationMethod.Email)]
     [InlineData(NotificationMethod.Sms)]
-    [InlineData(NotificationMethod.Push)]
     public void CreateSender_WithValidMethod_ReturnsINotificationSender(NotificationMethod method)
     {
         // Arrange
@@ -146,12 +126,6 @@ public class NotificationSenderFactoryTests
                 _mockServiceProvider
                     .Setup(x => x.GetService(typeof(SmsNotificationSender)))
                     .Returns(new SmsNotificationSender(smsLogger.Object));
-                break;
-            case NotificationMethod.Push:
-                var pushLogger = new Mock<ILogger<PushNotificationSender>>();
-                _mockServiceProvider
-                    .Setup(x => x.GetService(typeof(PushNotificationSender)))
-                    .Returns(new PushNotificationSender(pushLogger.Object));
                 break;
         }
     }

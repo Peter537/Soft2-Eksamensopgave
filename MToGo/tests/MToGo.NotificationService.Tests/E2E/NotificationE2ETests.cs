@@ -192,7 +192,6 @@ public class NotificationE2ETests : IAsyncLifetime
     [Theory]
     [InlineData(NotificationMethod.Email)]
     [InlineData(NotificationMethod.Sms)]
-    [InlineData(NotificationMethod.Push)]
     public async Task Notify_CustomerWithDifferentNotificationMethods_SendsSuccessfully(NotificationMethod method)
     {
         // Arrange - Create customer with specific notification method

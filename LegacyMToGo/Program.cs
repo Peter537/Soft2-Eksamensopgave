@@ -11,7 +11,6 @@ builder.Services.AddDbContext<LegacyDbContext>(options =>
 // Register notification senders (Factory pattern)
 builder.Services.AddScoped<EmailNotificationSender>();
 builder.Services.AddScoped<SmsNotificationSender>();
-builder.Services.AddScoped<PushNotificationSender>();
 builder.Services.AddScoped<INotificationSenderFactory, NotificationSenderFactory>();
 builder.Services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
 
