@@ -60,6 +60,8 @@ Vi har brugt C4-modellering til at beskrive systemets arkitektur på forskellige
 En samlet oversigt kan findes inde på dette link:  
 [https://drive.google.com/file/d/1LMQYstO4bs9l7I8GLsPPaoj-\_bEhM04L/view?usp=sharing](https://drive.google.com/file/d/1LMQYstO4bs9l7I8GLsPPaoj-_bEhM04L/view?usp=sharing)
 
+> **OBS:** Alle diagrammer inde fra Google Drive linket er i denne fil, men kan også findes som separate billeder i [/resources](./resources)-mappen for bedre resolution.
+
 ### System Context Diagram
 
 ![System Context Diagram](./resources/system-context-diagram.png)
@@ -113,7 +115,7 @@ MToGo-systemet er bygget som en service-arkitektur, hvor hver service kører som
 
 **Eksterne Systemer**:
 
-- **Nets: Payment Provider** : Håndterer sikre betalinger for ordrer fra Website.
+- **Payment Provider** : Håndterer sikre betalinger for ordrer fra Website.
 - **Legacy MToGo App**: Tidligere version af MToGo-systemet, som stadig bruges til visse funktioner og data fra Customer og Notification Services.
 
 **Interaktioner**:
@@ -126,6 +128,8 @@ MToGo-systemet er bygget som en service-arkitektur, hvor hver service kører som
 ### Component Diagrammer
 
 Component diagrammer er beskrevet og vist under deres respektive service sektioner nedenfor.
+
+> **OBS:** Disse diagram blev lavet i starten af projektet for at være en guide til implementeringen, og kan derfor afvige en smule fra den endelige implementering.
 
 ## Frontend Service
 
