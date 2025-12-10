@@ -1,6 +1,7 @@
 ## Technical Stories
 
-Dette dokument indeholder technical stories (TS) for implementering af forskellige funktioner og forbedringer. Hver historie inkluderer størrelse, prioritet, beskrivelse og acceptkriterier (AC).
+Dette dokument indeholder de oprindelige technical stories (TS) for implementering af forskellige funktioner og forbedringer ved opstart af projektet.  
+Hver historie inkluderer størrelse, prioritet, beskrivelse og acceptkriterier (AC).
 
 ---
 
