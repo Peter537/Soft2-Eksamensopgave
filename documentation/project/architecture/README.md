@@ -18,8 +18,10 @@ MToGo består af følgende services:
 - Customer Service
 - Agent Service
 - Agent Bonus Service
+- Management Service
 - Notification Service
 - Feedback Hub Service
+- Log Collector Service
 - WebSocket Services (Customer, Partner, Agent)
 
 ## Ressourcer

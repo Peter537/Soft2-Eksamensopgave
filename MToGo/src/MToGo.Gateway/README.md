@@ -32,6 +32,7 @@ Alle API-endpoints proxies gennem Gateway:
 | `/api/v1/feedback-hub/*`     | Feedback Hub Service       |
 | `/api/v1/notifications/*`    | Legacy MToGo               |
 | `/api/v1/management/*`       | Management Service         |
+| `/api/v1/logs/*`             | Log Collector Service      |
 | `/api/v1/ws/customers/*`     | WebSocket Customer Service |
 | `/api/v1/ws/partners/*`      | WebSocket Partner Service  |
 | `/api/v1/ws/agents/*`        | WebSocket Agent Service    |

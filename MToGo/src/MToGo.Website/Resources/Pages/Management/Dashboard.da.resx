@@ -48,15 +48,6 @@
   <data name="CreatePartnerButton" xml:space="preserve">
     <value>Opret Partner</value>
   </data>
-  <data name="MetricsTitle" xml:space="preserve">
-    <value>Platform Metrics</value>
-  </data>
-  <data name="MetricsDescription" xml:space="preserve">
-    <value>Oversigt over nøglepræstationsindikatorer for MToGo-platformen.</value>
-  </data>
-  <data name="ViewMetricsButton" xml:space="preserve">
-    <value>Se Metrics</value>
-  </data>
   <data name="ViewReviewsTitle" xml:space="preserve">
     <value>Kundeanmeldelser</value>
   </data>

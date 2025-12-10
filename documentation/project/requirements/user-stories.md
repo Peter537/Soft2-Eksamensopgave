@@ -1,6 +1,7 @@
 # User Stories
 
-Dette dokument indeholder user stories for MToGo platformen, opdelt efter service. Hver user story (US) inkluderer størrelse, prioritet, kort beskrivelse og acceptance criterias (AC).
+Dette dokument indeholder de oprindelige user stories for MToGo-systemet ved opstart af projektet, opdelt efter service.  
+Hver user story (US) inkluderer størrelse, prioritet, kort beskrivelse og acceptance criterias (AC).
 
 ## Service: Customer Service
 

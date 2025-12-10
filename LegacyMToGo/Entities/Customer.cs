@@ -3,8 +3,7 @@ namespace LegacyMToGo.Entities;
 public enum NotificationMethod
 {
     Email,
-    Sms,
-    Push
+    Sms
 }
 
 public enum LanguagePreference

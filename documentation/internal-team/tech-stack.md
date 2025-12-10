@@ -1,15 +1,19 @@
 ## Tech Stack
 
-Vi benytter os af C# og .NET 8 til at lave dette projekt.
-
-Vores frontend framework er Blazor Web App.
-
-Vores test framework bruger vi xUnit.
-
-Alle vores NuGet packages kan findes i [Directory.Packages.props](../../MToGo/Directory.Packages.props) med versioner derinde.
-
-Vi benytter os af PostgresDB til vores databaser.
-
-Vi benytter os af Docker, Kubernetes og Terraform til containerisering og skalering.
-
-Vi benytter os af Visual Studio og Visual Studio Code til udviklingen.
+- **Backend**: ASP.NET Core 8.0, C#, .NET SDK 8.0
+- **Frontend**: Blazor Server
+- **Database**: PostgreSQL
+- **ORM**: Entity Framework Core
+- **Messaging**: Apache Kafka
+- **Real-time Communication**: WebSockets
+- **CI/CD**: GitHub Actions
+- **Gateway**: YARP (Yet Another Reverse Proxy)
+- **Overvågning**: Prometheus, Grafana, Alertmanager
+- **Containerisering**: Docker, Docker Compose
+- **Infrastructure as Code**: Terraform
+- **Udviklingsmiljø**: Visual Studio 2022, Visual Studio Code
+- **Test Framework**: xUnit, Reqnroll (BDD), JMeter (Performance), Selenium (E2E)
+- **Code Quality**: StyleCop, SonarQube, Stryker.NET (Mutation Testing)
+- **Security Scanning**: CodeQL, Trivy, Gitleaks
+- **Package Management**: NuGet via [Directory.Packages.props](../../MToGo/Directory.Packages.props)
+- **Version Control**: Git

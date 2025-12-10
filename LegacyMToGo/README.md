@@ -13,7 +13,7 @@ Dette er den gamle MToGo-applikation, der håndterer kundeadministration og noti
 | Mappe/Fil    | Beskrivelse                                  |
 | ------------ | -------------------------------------------- |
 | Controllers/ | API-controllere til kunder og notifikationer |
-| Data/        | Database-kontekst og konfigurationer         |
-| Models/      | Entity-modeller                              |
+| Entities/    | Database-kontekst og entity-modeller         |
+| Models/      | Request og response modeller                 |
 | Services/    | Forretningslogik-services                    |
 | Program.cs   | Applikationens indgangspunkt                 |

@@ -590,7 +590,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var updateRequest = new CustomerUpdateRequest(
             Name: "Updated Name",
             DeliveryAddress: "Updated Address 789",
-            NotificationMethod: "Push",
+            NotificationMethod: "Sms",
             PhoneNumber: "+4598765432",
             LanguagePreference: "da"
         );
@@ -603,7 +603,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.NotNull(updatedProfile);
         Assert.Equal("Updated Name", updatedProfile.Name);
         Assert.Equal("Updated Address 789", updatedProfile.DeliveryAddress);
-        Assert.Equal("Push", updatedProfile.NotificationMethod);
+        Assert.Equal("Sms", updatedProfile.NotificationMethod);
         Assert.Equal("+4598765432", updatedProfile.PhoneNumber);
         Assert.Equal("da", updatedProfile.LanguagePreference);
 
@@ -614,7 +614,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.NotNull(customer);
         Assert.Equal("Updated Name", customer.Name);
         Assert.Equal("Updated Address 789", customer.DeliveryAddress);
-        Assert.Equal(LegacyMToGo.Entities.NotificationMethod.Push, customer.NotificationMethod);
+        Assert.Equal(LegacyMToGo.Entities.NotificationMethod.Sms, customer.NotificationMethod);
         Assert.Equal("+4598765432", customer.PhoneNumber);
         Assert.Equal(LegacyMToGo.Entities.LanguagePreference.Da, customer.LanguagePreference);
     }
