@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Agent Bonus Calculator</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Access Denied</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>Please log in as a manager to access this page.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>log in</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Agent Bonus Calculator</value>
+  </data>
+  <data name="BackToDashboard" xml:space="preserve">
+    <value>Back to Dashboard</value>
+  </data>
+  <data name="CalculateBonus" xml:space="preserve">
+    <value>Calculate Bonus</value>
+  </data>
+  <data name="AgentId" xml:space="preserve">
+    <value>Agent ID</value>
+  </data>
+  <data name="AgentIdPlaceholder" xml:space="preserve">
+    <value>e.g., 1</value>
+  </data>
+  <data name="StartDate" xml:space="preserve">
+    <value>Start Date</value>
+  </data>
+  <data name="EndDate" xml:space="preserve">
+    <value>End Date</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Calculating...</value>
+  </data>
+  <data name="Calculate" xml:space="preserve">
+    <value>Calculate</value>
+  </data>
+  <data name="QuickSelect" xml:space="preserve">
+    <value>Quick select:</value>
+  </data>
+  <data name="ThisMonth" xml:space="preserve">
+    <value>This Month</value>
+  </data>
+  <data name="LastMonth" xml:space="preserve">
+    <value>Last Month</value>
+  </data>
+  <data name="Last3Months" xml:space="preserve">
+    <value>Last 3 Months</value>
+  </data>
+  <data name="ThisYear" xml:space="preserve">
+    <value>This Year</value>
+  </data>
+  <data name="Qualified" xml:space="preserve">
+    <value>Qualified</value>
+  </data>
+  <data name="NotQualified" xml:space="preserve">
+    <value>Not Qualified</value>
+  </data>
+  <data name="Period" xml:space="preserve">
+    <value>Period:</value>
+  </data>
+  <data name="Warnings" xml:space="preserve">
+    <value>Warnings</value>
+  </data>
+  <data name="TotalBonus" xml:space="preserve">
+    <value>Total Bonus</value>
+  </data>
+  <data name="EarnedThisPeriod" xml:space="preserve">
+    <value>Earned this period</value>
+  </data>
+  <data name="Deliveries" xml:space="preserve">
+    <value>Deliveries</value>
+  </data>
+  <data name="RequiredDeliveries" xml:space="preserve">
+    <value>20+ required ✓</value>
+  </data>
+  <data name="NeedMoreDeliveries" xml:space="preserve">
+    <value>Need {0} more</value>
+  </data>
+  <data name="Performance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="PerformanceMultiplier" xml:space="preserve">
+    <value>Performance multiplier</value>
+  </data>
+  <data name="TimeScoreBreakdown" xml:space="preserve">
+    <value>Time Score Breakdown</value>
+  </data>
+  <data name="TimeScore" xml:space="preserve">
+    <value>Time Score</value>
+  </data>
+  <data name="Early" xml:space="preserve">
+    <value>Early (10-14h)</value>
+  </data>
+  <data name="EarlyBonus" xml:space="preserve">
+    <value>1.2x bonus</value>
+  </data>
+  <data name="Normal" xml:space="preserve">
+    <value>Normal (14-20h)</value>
+  </data>
+  <data name="NormalBase" xml:space="preserve">
+    <value>1.0x base</value>
+  </data>
+  <data name="Late" xml:space="preserve">
+    <value>Late (20h+)</value>
+  </data>
+  <data name="LateBonus" xml:space="preserve">
+    <value>1.2x bonus</value>
+  </data>
+  <data name="ReviewScoreTitle" xml:space="preserve">
+    <value>Review Score</value>
+  </data>
+  <data name="ReviewScore" xml:space="preserve">
+    <value>Review Score</value>
+  </data>
+  <data name="BasedOnReviews" xml:space="preserve">
+    <value>Based on {0} reviews</value>
+  </data>
+  <data name="UsingDefaultRating" xml:space="preserve">
+    <value>Using default rating</value>
+  </data>
+  <data name="DefaultScoreApplied" xml:space="preserve">
+    <value>Default score of 3.0/5.0 applied ({0} reviews found)</value>
+  </data>
+  <data name="CalculationBreakdown" xml:space="preserve">
+    <value>Calculation Breakdown</value>
+  </data>
+  <data name="ContributionBase" xml:space="preserve">
+    <value>Contribution Base</value>
+  </data>
+  <data name="ContributionBaseDesc" xml:space="preserve">
+    <value>(Sum of delivery fees × 15%)</value>
+  </data>
+  <data name="TimeScoreDesc" xml:space="preserve">
+    <value>(Early/Late bonuses applied)</value>
+  </data>
+  <data name="ReviewScoreDesc" xml:space="preserve">
+    <value>(Average rating / 5)</value>
+  </data>
+  <data name="PerformanceDesc" xml:space="preserve">
+    <value>(50% Time + 50% Review)</value>
+  </data>
+  <data name="FinalBonus" xml:space="preserve">
+    <value>Final Bonus</value>
+  </data>
+  <data name="FinalBonusDesc" xml:space="preserve">
+    <value>(Contribution × Performance)</value>
+  </data>
+  <data name="NotQualifiedWarning" xml:space="preserve">
+    <value>Agent needs at least 20 deliveries to qualify for bonus. Currently has {0} deliveries.</value>
+  </data>
+  <data name="EnterValidAgentId" xml:space="preserve">
+    <value>Please enter a valid Agent ID</value>
+  </data>
+  <data name="EndDateAfterStart" xml:space="preserve">
+    <value>End date must be after start date</value>
+  </data>
+  <data name="AgentNotFound" xml:space="preserve">
+    <value>Agent with ID {0} not found</value>
+  </data>
+  <data name="FailedToCalculate" xml:space="preserve">
+    <value>Failed to calculate bonus ({0}): {1}</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Error: {0}</value>
+  </data>
+</root>

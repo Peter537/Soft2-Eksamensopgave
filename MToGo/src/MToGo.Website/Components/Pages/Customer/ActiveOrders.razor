@@ -9,25 +9,25 @@
 @implements IAsyncDisposable
 @rendermode InteractiveServer
 
-<PageTitle>Active Orders</PageTitle>
+<PageTitle>@L["Pages.Customer.ActiveOrders.PageTitle"]</PageTitle>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-10">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="mb-0">
-                    <i class="bi bi-bag-check me-2"></i>Your Active Orders
+                    <i class="bi bi-bag-check me-2"></i>@L["Pages.Customer.ActiveOrders.Title"]
                 </h2>
                 @if (IsConnected)
                 {
                     <span class="badge bg-success">
-                        <i class="bi bi-wifi me-1"></i>Live Updates
+                        <i class="bi bi-wifi me-1"></i>@L["Pages.Customer.ActiveOrders.LiveUpdates"]
                     </span>
                 }
                 else
                 {
                     <span class="badge bg-secondary">
-                        <i class="bi bi-wifi-off me-1"></i>Connecting...
+                        <i class="bi bi-wifi-off me-1"></i>@L["Pages.Customer.ActiveOrders.Connecting"]
                     </span>
                 }
             </div>
@@ -35,16 +35,16 @@
             @if (!Auth.IsCustomer)
             {
                 <div class="alert alert-warning">
-                    <p class="mb-0">Please <a href="/login">log in</a> to view your active orders.</p>
+                    <p class="mb-0">@L["Pages.Customer.ActiveOrders.LoginRequired"] <a href="/login">@L["Pages.Customer.ActiveOrders.LoginLink"]</a></p>
                 </div>
             }
             else if (isLoading)
             {
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">@L["Pages.Customer.ActiveOrders.Loading"]</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading your orders...</p>
+                    <p class="mt-2 text-muted">@L["Pages.Customer.ActiveOrders.Loading"]</p>
                 </div>
             }
             else if (!string.IsNullOrEmpty(errorMessage))
@@ -57,10 +57,10 @@
             {
                 <div class="text-center py-5">
                     <i class="bi bi-inbox display-1 text-muted"></i>
-                    <h4 class="mt-3 text-muted">No Active Orders</h4>
-                    <p class="text-muted">You don't have any ongoing orders at the moment.</p>
+                    <h4 class="mt-3 text-muted">@L["Pages.Customer.ActiveOrders.NoActiveOrders"]</h4>
+                    <p class="text-muted">@L["Pages.Customer.ActiveOrders.NoActiveOrdersDesc"]</p>
                     <a href="/customer/orders" class="btn btn-outline-primary mt-2">
-                        <i class="bi bi-clock-history me-1"></i>View Order History
+                        <i class="bi bi-clock-history me-1"></i>@L["Pages.Customer.ActiveOrders.ViewOrderHistory"]
                     </a>
                 </div>
             }
@@ -72,15 +72,15 @@
                         <div class="col">
                             <div class="card h-100 shadow-sm order-card" @onclick="() => ViewOrderDetail(order.Id)" style="cursor: pointer;">
                                 <div class="card-header d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold">Order #@order.Id</span>
+                                    <span class="fw-bold">@string.Format(L["Pages.Customer.ActiveOrders.OrderId"], order.Id)</span>
                                     <span class="badge @GetStatusBadgeClass(order.Status)">
-                                        @GetStatusIcon(order.Status) @order.Status
+                                        @GetStatusIcon(order.Status) @GetLocalizedStatus(order.Status)
                                     </span>
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-2">
                                         <i class="bi bi-shop me-2 text-muted"></i>
-                                        <span class="text-muted">Partner #@order.PartnerId</span>
+                                        <span class="text-muted">@string.Format(L["Pages.Customer.ActiveOrders.Partner"], order.PartnerId)</span>
                                     </div>
                                     <div class="mb-2">
                                         <i class="bi bi-geo-alt me-2 text-muted"></i>
@@ -96,13 +96,13 @@
                                     <hr />
                                     
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span class="text-muted">@order.Items.Count item(s)</span>
-                                        <span class="fw-bold fs-5">@CalculateTotal(order).ToString("C")</span>
+                                        <span class="text-muted">@string.Format(L["Pages.Customer.ActiveOrders.ItemCount"], order.Items.Count)</span>
+                                        <span class="fw-bold fs-5">@CalculateTotal(order).FormatDKK()</span>
                                     </div>
                                 </div>
                                 <div class="card-footer bg-transparent">
                                     <small class="text-muted">
-                                        <i class="bi bi-arrow-right-circle me-1"></i>Tap to view details
+                                        <i class="bi bi-arrow-right-circle me-1"></i>@L["Pages.Customer.ActiveOrders.TapToViewDetails"]
                                     </small>
                                 </div>
                             </div>
@@ -112,7 +112,7 @@
                 
                 <div class="text-center mt-4">
                     <a href="/customer/orders" class="btn btn-outline-secondary">
-                        <i class="bi bi-clock-history me-1"></i>View Order History
+                        <i class="bi bi-clock-history me-1"></i>@L["Pages.Customer.ActiveOrders.ViewOrderHistory"]
                     </a>
                 </div>
             }
@@ -333,6 +333,20 @@
             "Delivered" => "📦",
             "Rejected" => "❌",
             _ => "•"
+        };
+    }
+
+    private string GetLocalizedStatus(string status)
+    {
+        return status switch
+        {
+            "Placed" => L["Pages.Customer.ActiveOrders.StatusPlaced"],
+            "Accepted" => L["Pages.Customer.ActiveOrders.StatusAccepted"],
+            "Ready" => L["Pages.Customer.ActiveOrders.StatusReady"],
+            "PickedUp" => L["Pages.Customer.ActiveOrders.StatusPickedUp"],
+            "Delivered" => L["Pages.Customer.ActiveOrders.StatusDelivered"],
+            "Rejected" => L["Pages.Customer.ActiveOrders.StatusRejected"],
+            _ => status
         };
     }
 

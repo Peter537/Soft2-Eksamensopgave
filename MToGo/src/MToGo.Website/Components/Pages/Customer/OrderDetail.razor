@@ -9,7 +9,7 @@
 @implements IAsyncDisposable
 @rendermode InteractiveServer
 
-<PageTitle>Order #@OrderId</PageTitle>
+<PageTitle>@string.Format(L["Pages.Customer.OrderDetail.PageTitle"], OrderId)</PageTitle>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
@@ -17,24 +17,24 @@
             <!-- Back navigation -->
             <nav aria-label="breadcrumb" class="mb-3">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="/customer/active-orders">Active Orders</a></li>
-                    <li class="breadcrumb-item active">Order #@OrderId</li>
+                    <li class="breadcrumb-item"><a href="/customer/active-orders">@L["Pages.Customer.OrderDetail.BreadcrumbActiveOrders"]</a></li>
+                    <li class="breadcrumb-item active">@string.Format(L["Pages.Customer.OrderDetail.BreadcrumbOrder"], OrderId)</li>
                 </ol>
             </nav>
 
             @if (!Auth.IsCustomer)
             {
                 <div class="alert alert-warning">
-                    <p class="mb-0">Please <a href="/login">log in</a> to view order details.</p>
+                    <p class="mb-0">@L["Pages.Customer.OrderDetail.LoginRequired"] <a href="/login">@L["Pages.Customer.OrderDetail.LoginLink"]</a></p>
                 </div>
             }
             else if (isLoading)
             {
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden">@L["Pages.Customer.OrderDetail.Loading"]</span>
                     </div>
-                    <p class="mt-2 text-muted">Loading order details...</p>
+                    <p class="mt-2 text-muted">@L["Pages.Customer.OrderDetail.Loading"]</p>
                 </div>
             }
             else if (!string.IsNullOrEmpty(errorMessage))
@@ -49,20 +49,20 @@
                 <div class="card mb-4 shadow-sm">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <div>
-                            <h4 class="mb-0">Order #@order.Id</h4>
+                            <h4 class="mb-0">@string.Format(L["Pages.Customer.OrderDetail.BreadcrumbOrder"], order.Id)</h4>
                             <small>@FormatDate(order.OrderCreatedTime)</small>
                         </div>
                         <div class="text-end">
                             @if (IsConnected)
                             {
                                 <span class="badge bg-success">
-                                    <i class="bi bi-wifi me-1"></i>Live
+                                    <i class="bi bi-wifi me-1"></i>@L["Pages.Customer.OrderDetail.LiveStatus"]
                                 </span>
                             }
                             else
                             {
                                 <span class="badge bg-light text-dark">
-                                    <i class="bi bi-wifi-off me-1"></i>Offline
+                                    <i class="bi bi-wifi-off me-1"></i>@L["Pages.Customer.OrderDetail.OfflineStatus"]
                                 </span>
                             }
                         </div>
@@ -70,10 +70,10 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <p class="mb-1"><strong><i class="bi bi-shop me-2"></i>Partner:</strong> #@order.PartnerId</p>
+                                <p class="mb-1"><strong><i class="bi bi-shop me-2"></i>@L["Pages.Customer.OrderDetail.Partner"]</strong> #@order.PartnerId</p>
                             </div>
                             <div class="col-md-6">
-                                <p class="mb-1"><strong><i class="bi bi-geo-alt me-2"></i>Delivery:</strong> @order.DeliveryAddress</p>
+                                <p class="mb-1"><strong><i class="bi bi-geo-alt me-2"></i>@L["Pages.Customer.OrderDetail.Delivery"]</strong> @order.DeliveryAddress</p>
                             </div>
                         </div>
                     </div>
@@ -84,17 +84,17 @@
                     <div class="col-lg-5 mb-4">
                         <div class="card shadow-sm h-100">
                             <div class="card-header">
-                                <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Order Status</h5>
+                                <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>@L["Pages.Customer.OrderDetail.OrderStatus"]</h5>
                             </div>
                             <div class="card-body">
                                 @if (order.Status == "Rejected")
                                 {
                                     <div class="alert alert-danger">
                                         <i class="bi bi-x-circle me-2"></i>
-                                        <strong>Order Rejected</strong>
+                                        <strong>@L["Pages.Customer.OrderDetail.OrderRejected"]</strong>
                                         @if (!string.IsNullOrEmpty(rejectionReason))
                                         {
-                                            <p class="mb-0 mt-2">Reason: @rejectionReason</p>
+                                            <p class="mb-0 mt-2">@L["Pages.Customer.OrderDetail.RejectionReason"] @rejectionReason</p>
                                         }
                                     </div>
                                 }
@@ -112,7 +112,7 @@
                                                     else if (step.IsCurrent)
                                                     {
                                                         <div class="spinner-border spinner-border-sm" role="status">
-                                                            <span class="visually-hidden">In progress...</span>
+                                                            <span class="visually-hidden">@L["Pages.Customer.OrderDetail.InProgress"]</span>
                                                         </div>
                                                     }
                                                     else
@@ -140,16 +140,16 @@
                     <div class="col-lg-7 mb-4">
                         <div class="card shadow-sm">
                             <div class="card-header">
-                                <h5 class="mb-0"><i class="bi bi-bag me-2"></i>Order Items</h5>
+                                <h5 class="mb-0"><i class="bi bi-bag me-2"></i>@L["Pages.Customer.OrderDetail.OrderItems"]</h5>
                             </div>
                             <div class="card-body p-0">
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Item</th>
-                                            <th class="text-center">Qty</th>
-                                            <th class="text-end">Price</th>
-                                            <th class="text-end">Subtotal</th>
+                                            <th>@L["Pages.Customer.OrderDetail.Item"]</th>
+                                            <th class="text-center">@L["Pages.Customer.OrderDetail.Qty"]</th>
+                                            <th class="text-end">@L["Pages.Customer.OrderDetail.Price"]</th>
+                                            <th class="text-end">@L["Pages.Customer.OrderDetail.Subtotal"]</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -158,8 +158,8 @@
                                             <tr>
                                                 <td>@item.Name</td>
                                                 <td class="text-center">@item.Quantity</td>
-                                                <td class="text-end">@item.UnitPrice.ToString("C")</td>
-                                                <td class="text-end">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                                                <td class="text-end">@item.UnitPrice.FormatDKK()</td>
+                                                <td class="text-end">@((item.Quantity * item.UnitPrice).FormatDKK())</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -169,27 +169,206 @@
                             <!-- Pricing Summary -->
                             <div class="card-footer bg-light">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Items Subtotal</span>
-                                    <span>@GetItemsSubtotal().ToString("C")</span>
+                                    <span class="text-muted">@L["Pages.Customer.OrderDetail.ItemsSubtotal"]</span>
+                                    <span>@GetItemsSubtotal().FormatDKK()</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span class="text-muted">Delivery Fee</span>
-                                    <span>@order.DeliveryFee.ToString("C")</span>
+                                    <span class="text-muted">@L["Pages.Customer.OrderDetail.DeliveryFee"]</span>
+                                    <span>@order.DeliveryFee.FormatDKK()</span>
                                 </div>
                                 <hr />
                                 <div class="d-flex justify-content-between">
-                                    <strong class="fs-5">Total</strong>
-                                    <strong class="fs-5 text-primary">@CalculateTotal().ToString("C")</strong>
+                                    <strong class="fs-5">@L["Pages.Customer.OrderDetail.Total"]</strong>
+                                    <strong class="fs-5 text-primary">@CalculateTotal().FormatDKK()</strong>
                                 </div>
                             </div>
                         </div>
+
+                        @* Review Section - Only show for delivered orders *@
+                        @if (order.Status == "Delivered")
+                        {
+                            <div class="card mt-3 shadow-sm">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0"><i class="bi bi-star me-2"></i>@L["Pages.Customer.OrderDetail.RateYourOrder"]</h5>
+                                </div>
+                                <div class="card-body">
+                                    @if (hasReviewed && existingReview != null)
+                                    {
+                                        <div class="alert alert-success mb-3">
+                                            <i class="bi bi-check-circle me-2"></i>@L["Pages.Customer.OrderDetail.ThankYouFeedback"]
+                                        </div>
+                                        
+                                        <div class="row">
+                                            @* Food Rating Display *@
+                                            @if (existingReview.FoodRating > 0)
+                                            {
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">🍽️ @L["Pages.Customer.OrderDetail.FoodQuality"]</label>
+                                                    <div class="mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <span class="@(existingReview.FoodRating >= i ? "text-warning" : "text-muted")" style="font-size: 1.5rem;">
+                                                                @(existingReview.FoodRating >= i ? "★" : "☆")
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(existingReview.FoodComment))
+                                                    {
+                                                        <p class="text-muted small mb-0 fst-italic">"@existingReview.FoodComment"</p>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @* Agent Rating Display *@
+                                            @if (existingReview.AgentRating > 0)
+                                            {
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">🚴 @L["Pages.Customer.OrderDetail.DeliveryAgent"]</label>
+                                                    <div class="mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <span class="@(existingReview.AgentRating >= i ? "text-warning" : "text-muted")" style="font-size: 1.5rem;">
+                                                                @(existingReview.AgentRating >= i ? "★" : "☆")
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(existingReview.AgentComment))
+                                                    {
+                                                        <p class="text-muted small mb-0 fst-italic">"@existingReview.AgentComment"</p>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @* Order Rating Display *@
+                                            @if (existingReview.OrderRating > 0)
+                                            {
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">📦 @L["Pages.Customer.OrderDetail.OverallExperience"]</label>
+                                                    <div class="mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            <span class="@(existingReview.OrderRating >= i ? "text-warning" : "text-muted")" style="font-size: 1.5rem;">
+                                                                @(existingReview.OrderRating >= i ? "★" : "☆")
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(existingReview.OrderComment))
+                                                    {
+                                                        <p class="text-muted small mb-0 fst-italic">"@existingReview.OrderComment"</p>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                        
+                                        <small class="text-muted">@L["Pages.Customer.OrderDetail.ReviewSubmittedOn"] @existingReview.CreatedAt.ToLocalTime().ToString("f")</small>
+                                    }
+                                    else if (hasReviewed)
+                                    {
+                                        <div class="alert alert-success mb-0">
+                                            <i class="bi bi-check-circle me-2"></i>@L["Pages.Customer.OrderDetail.ThankYouFeedback"]
+                                        </div>
+                                    }
+                                    else if (isSubmittingReview)
+                                    {
+                                        <div class="text-center py-3">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">@L["Pages.Customer.OrderDetail.Submitting"]</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">@L["Pages.Customer.OrderDetail.Submitting"]</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @if (!string.IsNullOrEmpty(reviewErrorMessage))
+                                        {
+                                            <div class="alert alert-danger">
+                                                <i class="bi bi-exclamation-triangle me-2"></i>@reviewErrorMessage
+                                            </div>
+                                        }
+
+                                        <EditForm Model="reviewModel" OnValidSubmit="SubmitReview">
+                                            <DataAnnotationsValidator />
+
+                                            <div class="row">
+                                                <!-- Food Rating -->
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">🍽️ @L["Pages.Customer.OrderDetail.FoodQuality"]</label>
+                                                    <div class="star-rating d-flex mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            var rating = i;
+                                                            <button type="button" class="btn btn-sm @(reviewModel.FoodRating >= rating ? "btn-warning" : "btn-outline-secondary") me-1" 
+                                                                    style="font-size: 1.2rem; width: 40px; height: 40px;"
+                                                                    @onclick="() => SetFoodRating(rating)">
+                                                                @(reviewModel.FoodRating >= rating ? "★" : "☆")
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                    <textarea class="form-control mt-2" rows="2" maxlength="500" 
+                                                              placeholder="@L["Pages.Customer.OrderDetail.FoodCommentPlaceholder"]"
+                                                              @bind="reviewModel.FoodComment"></textarea>
+                                                    <small class="text-muted">@(reviewModel.FoodComment?.Length ?? 0)/500</small>
+                                                </div>
+
+                                                <!-- Agent Rating -->
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">🚴 @L["Pages.Customer.OrderDetail.DeliveryAgent"]</label>
+                                                    <div class="star-rating d-flex mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            var rating = i;
+                                                            <button type="button" class="btn btn-sm @(reviewModel.AgentRating >= rating ? "btn-warning" : "btn-outline-secondary") me-1" 
+                                                                    style="font-size: 1.2rem; width: 40px; height: 40px;"
+                                                                    @onclick="() => SetAgentRating(rating)">
+                                                                @(reviewModel.AgentRating >= rating ? "★" : "☆")
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                    <textarea class="form-control mt-2" rows="2" maxlength="500" 
+                                                              placeholder="@L["Pages.Customer.OrderDetail.AgentCommentPlaceholder"]"
+                                                              @bind="reviewModel.AgentComment"></textarea>
+                                                    <small class="text-muted">@(reviewModel.AgentComment?.Length ?? 0)/500</small>
+                                                </div>
+
+                                                <!-- Order Rating -->
+                                                <div class="col-md-4 mb-3">
+                                                    <label class="form-label fw-bold">📦 @L["Pages.Customer.OrderDetail.OverallExperience"]</label>
+                                                    <div class="star-rating d-flex mb-2">
+                                                        @for (int i = 1; i <= 5; i++)
+                                                        {
+                                                            var rating = i;
+                                                            <button type="button" class="btn btn-sm @(reviewModel.OrderRating >= rating ? "btn-warning" : "btn-outline-secondary") me-1" 
+                                                                    style="font-size: 1.2rem; width: 40px; height: 40px;"
+                                                                    @onclick="() => SetOrderRating(rating)">
+                                                                @(reviewModel.OrderRating >= rating ? "★" : "☆")
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                    <textarea class="form-control mt-2" rows="2" maxlength="500" 
+                                                              placeholder="@L["Pages.Customer.OrderDetail.OrderCommentPlaceholder"]"
+                                                              @bind="reviewModel.OrderComment"></textarea>
+                                                    <small class="text-muted">@(reviewModel.OrderComment?.Length ?? 0)/500</small>
+                                                </div>
+                                            </div>
+
+                                            <div class="text-center mt-3">
+                                                <button type="submit" class="btn btn-warning btn-lg" 
+                                                        disabled="@(reviewModel.FoodRating == 0 && reviewModel.AgentRating == 0 && reviewModel.OrderRating == 0)">
+                                                    <i class="bi bi-send me-2"></i>@L["Pages.Customer.OrderDetail.SubmitReview"]
+                                                </button>
+                                            </div>
+                                        </EditForm>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
 
                 <!-- Back button -->
-                <div class="text-center mt-2">
+                <div class="text-center mt-4">
                     <a href="/customer/active-orders" class="btn btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>Back to Active Orders
+                        <i class="bi bi-arrow-left me-1"></i>@L["Pages.Customer.OrderDetail.BackToActiveOrders"]
                     </a>
                 </div>
             }
@@ -280,6 +459,13 @@
     private bool isLoading = true;
     private string? rejectionReason;
     
+    // Review state
+    private ReviewModel reviewModel = new();
+    private bool hasReviewed = false;
+    private bool isSubmittingReview = false;
+    private string? reviewErrorMessage;
+    private ReviewResponse? existingReview;
+    
     // Status timestamps (populated from WebSocket events)
     private Dictionary<string, string> statusTimestamps = new();
     
@@ -307,6 +493,7 @@
             if (Auth.IsCustomer)
             {
                 await LoadOrderDetail();
+                await CheckExistingReview();
                 await ConnectWebSocket();
             }
             else
@@ -492,40 +679,40 @@
         {
             new OrderStep 
             { 
-                Title = "Order Placed", 
-                Description = "Your order has been received",
+                Title = L["Pages.Customer.OrderDetail.StepOrderPlaced"], 
+                Description = L["Pages.Customer.OrderDetail.StepOrderPlacedDesc"],
                 IsCompleted = currentStatusIndex >= 0,
                 IsCurrent = currentStatusIndex == 0,
                 Timestamp = order != null ? FormatDate(order.OrderCreatedTime) : ""
             },
             new OrderStep 
             { 
-                Title = "Accepted", 
-                Description = "Restaurant is preparing your food",
+                Title = L["Pages.Customer.OrderDetail.StepAccepted"], 
+                Description = L["Pages.Customer.OrderDetail.StepAcceptedDesc"],
                 IsCompleted = currentStatusIndex >= 1,
                 IsCurrent = currentStatusIndex == 1,
                 Timestamp = statusTimestamps.GetValueOrDefault("Accepted", "")
             },
             new OrderStep 
             { 
-                Title = "Ready for Pickup", 
-                Description = "Food is ready, waiting for delivery agent",
+                Title = L["Pages.Customer.OrderDetail.StepReady"], 
+                Description = L["Pages.Customer.OrderDetail.StepReadyDesc"],
                 IsCompleted = currentStatusIndex >= 2,
                 IsCurrent = currentStatusIndex == 2,
                 Timestamp = statusTimestamps.GetValueOrDefault("Ready", "")
             },
             new OrderStep 
             { 
-                Title = "Picked Up", 
-                Description = "Delivery agent is on the way",
+                Title = L["Pages.Customer.OrderDetail.StepPickedUp"], 
+                Description = L["Pages.Customer.OrderDetail.StepPickedUpDesc"],
                 IsCompleted = currentStatusIndex >= 3,
                 IsCurrent = currentStatusIndex == 3,
                 Timestamp = statusTimestamps.GetValueOrDefault("PickedUp", "")
             },
             new OrderStep 
             { 
-                Title = "Delivered", 
-                Description = "Order has been delivered",
+                Title = L["Pages.Customer.OrderDetail.StepDelivered"], 
+                Description = L["Pages.Customer.OrderDetail.StepDeliveredDesc"],
                 IsCompleted = currentStatusIndex >= 4,
                 IsCurrent = currentStatusIndex == 4,
                 Timestamp = statusTimestamps.GetValueOrDefault("Delivered", "")
@@ -566,6 +753,24 @@
     {
         if (order == null) return 0;
         return GetItemsSubtotal() + order.DeliveryFee;
+    }
+
+    private void SetFoodRating(int rating)
+    {
+        reviewModel.FoodRating = rating;
+        StateHasChanged();
+    }
+
+    private void SetAgentRating(int rating)
+    {
+        reviewModel.AgentRating = rating;
+        StateHasChanged();
+    }
+
+    private void SetOrderRating(int rating)
+    {
+        reviewModel.OrderRating = rating;
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()
@@ -613,5 +818,158 @@
         public string Name { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
+    }
+
+    private async Task CheckExistingReview()
+    {
+        if (order == null || order.Status != "Delivered") return;
+
+        try
+        {
+            var url = $"/api/v1/feedback-hub/reviews/order/{OrderId}/exists";
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ReviewExistsResponse>();
+                hasReviewed = result?.Exists ?? false;
+                
+                // If review exists, fetch the full review details
+                if (hasReviewed)
+                {
+                    await LoadExistingReview();
+                }
+            }
+        }
+        catch { }
+    }
+
+    private async Task LoadExistingReview()
+    {
+        try
+        {
+            var url = $"/api/v1/feedback-hub/reviews/order/{OrderId}";
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                existingReview = await response.Content.ReadFromJsonAsync<ReviewResponse>();
+            }
+        }
+        catch { }
+    }
+
+    private async Task SubmitReview()
+    {
+        if (order == null || !Auth.Id.HasValue) return;
+
+        isSubmittingReview = true;
+        reviewErrorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var reviewRequest = new CreateReviewRequest
+            {
+                OrderId = OrderId,
+                CustomerId = Auth.Id.Value,
+                PartnerId = order.PartnerId,
+                AgentId = order.AgentId,
+                FoodRating = reviewModel.FoodRating,
+                AgentRating = reviewModel.AgentRating,
+                OrderRating = reviewModel.OrderRating,
+                FoodComment = reviewModel.FoodComment,
+                AgentComment = reviewModel.AgentComment,
+                OrderComment = reviewModel.OrderComment
+            };
+
+            var url = "/api/v1/feedback-hub/reviews";
+            var request = new HttpRequestMessage(HttpMethod.Post, url);
+            request.Content = JsonContent.Create(reviewRequest);
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                hasReviewed = true;
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                hasReviewed = true; // Already reviewed
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                reviewErrorMessage = "Failed to submit review. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            reviewErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isSubmittingReview = false;
+            StateHasChanged();
+        }
+    }
+
+    public class ReviewModel
+    {
+        public int FoodRating { get; set; }
+        public int AgentRating { get; set; }
+        public int OrderRating { get; set; }
+        public string? FoodComment { get; set; }
+        public string? AgentComment { get; set; }
+        public string? OrderComment { get; set; }
+    }
+
+    public class CreateReviewRequest
+    {
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public int FoodRating { get; set; }
+        public int AgentRating { get; set; }
+        public int OrderRating { get; set; }
+        public string? FoodComment { get; set; }
+        public string? AgentComment { get; set; }
+        public string? OrderComment { get; set; }
+    }
+
+    public class ReviewExistsResponse
+    {
+        public bool Exists { get; set; }
+    }
+
+    public class ReviewResponse
+    {
+        public int Id { get; set; }
+        public int OrderId { get; set; }
+        public int CustomerId { get; set; }
+        public int PartnerId { get; set; }
+        public int? AgentId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int FoodRating { get; set; }
+        public int AgentRating { get; set; }
+        public int OrderRating { get; set; }
+        public string? FoodComment { get; set; }
+        public string? AgentComment { get; set; }
+        public string? OrderComment { get; set; }
     }
 }

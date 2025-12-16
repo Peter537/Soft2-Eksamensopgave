@@ -446,3 +446,6 @@ terraform.rc
 # Plan files
 *.tfplan
 tfplan
+# Stryker.NET mutation test reports
+mutation-reports/
+StrykerOutput/

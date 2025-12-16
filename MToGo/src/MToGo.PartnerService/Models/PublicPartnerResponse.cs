@@ -17,6 +17,7 @@ public class PublicMenuResponse
 {
     public int PartnerId { get; set; }
     public string PartnerName { get; set; } = string.Empty;
+    public string PartnerAddress { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public List<PublicMenuItemResponse> Items { get; set; } = new();
 }

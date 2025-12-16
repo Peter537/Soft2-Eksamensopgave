@@ -1,6 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using LegacyMToGo.Data;
+using LegacyMToGo.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -9,9 +9,9 @@ using Microsoft.Extensions.Logging;
 using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
-using MToGo.CustomerService.Models;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
+using CustomerModel = MToGo.CustomerService.Models.Customer;
 
 namespace MToGo.CustomerService.Tests.E2E;
 
@@ -43,14 +43,14 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
                 {
                     // Remove existing DbContext
                     var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<LegacyContext>));
+                        d => d.ServiceType == typeof(DbContextOptions<LegacyDbContext>));
                     if (descriptor != null)
                     {
                         services.Remove(descriptor);
                     }
 
                     // Add test database
-                    services.AddDbContext<LegacyContext>(options =>
+                    services.AddDbContext<LegacyDbContext>(options =>
                         options.UseNpgsql(_postgresContainer.GetConnectionString()));
                 });
             });
@@ -58,7 +58,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         // Ensure database is created
         using (var scope = _legacyApiFactory.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
             await dbContext.Database.EnsureCreatedAsync();
         }
 
@@ -142,7 +142,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange
         var uniqueEmail = $"john.doe.{Guid.NewGuid():N}@example.com";
-        var request = new Customer
+        var request = new CustomerModel
         {
             Name = "John Doe",
             Email = uniqueEmail,
@@ -165,7 +165,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
 
         // Verify customer exists in database
         using var scope = _legacyApiFactory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
         var customer = await dbContext.Customers.FindAsync(result.Id);
         
         Assert.NotNull(customer);
@@ -179,7 +179,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         // Arrange - Create first customer
         var uniqueEmail = $"duplicate.{Guid.NewGuid():N}@example.com";
         
-        var request = new Customer
+        var request = new CustomerModel
         {
             Name = "First User",
             Email = uniqueEmail,
@@ -194,7 +194,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
         // Act - Try to create second customer with same email
-        var duplicateRequest = new Customer
+        var duplicateRequest = new CustomerModel
         {
             Name = "Second User",
             Email = uniqueEmail,
@@ -222,7 +222,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var uniqueEmail = $"logintest.{Guid.NewGuid():N}@example.com";
         var password = "TestPass123!";
         
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Login Test User",
             Email = uniqueEmail,
@@ -253,7 +253,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         // Arrange
         var uniqueEmail = $"invalidpass.{Guid.NewGuid():N}@example.com";
         
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Invalid Pass User",
             Email = uniqueEmail,
@@ -282,7 +282,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var uniqueEmail = $"bcrypttest.{Guid.NewGuid():N}@example.com";
         var plainPassword = "PlainTextPass123!";
         
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "BCrypt Test User",
             Email = uniqueEmail,
@@ -299,7 +299,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
 
         // Verify password is hashed in database
         using var scope = _legacyApiFactory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
         var customer = await dbContext.Customers.FindAsync(registeredCustomer!.Id);
 
         Assert.NotNull(customer);
@@ -322,7 +322,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange
         var uniqueEmail = $"getprofile.{Guid.NewGuid():N}@example.com";
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Profile Test User",
             Email = uniqueEmail,
@@ -372,7 +372,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange - Create customer with Danish preference
         var uniqueEmail = $"langpref.{Guid.NewGuid():N}@example.com";
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Danish User",
             Email = uniqueEmail,
@@ -409,7 +409,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange - Create customer
         var uniqueEmail = $"updateaddr.{Guid.NewGuid():N}@example.com";
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Update Test User",
             Email = uniqueEmail,
@@ -446,7 +446,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
 
         // Verify in database
         using var scope = _legacyApiFactory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
         var customer = await dbContext.Customers.FindAsync(registeredCustomer.Id);
         Assert.NotNull(customer);
         Assert.Equal("New Address 456, Copenhagen", customer.DeliveryAddress);
@@ -457,7 +457,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange - Create customer with English
         var uniqueEmail = $"updatelang.{Guid.NewGuid():N}@example.com";
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Language Test User",
             Email = uniqueEmail,
@@ -494,10 +494,10 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
 
         // Verify in database
         using var scope = _legacyApiFactory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
         var customer = await dbContext.Customers.FindAsync(registeredCustomer.Id);
         Assert.NotNull(customer);
-        Assert.Equal(LegacyMToGo.Models.LanguagePreference.Da, customer.LanguagePreference);
+        Assert.Equal(LegacyMToGo.Entities.LanguagePreference.Da, customer.LanguagePreference);
     }
 
     [Fact]
@@ -505,7 +505,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange
         var uniqueEmail = $"updatenotif.{Guid.NewGuid():N}@example.com";
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Notification Test User",
             Email = uniqueEmail,
@@ -568,7 +568,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     {
         // Arrange
         var uniqueEmail = $"fullupdate.{Guid.NewGuid():N}@example.com";
-        var registerRequest = new Customer
+        var registerRequest = new CustomerModel
         {
             Name = "Original Name",
             Email = uniqueEmail,
@@ -590,7 +590,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         var updateRequest = new CustomerUpdateRequest(
             Name: "Updated Name",
             DeliveryAddress: "Updated Address 789",
-            NotificationMethod: "Push",
+            NotificationMethod: "Sms",
             PhoneNumber: "+4598765432",
             LanguagePreference: "da"
         );
@@ -603,20 +603,20 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         Assert.NotNull(updatedProfile);
         Assert.Equal("Updated Name", updatedProfile.Name);
         Assert.Equal("Updated Address 789", updatedProfile.DeliveryAddress);
-        Assert.Equal("Push", updatedProfile.NotificationMethod);
+        Assert.Equal("Sms", updatedProfile.NotificationMethod);
         Assert.Equal("+4598765432", updatedProfile.PhoneNumber);
         Assert.Equal("da", updatedProfile.LanguagePreference);
 
         // Verify in database
         using var scope = _legacyApiFactory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LegacyDbContext>();
         var customer = await dbContext.Customers.FindAsync(registeredCustomer.Id);
         Assert.NotNull(customer);
         Assert.Equal("Updated Name", customer.Name);
         Assert.Equal("Updated Address 789", customer.DeliveryAddress);
-        Assert.Equal(LegacyMToGo.Models.NotificationMethod.Push, customer.NotificationMethod);
+        Assert.Equal(LegacyMToGo.Entities.NotificationMethod.Sms, customer.NotificationMethod);
         Assert.Equal("+4598765432", customer.PhoneNumber);
-        Assert.Equal(LegacyMToGo.Models.LanguagePreference.Da, customer.LanguagePreference);
+        Assert.Equal(LegacyMToGo.Entities.LanguagePreference.Da, customer.LanguagePreference);
     }
 
     #endregion
@@ -633,7 +633,7 @@ internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
         _logger = logger;
     }
 
-    public async Task<CreateCustomerResponse> CreateCustomerAsync(Customer request)
+    public async Task<CreateCustomerResponse> CreateCustomerAsync(CustomerModel request)
     {
         _logger.LogInformation("E2E: Creating customer with email: {Email}", request.Email);
 

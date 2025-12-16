@@ -27,4 +27,58 @@
   <data name="LoginLink" xml:space="preserve">
     <value>Log ind her</value>
   </data>
+  <data name="NewOrders" xml:space="preserve">
+    <value>Nye ordrer</value>
+  </data>
+  <data name="WaitingForOrders" xml:space="preserve">
+    <value>Venter på nye ordrer...</value>
+  </data>
+  <data name="OrderNumber" xml:space="preserve">
+    <value>Ordre #{0}</value>
+  </data>
+  <data name="Distance" xml:space="preserve">
+    <value>📍 Afstand: {0}</value>
+  </data>
+  <data name="EstimatedPrepTime" xml:space="preserve">
+    <value>Estimeret tilberedningstid (minutter)*</value>
+  </data>
+  <data name="EstimatedPrepPlaceholder" xml:space="preserve">
+    <value>f.eks. 15</value>
+  </data>
+  <data name="Accept" xml:space="preserve">
+    <value>Accepter</value>
+  </data>
+  <data name="Reject" xml:space="preserve">
+    <value>Afvis</value>
+  </data>
+  <data name="AcceptedOrders" xml:space="preserve">
+    <value>Accepterede ordrer</value>
+  </data>
+  <data name="NoAcceptedOrders" xml:space="preserve">
+    <value>Ingen accepterede ordrer endnu</value>
+  </data>
+  <data name="AgentAssigned" xml:space="preserve">
+    <value>Agent #{0}</value>
+  </data>
+  <data name="AwaitingAgent" xml:space="preserve">
+    <value>Venter på agent</value>
+  </data>
+  <data name="AcceptedAt" xml:space="preserve">
+    <value>Accepteret kl. {0}</value>
+  </data>
+  <data name="FoodReady" xml:space="preserve">
+    <value>Mad klar</value>
+  </data>
+  <data name="ReadyForPickup" xml:space="preserve">
+    <value>Klar til afhentning</value>
+  </data>
+  <data name="Connected" xml:space="preserve">
+    <value>Forbundet</value>
+  </data>
+  <data name="Disconnected" xml:space="preserve">
+    <value>Afbrudt</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
 </root>

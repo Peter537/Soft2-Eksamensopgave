@@ -66,4 +66,10 @@
   <data name="PasswordMismatch" xml:space="preserve">
     <value>Passwords do not match.</value>
   </data>
+  <data name="ManagedRegistrationTitle" xml:space="preserve">
+    <value>Registration Managed by Administration</value>
+  </data>
+  <data name="ManagedRegistrationDescription" xml:space="preserve">
+    <value>Agent accounts are created by platform administrators. If you would like to become an agent, please contact MToGo administration.</value>
+  </data>
 </root>

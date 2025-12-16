@@ -60,4 +60,16 @@
   <data name="ErrorOccurred" xml:space="preserve">
     <value>Der opstod en fejl: {0}</value>
   </data>
+  <data name="PartnerQuestion" xml:space="preserve">
+    <value>Er du en partner?</value>
+  </data>
+  <data name="PartnerLogin" xml:space="preserve">
+    <value>Partner Log ind</value>
+  </data>
+  <data name="ManagementQuestion" xml:space="preserve">
+    <value>Er du en manager?</value>
+  </data>
+  <data name="ManagementLogin" xml:space="preserve">
+    <value>Management Log ind</value>
+  </data>
 </root>

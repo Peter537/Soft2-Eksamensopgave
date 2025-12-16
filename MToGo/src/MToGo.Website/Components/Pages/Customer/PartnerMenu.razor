@@ -4,6 +4,7 @@
 @inject AuthService Auth
 @inject NavigationManager Navigation
 @inject ILocalizerService L
+@inject CartService Cart
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -88,7 +89,7 @@
                                             {
                                                 <tr>
                                                     <td>@item.Name</td>
-                                                    <td class="text-end">@item.Price.ToString("C")</td>
+                                                    <td class="text-end">@item.Price.FormatDKK()</td>
                                                     @if (menu.IsActive && Auth.IsCustomer)
                                                     {
                                                         <td class="text-center">
@@ -115,6 +116,32 @@
                                     <div class="alert alert-info mt-3">
                                         @L["Pages.Customer.PartnerMenu.LoginToOrder"]
                                         <a href="/login">@L["Pages.Customer.PartnerMenu.LoginLink"]</a>
+                                    </div>
+                                }
+
+                                @if (Cart.HasItems && Cart.PartnerId == PartnerId)
+                                {
+                                    <div class="card bg-light mt-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title">
+                                                <i class="bi bi-cart3 me-2"></i>@L["Pages.Customer.PartnerMenu.YourCart"]
+                                            </h5>
+                                            <ul class="list-group list-group-flush mb-3">
+                                                @foreach (var item in Cart.Items)
+                                                {
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                                                        <span>@item.Quantity x @item.Name</span>
+                                                        <span class="fw-bold">@((item.Quantity * item.UnitPrice).FormatDKK())</span>
+                                                    </li>
+                                                }
+                                            </ul>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">Total: @Cart.Items.Sum(i => i.Quantity * i.UnitPrice).FormatDKK()</span>
+                                                <button class="btn btn-success" @onclick="GoToCheckout">
+                                                    <i class="bi bi-check-circle me-2"></i>@L["Pages.Customer.PartnerMenu.GoToCheckout"]
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 }
                             }
@@ -193,8 +220,14 @@
 
     private void AddToOrder(MenuItemResponse item)
     {
-        // Navigate to order page with the selected item
-        Navigation.NavigateTo($"/order/create?partnerId={PartnerId}&itemId={item.Id}");
+        // Add item to cart service
+        Cart.AddItem(PartnerId, item.Id, item.Name, item.Price);
+        StateHasChanged();
+    }
+
+    private void GoToCheckout()
+    {
+        Navigation.NavigateTo($"/order/create?partnerId={PartnerId}");
     }
 
     public class MenuResponse

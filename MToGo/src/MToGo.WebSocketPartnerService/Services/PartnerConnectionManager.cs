@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using MToGo.WebSocketPartnerService.Models;
 
 namespace MToGo.WebSocketPartnerService.Services;
 
@@ -128,23 +129,4 @@ public class PartnerConnectionManager
             _logger.LogWarning(ex, "Error closing old WebSocket connection");
         }
     }
-}
-
-public class PartnerConnection
-{
-    public WebSocket WebSocket { get; }
-    public DateTime ConnectedAt { get; }
-
-    public PartnerConnection(WebSocket webSocket)
-    {
-        WebSocket = webSocket;
-        ConnectedAt = DateTime.UtcNow;
-    }
-}
-
-public class WebSocketMessage<T>
-{
-    public string EventType { get; set; } = string.Empty;
-    public T? Payload { get; set; }
-    public DateTime Timestamp { get; set; }
 }

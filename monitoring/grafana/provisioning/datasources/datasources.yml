@@ -1,0 +1,27 @@
+# Grafana Datasources Provisioning
+# This file configures Prometheus and Alertmanager as datasources for Grafana
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    uid: prometheus
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "3.8.0"
+
+  - name: Alertmanager
+    type: alertmanager
+    access: proxy
+    url: http://alertmanager:9093
+    uid: alertmanager
+    editable: false
+    jsonData:
+      implementation: prometheus

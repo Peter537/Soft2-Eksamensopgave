@@ -102,4 +102,22 @@
   <data name="Total" xml:space="preserve">
     <value>Total</value>
   </data>
+  <data name="ReviewTitle" xml:space="preserve">
+    <value>Kundeanmeldelse</value>
+  </data>
+  <data name="FoodQuality" xml:space="preserve">
+    <value>Madkvalitet</value>
+  </data>
+  <data name="DeliveryAgent" xml:space="preserve">
+    <value>Leveringsagent</value>
+  </data>
+  <data name="OverallExperience" xml:space="preserve">
+    <value>Samlet oplevelse</value>
+  </data>
+  <data name="ReviewSubmittedOn" xml:space="preserve">
+    <value>Anmeldelse indsendt den</value>
+  </data>
+  <data name="NoReviewYet" xml:space="preserve">
+    <value>Der er endnu ikke indsendt en anmeldelse for denne ordre.</value>
+  </data>
 </root>

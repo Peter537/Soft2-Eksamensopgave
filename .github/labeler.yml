@@ -106,5 +106,11 @@ docs:
 devops:
   - changed-files:
       - any-glob-to-any-file:
+          - .config/**
           - .github/**
           - terraform/**
+
+monitoring:
+  - changed-files:
+      - any-glob-to-any-file:
+          - monitoring/**

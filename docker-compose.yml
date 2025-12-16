@@ -16,6 +16,9 @@
 #   - Website:     http://localhost:8081
 #   - API Gateway: http://localhost:8080
 #   - Legacy API:  http://localhost:8082
+#   - Prometheus:  http://localhost:9090
+#   - Grafana:     http://localhost:3000
+#   - Alertmanager: http://localhost:9093
 
 services:
   # ===========================================
@@ -86,6 +89,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Kafka__BootstrapServers: kafka:9092
+      # CORS settings - whitelist the website origin
+      CorsSettings__AllowedOrigins__0: http://localhost:8081
+      CorsSettings__AllowedOrigins__1: http://website:8080
+      CorsSettings__AllowCredentials: "true"
+      CorsSettings__LogBlockedRequests: "true"
       # Reverse proxy cluster destinations
       ReverseProxy__Clusters__orders-cluster__Destinations__orders-destination__Address: http://order-service:8080
       ReverseProxy__Clusters__customers-cluster__Destinations__customers-destination__Address: http://customer-service:8080
@@ -94,6 +102,7 @@ services:
       ReverseProxy__Clusters__feedback-cluster__Destinations__feedbackhub-destination__Address: http://feedback-hub-service:8080
       ReverseProxy__Clusters__partners-cluster__Destinations__partners-destination__Address: http://partner-service:8080
       ReverseProxy__Clusters__management-cluster__Destinations__management-destination__Address: http://management-service:8080
+      ReverseProxy__Clusters__logs-cluster__Destinations__logs-destination__Address: http://log-collector-service:8080
       ReverseProxy__Clusters__wsagents-cluster__Destinations__wsagents-destination__Address: http://websocket-agent-service:8080
       ReverseProxy__Clusters__wscustomers-cluster__Destinations__wscustomers-destination__Address: http://websocket-customer-service:8080
       ReverseProxy__Clusters__wspartners-cluster__Destinations__wspartners-destination__Address: http://websocket-partner-service:8080
@@ -179,6 +188,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      Gateway__BaseUrl: http://gateway:8080
+    depends_on:
+      - gateway
     networks:
       - mtogo-network
 
@@ -206,6 +218,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Kafka__BootstrapServers: kafka:9092
+      Gateway__BaseUrl: http://gateway:8080
     depends_on:
       kafka:
         condition: service_healthy
@@ -240,6 +253,27 @@ services:
       Management__Password: ${MANAGEMENT_PASSWORD}
     depends_on:
       postgres:
+        condition: service_healthy
+    networks:
+      - mtogo-network
+
+  log-collector-service:
+    build:
+      context: ./MToGo
+      dockerfile: src/MToGo.LogCollectorService/Dockerfile
+    container_name: mtogo-log-collector-service
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_logs;Username=mtogo;Password=mtogo_password
+      Kafka__BootstrapServers: kafka:9092
+      Logging__SystemLogsDirectory: /var/log/mtogo
+    volumes:
+      - log_collector_data:/var/log/mtogo
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - mtogo-network
@@ -306,6 +340,102 @@ services:
     networks:
       - mtogo-network
 
+  # ===========================================
+  # Monitoring Services
+  # ===========================================
+
+  prometheus:
+    image: prom/prometheus:v3.8.0
+    container_name: mtogo-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/ready",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - mtogo-network
+
+  alertmanager:
+    image: prom/alertmanager:v0.29.0
+    container_name: mtogo-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml.template:/etc/alertmanager/alertmanager.yml.template:ro
+      - ./monitoring/alertmanager/entrypoint.sh:/entrypoint.sh:ro
+      - alertmanager_data:/alertmanager
+    environment:
+      DISCORD_WEBHOOK_ALERT: ${DISCORD_WEBHOOK_ALERT}
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9093/-/ready",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - mtogo-network
+
+  grafana:
+    image: grafana/grafana:12.1
+    container_name: mtogo-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mtogo-network
+
 # ===========================================
 # Networks and Volumes
 # ===========================================
@@ -316,4 +446,12 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  grafana_data:
+    driver: local
+  log_collector_data:
     driver: local

@@ -48,13 +48,52 @@
   <data name="CreatePartnerButton" xml:space="preserve">
     <value>Opret Partner</value>
   </data>
-  <data name="MetricsTitle" xml:space="preserve">
-    <value>Platform Metrics</value>
+  <data name="ViewReviewsTitle" xml:space="preserve">
+    <value>Kundeanmeldelser</value>
   </data>
-  <data name="MetricsDescription" xml:space="preserve">
-    <value>Oversigt over nøglepræstationsindikatorer for MToGo-platformen.</value>
+  <data name="ViewReviewsDescription" xml:space="preserve">
+    <value>Se og filtrer kundeanmeldelser for ordrer, agenter og partnere.</value>
   </data>
-  <data name="ViewMetricsButton" xml:space="preserve">
-    <value>Se Metrics</value>
+  <data name="ViewReviewsButton" xml:space="preserve">
+    <value>Se anmeldelser</value>
+  </data>
+  <data name="GrafanaTitle" xml:space="preserve">
+    <value>Grafana Analyse</value>
+  </data>
+  <data name="GrafanaDescription" xml:space="preserve">
+    <value>Tilgå Grafana dashboards for realtidsovervågning, metrics og analyse.</value>
+  </data>
+  <data name="OpenGrafanaButton" xml:space="preserve">
+    <value>Åbn Grafana</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="AgentBonusTitle" xml:space="preserve">
+    <value>Agent Bonus Beregner</value>
+  </data>
+  <data name="AgentBonusDescription" xml:space="preserve">
+    <value>Beregn månedlige bonusser for agenter baseret på leveringer, tidspræstation og kundeanmeldelser.</value>
+  </data>
+  <data name="AgentBonusButton" xml:space="preserve">
+    <value>Beregn Bonus</value>
+  </data>
+  <data name="AuditLogsTitle" xml:space="preserve">
+    <value>Audit Logs</value>
+  </data>
+  <data name="AuditLogsDescription" xml:space="preserve">
+    <value>Se forretningskritiske audit logs til sporing af brugerhandlinger, ordrer og systemhændelser.</value>
+  </data>
+  <data name="ViewAuditLogsButton" xml:space="preserve">
+    <value>Se Audit Logs</value>
+  </data>
+  <data name="SystemLogsTitle" xml:space="preserve">
+    <value>System Logs</value>
+  </data>
+  <data name="SystemLogsDescription" xml:space="preserve">
+    <value>Gennemse daglige system log filer til debugging, overvågning og fejlfinding.</value>
+  </data>
+  <data name="ViewSystemLogsButton" xml:space="preserve">
+    <value>Se System Logs</value>
   </data>
 </root>

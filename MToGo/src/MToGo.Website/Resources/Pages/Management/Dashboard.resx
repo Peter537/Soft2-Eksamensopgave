@@ -48,13 +48,52 @@
   <data name="CreatePartnerButton" xml:space="preserve">
     <value>Create Partner</value>
   </data>
-  <data name="MetricsTitle" xml:space="preserve">
-    <value>Platform Metrics</value>
+  <data name="ViewReviewsTitle" xml:space="preserve">
+    <value>Customer Reviews</value>
   </data>
-  <data name="MetricsDescription" xml:space="preserve">
-    <value>Overview of key performance indicators for the MToGo platform.</value>
+  <data name="ViewReviewsDescription" xml:space="preserve">
+    <value>View and filter customer reviews for orders, agents, and partners.</value>
   </data>
-  <data name="ViewMetricsButton" xml:space="preserve">
-    <value>View Metrics</value>
+  <data name="ViewReviewsButton" xml:space="preserve">
+    <value>View Reviews</value>
+  </data>
+  <data name="GrafanaTitle" xml:space="preserve">
+    <value>Grafana Analytics</value>
+  </data>
+  <data name="GrafanaDescription" xml:space="preserve">
+    <value>Access Grafana dashboards for real-time monitoring, metrics, and analytics.</value>
+  </data>
+  <data name="OpenGrafanaButton" xml:space="preserve">
+    <value>Open Grafana</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="AgentBonusTitle" xml:space="preserve">
+    <value>Agent Bonus Calculator</value>
+  </data>
+  <data name="AgentBonusDescription" xml:space="preserve">
+    <value>Calculate monthly bonuses for agents based on deliveries, time performance, and customer reviews.</value>
+  </data>
+  <data name="AgentBonusButton" xml:space="preserve">
+    <value>Calculate Bonus</value>
+  </data>
+  <data name="AuditLogsTitle" xml:space="preserve">
+    <value>Audit Logs</value>
+  </data>
+  <data name="AuditLogsDescription" xml:space="preserve">
+    <value>View business-critical audit logs for tracking user actions, orders, and system events.</value>
+  </data>
+  <data name="ViewAuditLogsButton" xml:space="preserve">
+    <value>View Audit Logs</value>
+  </data>
+  <data name="SystemLogsTitle" xml:space="preserve">
+    <value>System Logs</value>
+  </data>
+  <data name="SystemLogsDescription" xml:space="preserve">
+    <value>Browse daily system log files for debugging, monitoring, and troubleshooting.</value>
+  </data>
+  <data name="ViewSystemLogsButton" xml:space="preserve">
+    <value>View System Logs</value>
   </data>
 </root>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Customer Reviews - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Customer Reviews</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Access Denied</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>You must be logged in as management to view this page.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Login here</value>
+  </data>
+  <data name="BreadcrumbDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="BreadcrumbReviews" xml:space="preserve">
+    <value>Reviews</value>
+  </data>
+  <data name="Filters" xml:space="preserve">
+    <value>Filters</value>
+  </data>
+  <data name="FilterType" xml:space="preserve">
+    <value>Filter By</value>
+  </data>
+  <data name="FilterTypeAll" xml:space="preserve">
+    <value>All Reviews</value>
+  </data>
+  <data name="FilterTypeAgent" xml:space="preserve">
+    <value>By Agent</value>
+  </data>
+  <data name="FilterTypeCustomer" xml:space="preserve">
+    <value>By Customer</value>
+  </data>
+  <data name="FilterTypePartner" xml:space="preserve">
+    <value>By Partner</value>
+  </data>
+  <data name="FilterId" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="FilterStartDate" xml:space="preserve">
+    <value>Start Date</value>
+  </data>
+  <data name="FilterEndDate" xml:space="preserve">
+    <value>End Date</value>
+  </data>
+  <data name="FilterAmount" xml:space="preserve">
+    <value>Max Results</value>
+  </data>
+  <data name="NoReviewsFound" xml:space="preserve">
+    <value>No reviews found matching your criteria.</value>
+  </data>
+  <data name="ReviewsTitle" xml:space="preserve">
+    <value>Reviews</value>
+  </data>
+  <data name="ReviewCount" xml:space="preserve">
+    <value>{0} reviews</value>
+  </data>
+  <data name="TableOrderId" xml:space="preserve">
+    <value>Order ID</value>
+  </data>
+  <data name="TableCustomerId" xml:space="preserve">
+    <value>Customer ID</value>
+  </data>
+  <data name="TablePartnerId" xml:space="preserve">
+    <value>Partner ID</value>
+  </data>
+  <data name="TableAgentId" xml:space="preserve">
+    <value>Agent ID</value>
+  </data>
+  <data name="TableFoodRating" xml:space="preserve">
+    <value>Food</value>
+  </data>
+  <data name="TableAgentRating" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="TableOrderRating" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="TableTimestamp" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="ModalTitle" xml:space="preserve">
+    <value>Review Details - Order #{0}</value>
+  </data>
+  <data name="FoodQuality" xml:space="preserve">
+    <value>Food Quality</value>
+  </data>
+  <data name="DeliveryAgent" xml:space="preserve">
+    <value>Delivery Agent</value>
+  </data>
+  <data name="OverallExperience" xml:space="preserve">
+    <value>Overall Experience</value>
+  </data>
+  <data name="SubmittedOn" xml:space="preserve">
+    <value>Submitted on</value>
+  </data>
+  <data name="CloseButton" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="SearchButton" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="ViewDetails" xml:space="preserve">
+    <value>View Details</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Failed to load reviews. Status: {0}</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>An error occurred: {0}</value>
+  </data>
+</root>

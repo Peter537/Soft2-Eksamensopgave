@@ -1,13 +1,61 @@
 using MToGo.PartnerService.Entities;
 using MToGo.PartnerService.Exceptions;
-using MToGo.PartnerService.Logging;
 using MToGo.PartnerService.Models;
 using MToGo.PartnerService.Repositories;
+using MToGo.Shared.Logging;
 using MToGo.Shared.Security.Authentication;
 using MToGo.Shared.Security.Authorization;
 using MToGo.Shared.Security.Password;
 
 namespace MToGo.PartnerService.Services;
+
+public interface IPartnerService
+{
+    /// <summary>
+    /// Registers a partner with initial menu and hashed password.
+    /// </summary>
+    Task<CreatePartnerResponse> RegisterPartnerAsync(PartnerRegisterRequest request);
+    /// <summary>
+    /// Authenticates a partner and issues a JWT.
+    /// </summary>
+    Task<PartnerLoginResponse> LoginAsync(PartnerLoginRequest request);
+    /// <summary>
+    /// Retrieves partner details if active.
+    /// </summary>
+    Task<PartnerDetailsResponse?> GetPartnerByIdAsync(int partnerId);
+    /// <summary>
+    /// Retrieves partner details including inactive partners.
+    /// </summary>
+    Task<PartnerDetailsResponse?> GetPartnerByIdIncludeInactiveAsync(int partnerId);
+    /// <summary>
+    /// Adds a new menu item for a partner.
+    /// </summary>
+    Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request);
+    /// <summary>
+    /// Updates an existing menu item owned by the partner.
+    /// </summary>
+    Task UpdateMenuItemAsync(int partnerId, int menuItemId, UpdateMenuItemRequest request);
+    /// <summary>
+    /// Deletes a menu item owned by the partner.
+    /// </summary>
+    Task DeleteMenuItemAsync(int partnerId, int menuItemId);
+    /// <summary>
+    /// Lists all active partners for customers.
+    /// </summary>
+    Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync();
+    /// <summary>
+    /// Returns the public menu for a partner.
+    /// </summary>
+    Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId);
+    /// <summary>
+    /// Returns a specific menu item for a partner.
+    /// </summary>
+    Task<PublicMenuItemResponse?> GetMenuItemAsync(int partnerId, int menuItemId);
+    /// <summary>
+    /// Activates or deactivates a partner.
+    /// </summary>
+    Task<bool> SetPartnerActiveStatusAsync(int partnerId, bool isActive);
+}
 
 public class PartnerService : IPartnerService
 {
@@ -28,6 +76,9 @@ public class PartnerService : IPartnerService
         _logger = logger;
     }
 
+    /// <summary>
+    /// Validates input, enforces unique email, hashes the password, seeds menu items, and saves the partner.
+    /// </summary>
     public async Task<CreatePartnerResponse> RegisterPartnerAsync(PartnerRegisterRequest request)
     {
         // Validate menu is not empty
@@ -62,6 +113,9 @@ public class PartnerService : IPartnerService
         return new CreatePartnerResponse { Id = createdPartner.Id };
     }
 
+    /// <summary>
+    /// Verifies partner credentials and issues a JWT.
+    /// </summary>
     public async Task<PartnerLoginResponse> LoginAsync(PartnerLoginRequest request)
     {
         var partner = await _partnerRepository.GetByEmailAsync(request.Email);
@@ -86,6 +140,9 @@ public class PartnerService : IPartnerService
         return new PartnerLoginResponse { Jwt = token };
     }
 
+    /// <summary>
+    /// Returns partner details when the partner exists and is active.
+    /// </summary>
     public async Task<PartnerDetailsResponse?> GetPartnerByIdAsync(int partnerId)
     {
         var partner = await _partnerRepository.GetByIdAsync(partnerId);
@@ -109,14 +166,17 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Adds a new menu item for the partner and audits the creation.
+    /// </summary>
     public async Task<CreateMenuItemResponse> AddMenuItemAsync(int partnerId, CreateMenuItemRequest request)
     {
-        _logger.AddingMenuItem(partnerId);
+        _logger.LogInformation("Adding menu item for PartnerId: {PartnerId}", partnerId);
 
         var partner = await _partnerRepository.GetByIdAsync(partnerId);
         if (partner == null)
         {
-            _logger.PartnerNotFound(partnerId);
+            _logger.LogWarning("Partner not found: PartnerId={PartnerId}", partnerId);
             throw new PartnerNotFoundException($"Partner with ID {partnerId} not found.");
         }
 
@@ -130,32 +190,42 @@ public class PartnerService : IPartnerService
 
         var createdMenuItem = await _partnerRepository.AddMenuItemAsync(menuItem);
 
-        _logger.MenuItemAdded(partnerId, createdMenuItem.Id);
+        _logger.LogAuditInformation(
+            action: "MenuItemAdded",
+            resource: "MenuItem",
+            resourceId: createdMenuItem.Id.ToString(),
+            userId: partnerId,
+            userRole: "Partner",
+            message: "Menu item added: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+            args: new object[] { partnerId, createdMenuItem.Id });
 
         return new CreateMenuItemResponse { Id = createdMenuItem.Id };
     }
 
+    /// <summary>
+    /// Updates a partner-owned menu item and audits the change.
+    /// </summary>
     public async Task UpdateMenuItemAsync(int partnerId, int menuItemId, UpdateMenuItemRequest request)
     {
-        _logger.UpdatingMenuItem(partnerId, menuItemId);
+        _logger.LogInformation("Updating menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
 
         var partner = await _partnerRepository.GetByIdAsync(partnerId);
         if (partner == null)
         {
-            _logger.PartnerNotFound(partnerId);
+            _logger.LogWarning("Partner not found: PartnerId={PartnerId}", partnerId);
             throw new PartnerNotFoundException($"Partner with ID {partnerId} not found.");
         }
 
         var menuItem = await _partnerRepository.GetMenuItemByIdAsync(menuItemId);
         if (menuItem == null)
         {
-            _logger.MenuItemNotFound(menuItemId);
+            _logger.LogWarning("Menu item not found: MenuItemId={MenuItemId}", menuItemId);
             throw new MenuItemNotFoundException($"Menu item with ID {menuItemId} not found.");
         }
 
         if (menuItem.PartnerId != partnerId)
         {
-            _logger.MenuItemNotOwnedByPartner(menuItemId, partnerId);
+            _logger.LogWarning("Menu item does not belong to partner: MenuItemId={MenuItemId}, PartnerId={PartnerId}", menuItemId, partnerId);
             throw new UnauthorizedMenuItemAccessException($"Menu item {menuItemId} does not belong to partner {partnerId}.");
         }
 
@@ -172,41 +242,61 @@ public class PartnerService : IPartnerService
 
         await _partnerRepository.UpdateMenuItemAsync(menuItem);
 
-        _logger.MenuItemUpdated(partnerId, menuItemId);
+        _logger.LogAuditInformation(
+            action: "MenuItemUpdated",
+            resource: "MenuItem",
+            resourceId: menuItemId.ToString(),
+            userId: partnerId,
+            userRole: "Partner",
+            message: "Menu item updated: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+            args: new object[] { partnerId, menuItemId });
     }
 
+    /// <summary>
+    /// Deletes a partner-owned menu item and audits the removal.
+    /// </summary>
     public async Task DeleteMenuItemAsync(int partnerId, int menuItemId)
     {
-        _logger.DeletingMenuItem(partnerId, menuItemId);
+        _logger.LogInformation("Deleting menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
 
         var partner = await _partnerRepository.GetByIdAsync(partnerId);
         if (partner == null)
         {
-            _logger.PartnerNotFound(partnerId);
+            _logger.LogWarning("Partner not found: PartnerId={PartnerId}", partnerId);
             throw new PartnerNotFoundException($"Partner with ID {partnerId} not found.");
         }
 
         var menuItem = await _partnerRepository.GetMenuItemByIdAsync(menuItemId);
         if (menuItem == null)
         {
-            _logger.MenuItemNotFound(menuItemId);
+            _logger.LogWarning("Menu item not found: MenuItemId={MenuItemId}", menuItemId);
             throw new MenuItemNotFoundException($"Menu item with ID {menuItemId} not found.");
         }
 
         if (menuItem.PartnerId != partnerId)
         {
-            _logger.MenuItemNotOwnedByPartner(menuItemId, partnerId);
+            _logger.LogWarning("Menu item does not belong to partner: MenuItemId={MenuItemId}, PartnerId={PartnerId}", menuItemId, partnerId);
             throw new UnauthorizedMenuItemAccessException($"Menu item {menuItemId} does not belong to partner {partnerId}.");
         }
 
         await _partnerRepository.DeleteMenuItemAsync(menuItem);
 
-        _logger.MenuItemDeleted(partnerId, menuItemId);
+        _logger.LogAuditInformation(
+            action: "MenuItemDeleted",
+            resource: "MenuItem",
+            resourceId: menuItemId.ToString(),
+            userId: partnerId,
+            userRole: "Partner",
+            message: "Menu item deleted: PartnerId={PartnerId}, MenuItemId={MenuItemId}",
+            args: new object[] { partnerId, menuItemId });
     }
 
+    /// <summary>
+    /// Retrieves all active partners for public listing.
+    /// </summary>
     public async Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync()
     {
-        _logger.GettingAllActivePartners();
+        _logger.LogInformation("Getting all active partners");
 
         var partners = await _partnerRepository.GetAllActivePartnersAsync();
 
@@ -217,28 +307,32 @@ public class PartnerService : IPartnerService
             Address = p.Address
         });
 
-        _logger.ActivePartnersRetrieved(partners.Count());
+        _logger.LogInformation("Active partners retrieved: Count={Count}", partners.Count());
 
         return result;
     }
 
+    /// <summary>
+    /// Returns the public menu for a partner if found.
+    /// </summary>
     public async Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId)
     {
-        _logger.GettingPartnerMenu(partnerId);
+        _logger.LogInformation("Getting partner menu: PartnerId={PartnerId}", partnerId);
 
         var partner = await _partnerRepository.GetPartnerWithMenuAsync(partnerId);
         if (partner == null)
         {
-            _logger.PartnerNotFound(partnerId);
+            _logger.LogWarning("Partner not found: PartnerId={PartnerId}", partnerId);
             return null;
         }
 
-        _logger.PartnerMenuRetrieved(partnerId, partner.MenuItems.Count);
+        _logger.LogInformation("Partner menu retrieved: PartnerId={PartnerId}, ItemCount={ItemCount}", partnerId, partner.MenuItems.Count);
 
         return new PublicMenuResponse
         {
             PartnerId = partner.Id,
             PartnerName = partner.Name,
+            PartnerAddress = partner.Address,
             IsActive = partner.IsActive,
             Items = partner.MenuItems.Select(m => new PublicMenuItemResponse
             {
@@ -249,25 +343,28 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Returns a specific menu item for a partner if it exists.
+    /// </summary>
     public async Task<PublicMenuItemResponse?> GetMenuItemAsync(int partnerId, int menuItemId)
     {
-        _logger.GettingMenuItem(partnerId, menuItemId);
+        _logger.LogInformation("Getting menu item: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
 
         var partner = await _partnerRepository.GetPartnerWithMenuAsync(partnerId);
         if (partner == null)
         {
-            _logger.PartnerNotFound(partnerId);
+            _logger.LogWarning("Partner not found: PartnerId={PartnerId}", partnerId);
             return null;
         }
 
         var menuItem = partner.MenuItems.FirstOrDefault(m => m.Id == menuItemId);
         if (menuItem == null)
         {
-            _logger.MenuItemNotFound(menuItemId);
+            _logger.LogWarning("Menu item not found: MenuItemId={MenuItemId}", menuItemId);
             return null;
         }
 
-        _logger.MenuItemRetrieved(partnerId, menuItemId);
+        _logger.LogInformation("Menu item retrieved: PartnerId={PartnerId}, MenuItemId={MenuItemId}", partnerId, menuItemId);
 
         return new PublicMenuItemResponse
         {
@@ -277,6 +374,9 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Retrieves partner details even when inactive.
+    /// </summary>
     public async Task<PartnerDetailsResponse?> GetPartnerByIdIncludeInactiveAsync(int partnerId)
     {
         var partner = await _partnerRepository.GetByIdIncludeInactiveAsync(partnerId);
@@ -300,20 +400,30 @@ public class PartnerService : IPartnerService
         };
     }
 
+    /// <summary>
+    /// Updates partner active status and audits the change.
+    /// </summary>
     public async Task<bool> SetPartnerActiveStatusAsync(int partnerId, bool isActive)
     {
-        _logger.SettingPartnerActiveStatus(partnerId, isActive);
+        _logger.LogInformation("Setting partner active status: PartnerId={PartnerId}, Active={Active}", partnerId, isActive);
 
         var partner = await _partnerRepository.GetByIdIncludeInactiveAsync(partnerId);
         if (partner == null)
         {
-            _logger.PartnerNotFound(partnerId);
+            _logger.LogWarning("Partner not found: PartnerId={PartnerId}", partnerId);
             return false;
         }
 
         await _partnerRepository.UpdatePartnerActiveStatusAsync(partnerId, isActive);
 
-        _logger.PartnerActiveStatusUpdated(partnerId, isActive);
+        _logger.LogAuditInformation(
+            action: "PartnerActiveStatusUpdated",
+            resource: "Partner",
+            resourceId: partnerId.ToString(),
+            userId: partnerId,
+            userRole: "Partner",
+            message: "Partner active status updated: PartnerId={PartnerId}, Active={Active}",
+            args: new object[] { partnerId, isActive });
 
         return true;
     }

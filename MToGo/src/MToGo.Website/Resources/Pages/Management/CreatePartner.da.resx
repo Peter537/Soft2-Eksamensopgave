@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Opret Partner - MToGo</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="LoginRequired" xml:space="preserve">
+    <value>Du skal være logget ind som administrator for at tilgå denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>Log ind her</value>
+  </data>
+  <data name="BreadcrumbDashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="BreadcrumbCreatePartner" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="RestaurantInfo" xml:space="preserve">
+    <value>Restaurant Information</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Restaurant Navn</value>
+  </data>
+  <data name="NamePlaceholder" xml:space="preserve">
+    <value>Indtast restaurant navn</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Adresse</value>
+  </data>
+  <data name="AddressPlaceholder" xml:space="preserve">
+    <value>Indtast restaurant adresse</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>Indtast emailadresse</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Adgangskode</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Indtast adgangskode</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>Bekræft Adgangskode</value>
+  </data>
+  <data name="ConfirmPasswordPlaceholder" xml:space="preserve">
+    <value>Bekræft din adgangskode</value>
+  </data>
+  <data name="MenuSection" xml:space="preserve">
+    <value>Indledende Menu</value>
+  </data>
+  <data name="MenuDescription" xml:space="preserve">
+    <value>Tilføj mindst én menuvare til partneren. Flere varer kan tilføjes senere.</value>
+  </data>
+  <data name="MenuItem" xml:space="preserve">
+    <value>Menuvare</value>
+  </data>
+  <data name="ItemName" xml:space="preserve">
+    <value>Varenavn</value>
+  </data>
+  <data name="ItemNamePlaceholder" xml:space="preserve">
+    <value>f.eks. Pizza Margherita</value>
+  </data>
+  <data name="ItemPrice" xml:space="preserve">
+    <value>Pris</value>
+  </data>
+  <data name="ItemPricePlaceholder" xml:space="preserve">
+    <value>0,00</value>
+  </data>
+  <data name="RemoveItem" xml:space="preserve">
+    <value>Fjern</value>
+  </data>
+  <data name="AddMenuItem" xml:space="preserve">
+    <value>Tilføj Menuvare</value>
+  </data>
+  <data name="CreateButton" xml:space="preserve">
+    <value>Opret Partner</value>
+  </data>
+  <data name="Processing" xml:space="preserve">
+    <value>Opretter...</value>
+  </data>
+  <data name="SuccessMessage" xml:space="preserve">
+    <value>Partner oprettet!</value>
+  </data>
+  <data name="PasswordMismatch" xml:space="preserve">
+    <value>Adgangskoder matcher ikke</value>
+  </data>
+  <data name="EmptyMenuError" xml:space="preserve">
+    <value>Tilføj venligst mindst én menuvare med et navn og en pris.</value>
+  </data>
+  <data name="CreateFailed" xml:space="preserve">
+    <value>Kunne ikke oprette partner. Prøv venligst igen.</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+</root>

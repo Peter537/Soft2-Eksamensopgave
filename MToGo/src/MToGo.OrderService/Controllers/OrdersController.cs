@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MToGo.OrderService.Logging;
 using MToGo.OrderService.Models;
 using MToGo.OrderService.Services;
+using MToGo.Shared.Logging;
 using MToGo.Shared.Security.Authorization;
 using MToGo.Shared.Security.Context;
 
@@ -32,12 +32,16 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(typeof(OrderCreateResponse), 201)]
         public async Task<IActionResult> CreateOrder(OrderCreateRequest request)
         {
-            _logger.ReceivedCreateOrderRequest();
+            _logger.LogInformation("Received CreateOrder request");
 
             var response = await _orderService.CreateOrderAsync(request);
 
-            // Audit log
-            _logger.CreateOrderCompleted(response.Id);
+            _logger.LogAuditInformation(
+                action: "CreateOrderCompleted",
+                resource: "Order",
+                resourceId: response.Id.ToString(),
+                message: "CreateOrder completed: OrderId={OrderId}",
+                args: response.Id);
 
             return StatusCode(201, response);
         }
@@ -48,19 +52,27 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(400)]
         public async Task<IActionResult> AcceptOrder(int id, [FromBody] OrderAcceptRequest request)
         {
-            _logger.ReceivedAcceptOrderRequest(id);
+            _logger.LogInformation("Received AcceptOrder request for OrderId: {OrderId}", id);
 
             var success = await _orderService.AcceptOrderAsync(id, request.EstimatedMinutes);
 
             if (!success)
             {
-                // Audit log
-                _logger.AcceptOrderFailed(id);
+                _logger.LogAuditWarning(
+                    action: "AcceptOrderFailed",
+                    resource: "Order",
+                    resourceId: id.ToString(),
+                    message: "AcceptOrder failed: OrderId={OrderId}",
+                    args: id);
                 return BadRequest();
             }
 
-            // Audit log
-            _logger.AcceptOrderCompleted(id);
+            _logger.LogAuditInformation(
+                action: "AcceptOrderCompleted",
+                resource: "Order",
+                resourceId: id.ToString(),
+                message: "AcceptOrder completed: OrderId={OrderId}",
+                args: id);
 
             return NoContent();
         }
@@ -71,19 +83,27 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(400)]
         public async Task<IActionResult> RejectOrder(int id, [FromBody] OrderRejectRequest? request = null)
         {
-            _logger.ReceivedRejectOrderRequest(id);
+            _logger.LogInformation("Received RejectOrder request for OrderId: {OrderId}", id);
 
             var success = await _orderService.RejectOrderAsync(id, request?.Reason);
 
             if (!success)
             {
-                // Audit log
-                _logger.RejectOrderFailed(id);
+                _logger.LogAuditWarning(
+                    action: "RejectOrderFailed",
+                    resource: "Order",
+                    resourceId: id.ToString(),
+                    message: "RejectOrder failed: OrderId={OrderId}",
+                    args: id);
                 return BadRequest();
             }
 
-            // Audit log
-            _logger.RejectOrderCompleted(id);
+            _logger.LogAuditInformation(
+                action: "RejectOrderCompleted",
+                resource: "Order",
+                resourceId: id.ToString(),
+                message: "RejectOrder completed: OrderId={OrderId}",
+                args: id);
 
             return NoContent();
         }
@@ -94,19 +114,27 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(400)]
         public async Task<IActionResult> SetReady(int id)
         {
-            _logger.ReceivedSetReadyRequest(id);
+            _logger.LogInformation("Received SetReady request for OrderId: {OrderId}", id);
 
             var success = await _orderService.SetReadyAsync(id);
 
             if (!success)
             {
-                // Audit log
-                _logger.SetReadyFailed(id);
+                _logger.LogAuditWarning(
+                    action: "SetReadyFailed",
+                    resource: "Order",
+                    resourceId: id.ToString(),
+                    message: "SetReady failed: OrderId={OrderId}",
+                    args: id);
                 return BadRequest();
             }
 
-            // Audit log
-            _logger.SetReadyCompleted(id);
+            _logger.LogAuditInformation(
+                action: "SetReadyCompleted",
+                resource: "Order",
+                resourceId: id.ToString(),
+                message: "SetReady completed: OrderId={OrderId}",
+                args: id);
 
             return NoContent();
         }
@@ -126,9 +154,32 @@ namespace MToGo.OrderService.Controllers
                 return Forbid();
             }
 
-            _logger.ReceivedAssignAgentRequest(id, request.AgentId);
+            _logger.LogInformation("Received AssignAgent request for OrderId: {OrderId}, AgentId: {AgentId}", id, request.AgentId);
 
             var result = await _orderService.AssignAgentAsync(id, request.AgentId);
+
+            if (result == AssignAgentResult.Success)
+            {
+                _logger.LogAuditInformation(
+                    action: "AssignAgentCompleted",
+                    resource: "Order",
+                    resourceId: id.ToString(),
+                    userId: request.AgentId,
+                    userRole: "Agent",
+                    message: "AssignAgent completed: OrderId={OrderId}, AgentId={AgentId}",
+                    args: new object[] { id, request.AgentId });
+            }
+            else
+            {
+                _logger.LogAuditWarning(
+                    action: "AssignAgentFailed",
+                    resource: "Order",
+                    resourceId: id.ToString(),
+                    userId: request.AgentId,
+                    userRole: "Agent",
+                    message: "AssignAgent failed: OrderId={OrderId}, AgentId={AgentId}, Result={Result}",
+                    args: new object[] { id, request.AgentId, result });
+            }
 
             return result switch
             {
@@ -145,20 +196,35 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(403)]
         public async Task<IActionResult> PickupOrder(int id)
         {
-            _logger.ReceivedPickupOrderRequest(id);
+            _logger.LogInformation("Received PickupOrder request for OrderId: {OrderId}", id);
 
             var result = await _orderService.PickupOrderAsync(id);
 
             switch (result)
             {
                 case PickupResult.Success:
-                    _logger.PickupOrderCompleted(id);
+                    _logger.LogAuditInformation(
+                        action: "PickupOrderCompleted",
+                        resource: "Order",
+                        resourceId: id.ToString(),
+                        message: "PickupOrder completed: OrderId={OrderId}",
+                        args: id);
                     return NoContent();
                 case PickupResult.NoAgentAssigned:
-                    _logger.PickupOrderFailed(id);
+                    _logger.LogAuditWarning(
+                        action: "PickupOrderFailed",
+                        resource: "Order",
+                        resourceId: id.ToString(),
+                        message: "PickupOrder failed (no agent): OrderId={OrderId}",
+                        args: id);
                     return StatusCode(403);
                 default:
-                    _logger.PickupOrderFailed(id);
+                    _logger.LogAuditWarning(
+                        action: "PickupOrderFailed",
+                        resource: "Order",
+                        resourceId: id.ToString(),
+                        message: "PickupOrder failed: OrderId={OrderId}",
+                        args: id);
                     return BadRequest();
             }
         }
@@ -170,20 +236,35 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(403)]
         public async Task<IActionResult> CompleteDelivery(int id)
         {
-            _logger.ReceivedCompleteDeliveryRequest(id);
+            _logger.LogInformation("Received CompleteDelivery request for OrderId: {OrderId}", id);
 
             var result = await _orderService.CompleteDeliveryAsync(id);
 
             switch (result)
             {
                 case DeliveryResult.Success:
-                    _logger.CompleteDeliveryCompleted(id);
+                    _logger.LogAuditInformation(
+                        action: "CompleteDeliveryCompleted",
+                        resource: "Order",
+                        resourceId: id.ToString(),
+                        message: "CompleteDelivery completed: OrderId={OrderId}",
+                        args: id);
                     return NoContent();
                 case DeliveryResult.NoAgentAssigned:
-                    _logger.CompleteDeliveryFailed(id);
+                    _logger.LogAuditWarning(
+                        action: "CompleteDeliveryFailed",
+                        resource: "Order",
+                        resourceId: id.ToString(),
+                        message: "CompleteDelivery failed (no agent): OrderId={OrderId}",
+                        args: id);
                     return StatusCode(403);
                 default:
-                    _logger.CompleteDeliveryFailed(id);
+                    _logger.LogAuditWarning(
+                        action: "CompleteDeliveryFailed",
+                        resource: "Order",
+                        resourceId: id.ToString(),
+                        message: "CompleteDelivery failed: OrderId={OrderId}",
+                        args: id);
                     return BadRequest();
             }
         }
@@ -196,11 +277,11 @@ namespace MToGo.OrderService.Controllers
             [FromQuery] DateTime? startDate = null, 
             [FromQuery] DateTime? endDate = null)
         {
-            _logger.ReceivedGetCustomerOrdersRequest(id, startDate, endDate);
+            _logger.LogInformation("Received GetCustomerOrders request for CustomerId: {CustomerId}, StartDate: {StartDate}, EndDate: {EndDate}", id, startDate, endDate);
 
             var orders = await _orderService.GetOrdersByCustomerIdAsync(id, startDate, endDate);
 
-            _logger.GetCustomerOrdersCompleted(id, orders.Count);
+            _logger.LogInformation("GetCustomerOrders completed: CustomerId={CustomerId}, OrderCount={OrderCount}", id, orders.Count);
 
             return Ok(orders);
         }
@@ -210,42 +291,42 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(typeof(List<CustomerOrderResponse>), 200)]
         public async Task<IActionResult> GetActiveCustomerOrders(int id)
         {
-            _logger.ReceivedGetActiveCustomerOrdersRequest(id);
+            _logger.LogInformation("Received GetActiveCustomerOrders request for CustomerId: {CustomerId}", id);
 
             var orders = await _orderService.GetActiveOrdersByCustomerIdAsync(id);
 
-            _logger.GetActiveCustomerOrdersCompleted(id, orders.Count);
+            _logger.LogInformation("GetActiveCustomerOrders completed: CustomerId={CustomerId}, OrderCount={OrderCount}", id, orders.Count);
 
             return Ok(orders);
         }
 
         [HttpGet("agent/{id}")]
-        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [Authorize(Policy = AuthorizationPolicies.AgentOrManagement)]
         [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
         public async Task<IActionResult> GetAgentDeliveries(
             int id, 
             [FromQuery] DateTime? startDate = null, 
             [FromQuery] DateTime? endDate = null)
         {
-            _logger.ReceivedGetAgentDeliveriesRequest(id, startDate, endDate);
+            _logger.LogInformation("Received GetAgentDeliveries request for AgentId: {AgentId}, StartDate: {StartDate}, EndDate: {EndDate}", id, startDate, endDate);
 
             var deliveries = await _orderService.GetOrdersByAgentIdAsync(id, startDate, endDate);
 
-            _logger.GetAgentDeliveriesCompleted(id, deliveries.Count);
+            _logger.LogInformation("GetAgentDeliveries completed: AgentId={AgentId}, DeliveryCount={DeliveryCount}", id, deliveries.Count);
 
             return Ok(deliveries);
         }
 
         [HttpGet("agent/{id}/active")]
-        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [Authorize(Policy = AuthorizationPolicies.AgentOrManagement)]
         [ProducesResponseType(typeof(List<AgentDeliveryResponse>), 200)]
         public async Task<IActionResult> GetActiveAgentOrders(int id)
         {
-            _logger.ReceivedGetActiveAgentOrdersRequest(id);
+            _logger.LogInformation("Received GetActiveAgentOrders request for AgentId: {AgentId}", id);
 
             var orders = await _orderService.GetActiveOrdersByAgentIdAsync(id);
 
-            _logger.GetActiveAgentOrdersCompleted(id, orders.Count);
+            _logger.LogInformation("GetActiveAgentOrders completed: AgentId={AgentId}, OrderCount={OrderCount}", id, orders.Count);
 
             return Ok(orders);
         }
@@ -258,11 +339,11 @@ namespace MToGo.OrderService.Controllers
             [FromQuery] DateTime? startDate = null, 
             [FromQuery] DateTime? endDate = null)
         {
-            _logger.ReceivedGetPartnerOrdersRequest(id, startDate, endDate);
+            _logger.LogInformation("Received GetPartnerOrders request for PartnerId: {PartnerId}, StartDate: {StartDate}, EndDate: {EndDate}", id, startDate, endDate);
 
             var orders = await _orderService.GetOrdersByPartnerIdAsync(id, startDate, endDate);
 
-            _logger.GetPartnerOrdersCompleted(id, orders.Count);
+            _logger.LogInformation("GetPartnerOrders completed: PartnerId={PartnerId}, OrderCount={OrderCount}", id, orders.Count);
 
             return Ok(orders);
         }
@@ -272,11 +353,11 @@ namespace MToGo.OrderService.Controllers
         [ProducesResponseType(typeof(List<PartnerOrderResponse>), 200)]
         public async Task<IActionResult> GetActivePartnerOrders(int id)
         {
-            _logger.ReceivedGetActivePartnerOrdersRequest(id);
+            _logger.LogInformation("Received GetActivePartnerOrders request for PartnerId: {PartnerId}", id);
 
             var orders = await _orderService.GetActiveOrdersByPartnerIdAsync(id);
 
-            _logger.GetActivePartnerOrdersCompleted(id, orders.Count);
+            _logger.LogInformation("GetActivePartnerOrders completed: PartnerId={PartnerId}, OrderCount={OrderCount}", id, orders.Count);
 
             return Ok(orders);
         }
@@ -295,7 +376,7 @@ namespace MToGo.OrderService.Controllers
                 return Forbid();
             }
             
-            _logger.ReceivedGetOrderDetailRequest(id, userContext.Id.Value, userContext.Role);
+            _logger.LogInformation("Received GetOrderDetail request for OrderId: {OrderId}, UserId: {UserId}, Role: {Role}", id, userContext.Id.Value, userContext.Role);
 
             var result = await _orderService.GetOrderDetailAsync(id, userContext.Id.Value, userContext.Role);
 
@@ -309,9 +390,23 @@ namespace MToGo.OrderService.Controllers
                 };
             }
 
-            _logger.GetOrderDetailCompleted(id);
+            _logger.LogInformation("GetOrderDetail completed: OrderId={OrderId}", id);
 
             return Ok(result.Order);
+        }
+
+        [HttpGet("available")]
+        [Authorize(Policy = AuthorizationPolicies.AgentOnly)]
+        [ProducesResponseType(typeof(List<AvailableJobResponse>), 200)]
+        public async Task<IActionResult> GetAvailableOrders()
+        {
+            _logger.LogInformation("Received GetAvailableOrders request");
+
+            var availableJobs = await _orderService.GetAvailableOrdersAsync();
+
+            _logger.LogInformation("GetAvailableOrders completed: JobCount={JobCount}", availableJobs.Count);
+
+            return Ok(availableJobs);
         }
     }
 }

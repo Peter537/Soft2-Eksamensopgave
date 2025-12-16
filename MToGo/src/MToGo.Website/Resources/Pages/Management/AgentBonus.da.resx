@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="PageTitle" xml:space="preserve">
+    <value>Agent Bonus Beregner</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Adgang nægtet</value>
+  </data>
+  <data name="AccessDeniedMessage" xml:space="preserve">
+    <value>Log venligst ind som administrator for at få adgang til denne side.</value>
+  </data>
+  <data name="LoginLink" xml:space="preserve">
+    <value>log ind</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Agent Bonus Beregner</value>
+  </data>
+  <data name="BackToDashboard" xml:space="preserve">
+    <value>Tilbage til Dashboard</value>
+  </data>
+  <data name="CalculateBonus" xml:space="preserve">
+    <value>Beregn Bonus</value>
+  </data>
+  <data name="AgentId" xml:space="preserve">
+    <value>Agent ID</value>
+  </data>
+  <data name="AgentIdPlaceholder" xml:space="preserve">
+    <value>f.eks. 1</value>
+  </data>
+  <data name="StartDate" xml:space="preserve">
+    <value>Startdato</value>
+  </data>
+  <data name="EndDate" xml:space="preserve">
+    <value>Slutdato</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Beregner...</value>
+  </data>
+  <data name="Calculate" xml:space="preserve">
+    <value>Beregn</value>
+  </data>
+  <data name="QuickSelect" xml:space="preserve">
+    <value>Hurtigvalg:</value>
+  </data>
+  <data name="ThisMonth" xml:space="preserve">
+    <value>Denne måned</value>
+  </data>
+  <data name="LastMonth" xml:space="preserve">
+    <value>Sidste måned</value>
+  </data>
+  <data name="Last3Months" xml:space="preserve">
+    <value>Sidste 3 måneder</value>
+  </data>
+  <data name="ThisYear" xml:space="preserve">
+    <value>I år</value>
+  </data>
+  <data name="Qualified" xml:space="preserve">
+    <value>Kvalificeret</value>
+  </data>
+  <data name="NotQualified" xml:space="preserve">
+    <value>Ikke kvalificeret</value>
+  </data>
+  <data name="Period" xml:space="preserve">
+    <value>Periode:</value>
+  </data>
+  <data name="Warnings" xml:space="preserve">
+    <value>Advarsler</value>
+  </data>
+  <data name="TotalBonus" xml:space="preserve">
+    <value>Total Bonus</value>
+  </data>
+  <data name="EarnedThisPeriod" xml:space="preserve">
+    <value>Optjent i denne periode</value>
+  </data>
+  <data name="Deliveries" xml:space="preserve">
+    <value>Leveringer</value>
+  </data>
+  <data name="RequiredDeliveries" xml:space="preserve">
+    <value>20+ påkrævet ✓</value>
+  </data>
+  <data name="NeedMoreDeliveries" xml:space="preserve">
+    <value>Mangler {0} flere</value>
+  </data>
+  <data name="Performance" xml:space="preserve">
+    <value>Præstation</value>
+  </data>
+  <data name="PerformanceMultiplier" xml:space="preserve">
+    <value>Præstationsmultiplikator</value>
+  </data>
+  <data name="TimeScoreBreakdown" xml:space="preserve">
+    <value>Tidsscore Oversigt</value>
+  </data>
+  <data name="TimeScore" xml:space="preserve">
+    <value>Tidsscore</value>
+  </data>
+  <data name="Early" xml:space="preserve">
+    <value>Tidlig (10-14t)</value>
+  </data>
+  <data name="EarlyBonus" xml:space="preserve">
+    <value>1,2x bonus</value>
+  </data>
+  <data name="Normal" xml:space="preserve">
+    <value>Normal (14-20t)</value>
+  </data>
+  <data name="NormalBase" xml:space="preserve">
+    <value>1,0x basis</value>
+  </data>
+  <data name="Late" xml:space="preserve">
+    <value>Sen (20t+)</value>
+  </data>
+  <data name="LateBonus" xml:space="preserve">
+    <value>1,2x bonus</value>
+  </data>
+  <data name="ReviewScoreTitle" xml:space="preserve">
+    <value>Anmeldelsesscore</value>
+  </data>
+  <data name="ReviewScore" xml:space="preserve">
+    <value>Anmeldelsesscore</value>
+  </data>
+  <data name="BasedOnReviews" xml:space="preserve">
+    <value>Baseret på {0} anmeldelser</value>
+  </data>
+  <data name="UsingDefaultRating" xml:space="preserve">
+    <value>Bruger standardvurdering</value>
+  </data>
+  <data name="DefaultScoreApplied" xml:space="preserve">
+    <value>Standardscore på 3,0/5,0 anvendt ({0} anmeldelser fundet)</value>
+  </data>
+  <data name="CalculationBreakdown" xml:space="preserve">
+    <value>Beregningsoversigt</value>
+  </data>
+  <data name="ContributionBase" xml:space="preserve">
+    <value>Bidragsgrundlag</value>
+  </data>
+  <data name="ContributionBaseDesc" xml:space="preserve">
+    <value>(Sum af leveringsgebyrer × 15%)</value>
+  </data>
+  <data name="TimeScoreDesc" xml:space="preserve">
+    <value>(Tidlig/Sen bonusser anvendt)</value>
+  </data>
+  <data name="ReviewScoreDesc" xml:space="preserve">
+    <value>(Gennemsnitlig vurdering / 5)</value>
+  </data>
+  <data name="PerformanceDesc" xml:space="preserve">
+    <value>(50% Tid + 50% Anmeldelse)</value>
+  </data>
+  <data name="FinalBonus" xml:space="preserve">
+    <value>Endelig Bonus</value>
+  </data>
+  <data name="FinalBonusDesc" xml:space="preserve">
+    <value>(Bidrag × Præstation)</value>
+  </data>
+  <data name="NotQualifiedWarning" xml:space="preserve">
+    <value>Agent skal have mindst 20 leveringer for at kvalificere sig til bonus. Har i øjeblikket {0} leveringer.</value>
+  </data>
+  <data name="EnterValidAgentId" xml:space="preserve">
+    <value>Indtast venligst et gyldigt Agent ID</value>
+  </data>
+  <data name="EndDateAfterStart" xml:space="preserve">
+    <value>Slutdato skal være efter startdato</value>
+  </data>
+  <data name="AgentNotFound" xml:space="preserve">
+    <value>Agent med ID {0} blev ikke fundet</value>
+  </data>
+  <data name="FailedToCalculate" xml:space="preserve">
+    <value>Kunne ikke beregne bonus ({0}): {1}</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Fejl: {0}</value>
+  </data>
+</root>

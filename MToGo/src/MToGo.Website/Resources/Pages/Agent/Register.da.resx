@@ -66,4 +66,10 @@
   <data name="PasswordMismatch" xml:space="preserve">
     <value>Adgangskoderne matcher ikke.</value>
   </data>
+  <data name="ManagedRegistrationTitle" xml:space="preserve">
+    <value>Registrering administreres af administrationen</value>
+  </data>
+  <data name="ManagedRegistrationDescription" xml:space="preserve">
+    <value>Agentkonti oprettes af platformens administratorer. Hvis du ønsker at blive agent, kontakt venligst MToGo administrationen.</value>
+  </data>
 </root>

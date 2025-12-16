@@ -66,4 +66,10 @@
   <data name="PartnerLogin" xml:space="preserve">
     <value>Partner Login</value>
   </data>
+  <data name="ManagementQuestion" xml:space="preserve">
+    <value>Are you a manager?</value>
+  </data>
+  <data name="ManagementLogin" xml:space="preserve">
+    <value>Management Login</value>
+  </data>
 </root>

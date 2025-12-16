@@ -7,6 +7,11 @@ using MToGo.Shared.Security.Password;
 
 namespace MToGo.ManagementService.Services;
 
+public interface IManagementService
+{
+    Task<ManagementLoginResponse> LoginAsync(ManagementLoginRequest request);
+}
+
 public class ManagementService : IManagementService
 {
     private readonly IManagementUserRepository _managementUserRepository;

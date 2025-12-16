@@ -1,4 +1,5 @@
-using LegacyMToGo.Data;
+using LegacyMToGo.Entities;
+using LegacyMToGo.Models;
 using LegacyMToGo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,8 +8,11 @@ namespace LegacyMToGo.Controllers;
 
 [ApiController]
 [Route("api/v1/notifications")]
-public class NotificationsController(LegacyContext dbContext, INotificationDispatcher dispatcher, ILogger<NotificationsController> logger) : ControllerBase
+public class NotificationsController(LegacyDbContext dbContext, INotificationDispatcher dispatcher, ILogger<NotificationsController> logger) : ControllerBase
 {
+    /// <summary>
+    /// Sends a notification to a customer using their preferred channel.
+    /// </summary>
     [HttpPost("notify")]
     public async Task<IActionResult> Notify(NotificationRequest request, CancellationToken cancellationToken)
     {
@@ -20,7 +24,7 @@ public class NotificationsController(LegacyContext dbContext, INotificationDispa
 
         var destination = customer.NotificationMethod switch
         {
-            Models.NotificationMethod.Email => customer.Email,
+            NotificationMethod.Email => customer.Email,
             _ => customer.PhoneNumber ?? customer.Email
         };
 
@@ -28,6 +32,4 @@ public class NotificationsController(LegacyContext dbContext, INotificationDispa
         logger.LogInformation("Legacy notification dispatched to customer {CustomerId}", request.CustomerId);
         return Accepted();
     }
-
-    public record NotificationRequest(int CustomerId, string Message);
 }

@@ -105,4 +105,10 @@
   <data name="EmptyMenuError" xml:space="preserve">
     <value>Tilføj venligst mindst én gyldig menu vare med navn og pris.</value>
   </data>
+  <data name="ManagedRegistrationTitle" xml:space="preserve">
+    <value>Registrering administreres af administrationen</value>
+  </data>
+  <data name="ManagedRegistrationDescription" xml:space="preserve">
+    <value>Restaurant partnerkonti oprettes af platformens administratorer. Hvis du ønsker at blive partner, kontakt venligst MToGo administrationen.</value>
+  </data>
 </root>

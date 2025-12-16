@@ -8,6 +8,30 @@ using MToGo.Shared.Security.Password;
 
 namespace MToGo.AgentService.Services;
 
+public interface IAgentService
+{
+    /// <summary>
+    /// Registers a new delivery agent with hashed credentials.
+    /// </summary>
+    Task<CreateAgentResponse> RegisterAgentAsync(AgentRegisterRequest request);
+    /// <summary>
+    /// Authenticates an agent and issues a JWT.
+    /// </summary>
+    Task<AgentLoginResponse> LoginAsync(AgentLoginRequest request);
+    /// <summary>
+    /// Retrieves an agent profile by id.
+    /// </summary>
+    Task<AgentProfileResponse> GetAgentAsync(int id);
+    /// <summary>
+    /// Deletes an agent record.
+    /// </summary>
+    Task DeleteAgentAsync(int id);
+    /// <summary>
+    /// Activates or deactivates an agent.
+    /// </summary>
+    Task<bool> SetActiveStatusAsync(int id, bool isActive);
+}
+
 public class AgentService : IAgentService
 {
     private readonly IAgentRepository _agentRepository;
@@ -24,6 +48,9 @@ public class AgentService : IAgentService
         _passwordHasher = passwordHasher;
     }
 
+    /// <summary>
+    /// Validates uniqueness, hashes password, and persists a new agent.
+    /// </summary>
     public async Task<CreateAgentResponse> RegisterAgentAsync(AgentRegisterRequest request)
     {
         if (await _agentRepository.EmailExistsAsync(request.Email))
@@ -44,6 +71,9 @@ public class AgentService : IAgentService
         return new CreateAgentResponse { Id = createdAgent.Id };
     }
 
+    /// <summary>
+    /// Verifies agent credentials and returns a JWT.
+    /// </summary>
     public async Task<AgentLoginResponse> LoginAsync(AgentLoginRequest request)
     {
         var agent = await _agentRepository.GetByEmailAsync(request.Email);
@@ -58,6 +88,9 @@ public class AgentService : IAgentService
         return new AgentLoginResponse { Jwt = token };
     }
 
+    /// <summary>
+    /// Loads an agent by id or throws if not found.
+    /// </summary>
     public async Task<AgentProfileResponse> GetAgentAsync(int id)
     {
         var agent = await _agentRepository.GetByIdAsync(id);
@@ -76,6 +109,9 @@ public class AgentService : IAgentService
         };
     }
 
+    /// <summary>
+    /// Removes an agent after confirming existence.
+    /// </summary>
     public async Task DeleteAgentAsync(int id)
     {
         var agent = await _agentRepository.GetByIdAsync(id);
@@ -88,6 +124,9 @@ public class AgentService : IAgentService
         await _agentRepository.DeleteAsync(id);
     }
 
+    /// <summary>
+    /// Updates active flag for an agent; returns false if agent is missing.
+    /// </summary>
     public async Task<bool> SetActiveStatusAsync(int id, bool isActive)
     {
         var agent = await _agentRepository.GetByIdAsync(id);
