@@ -21,11 +21,11 @@ terraform {
   required_providers {
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = ">= 2.0"
+      version = "~> 2.0"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = ">= 2.0"
+      version = "~> 2.0"
     }
   }
 }
@@ -107,4 +107,21 @@ variable "kafka_bootstrap_servers" {
   description = "Kafka bootstrap servers address"
   type        = string
   default     = "kafka:9092"
+}
+
+variable "management_username" {
+  description = "Initial ManagementService admin username (required)"
+  type        = string
+}
+
+variable "management_password" {
+  description = "Initial ManagementService admin password (required)"
+  type        = string
+  sensitive   = true
+}
+
+variable "management_name" {
+  description = "Display name for the seeded management user"
+  type        = string
+  default     = "Management Admin"
 }

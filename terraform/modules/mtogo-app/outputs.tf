@@ -19,5 +19,5 @@ output "services" {
 
 output "ingress_name" {
   description = "Name of the ingress resource"
-  value       = kubernetes_ingress_v1.mtogo.metadata[0].name
+  value       = try(kubernetes_ingress_v1.mtogo[0].metadata[0].name, null)
 }

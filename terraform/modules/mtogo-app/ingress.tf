@@ -3,6 +3,8 @@
 # ===========================================
 
 resource "kubernetes_ingress_v1" "mtogo" {
+  count = var.install_ingress_controller ? 1 : 0
+
   metadata {
     name      = "mtogo-ingress"
     namespace = kubernetes_namespace.mtogo.metadata[0].name

@@ -50,11 +50,29 @@ resource "kubernetes_secret" "db_credentials" {
     POSTGRES_PASSWORD = var.postgres_admin_password
     POSTGRES_HOST     = var.postgres_host
 
-    CONNECTION_STRING_ORDERS   = "Host=${var.postgres_host};Database=mtogo_orders;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
-    CONNECTION_STRING_AGENTS   = "Host=${var.postgres_host};Database=mtogo_agents;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
-    CONNECTION_STRING_FEEDBACK = "Host=${var.postgres_host};Database=mtogo_feedback;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
-    CONNECTION_STRING_PARTNERS = "Host=${var.postgres_host};Database=mtogo_partners;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
-    CONNECTION_STRING_LEGACY   = "Host=${var.postgres_host};Database=mtogo_legacy;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_ORDERS     = "Host=${var.postgres_host};Database=mtogo_orders;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_AGENTS     = "Host=${var.postgres_host};Database=mtogo_agents;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_FEEDBACK   = "Host=${var.postgres_host};Database=mtogo_feedback;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_PARTNERS   = "Host=${var.postgres_host};Database=mtogo_partners;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_LEGACY     = "Host=${var.postgres_host};Database=mtogo_legacy;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_MANAGEMENT = "Host=${var.postgres_host};Database=mtogo_management;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+    CONNECTION_STRING_LOGS       = "Host=${var.postgres_host};Database=mtogo_logs;Username=${var.postgres_admin_username};Password=${var.postgres_admin_password};SSL Mode=${var.postgres_ssl_mode}"
+  }
+}
+
+resource "kubernetes_secret" "management_credentials" {
+  metadata {
+    name      = "mtogo-management-secret"
+    namespace = kubernetes_namespace.mtogo.metadata[0].name
+    labels = {
+      "app.kubernetes.io/part-of" = "mtogo-platform"
+    }
+  }
+
+  data = {
+    MANAGEMENT_USERNAME = var.management_username
+    MANAGEMENT_PASSWORD = var.management_password
+    MANAGEMENT_NAME     = var.management_name
   }
 }
 

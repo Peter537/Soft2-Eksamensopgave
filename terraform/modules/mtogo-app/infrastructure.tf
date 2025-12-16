@@ -89,6 +89,12 @@ resource "kubernetes_deployment" "postgres" {
             mount_path = "/var/lib/postgresql/data"
           }
 
+          volume_mount {
+            name       = "postgres-init"
+            mount_path = "/docker-entrypoint-initdb.d"
+            read_only  = true
+          }
+
           resources {
             requests = {
               memory = "256Mi"
@@ -123,8 +129,39 @@ resource "kubernetes_deployment" "postgres" {
             claim_name = kubernetes_persistent_volume_claim.postgres[0].metadata[0].name
           }
         }
+
+        volume {
+          name = "postgres-init"
+          config_map {
+            name = kubernetes_config_map.postgres_init[0].metadata[0].name
+          }
+        }
       }
     }
+  }
+}
+
+resource "kubernetes_config_map" "postgres_init" {
+  count = var.deploy_postgres ? 1 : 0
+
+  metadata {
+    name      = "mtogo-postgres-init"
+    namespace = kubernetes_namespace.mtogo.metadata[0].name
+    labels = {
+      "app.kubernetes.io/part-of" = "mtogo-platform"
+    }
+  }
+
+  data = {
+    "01-create-databases.sql" = <<-SQL
+      CREATE DATABASE mtogo_orders;
+      CREATE DATABASE mtogo_agents;
+      CREATE DATABASE mtogo_feedback;
+      CREATE DATABASE mtogo_partners;
+      CREATE DATABASE mtogo_legacy;
+      CREATE DATABASE mtogo_management;
+      CREATE DATABASE mtogo_logs;
+    SQL
   }
 }
 
