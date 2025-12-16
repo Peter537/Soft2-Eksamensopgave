@@ -17,9 +17,9 @@
 #   terraform init
 #   terraform apply
 #
-# Access:
-#   kubectl port-forward -n mtogo svc/website 8081:8080
-#   Open http://localhost:8081
+# Access (Docker Desktop + ingress-nginx):
+#   Open http://localhost/
+#   API is available under http://localhost/api/v1/
 
 terraform {
   required_version = ">= 1.0.0"
@@ -65,15 +65,19 @@ module "mtogo_app" {
   namespace               = "mtogo"
   image_registry          = var.image_registry
   image_tag               = var.image_tag
-  postgres_host           = "mtogo-db"  # In-cluster PostgreSQL
+  postgres_host           = "mtogo-db" # In-cluster PostgreSQL
   postgres_admin_username = var.postgres_admin_username
   postgres_admin_password = var.postgres_admin_password
-  postgres_ssl_mode       = "Disable"   # No SSL for local
-  registry_secret_name    = ""          # No auth needed for local images
+  postgres_ssl_mode       = "Disable" # No SSL for local
+  registry_secret_name    = ""        # No auth needed for local images
 
   # Deploy infrastructure in cluster
-  deploy_postgres            = true   # Deploy PostgreSQL in cluster
-  deploy_kafka               = true   # Deploy Kafka in cluster
+  deploy_postgres            = true # Deploy PostgreSQL in cluster
+  deploy_kafka               = true # Deploy Kafka in cluster
   install_ingress_controller = var.install_ingress
   kafka_bootstrap_servers    = "kafka:9092"
+
+  management_username = var.management_username
+  management_password = var.management_password
+  management_name     = var.management_name
 }

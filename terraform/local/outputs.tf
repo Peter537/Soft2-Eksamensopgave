@@ -19,30 +19,12 @@ output "access_instructions" {
     ============================================
     Local Kubernetes Access Instructions
     ============================================
-    
-    Option 1: Port Forwarding (Recommended)
+
+    Default: Using Ingress (Docker Desktop)
     ----------------------------------------
-    # Website
-    kubectl port-forward -n mtogo svc/website 8081:8080
-    # Open: http://localhost:8081
-    
-    # API Gateway
-    kubectl port-forward -n mtogo svc/gateway 8080:8080
-    # Open: http://localhost:8080/api
-    
-    # Legacy API
-    kubectl port-forward -n mtogo svc/legacy-mtogo 8082:8080
-    # Open: http://localhost:8082
-    
-    Option 2: Using Ingress (if installed)
-    ----------------------------------------
-    # Add to /etc/hosts (or C:\Windows\System32\drivers\etc\hosts):
-    127.0.0.1 mtogo.local
-    
-    # Get ingress IP:
-    kubectl get svc -n ingress-nginx
-    
-    # Open: http://mtogo.local
+    Website:    http://localhost/
+    API:        http://localhost/api/v1/
+    Legacy API: http://localhost/legacy
     
     Useful Commands
     ----------------------------------------

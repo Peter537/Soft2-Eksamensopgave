@@ -19,7 +19,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RootDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$RootDir = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
 
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host "  MToGo Local Terraform Deployment" -ForegroundColor Cyan
@@ -62,11 +62,41 @@ if ($Destroy) {
 # Build images if requested
 if ($Build) {
     Write-Host "`nBuilding Docker images..." -ForegroundColor Yellow
-    & "$RootDir\k8s\build-images.ps1" -Registry "mtogo" -Tag "latest"
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Error building images" -ForegroundColor Red
+
+    if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: docker is not installed" -ForegroundColor Red
         exit 1
+    }
+
+    $registry = "mtogo"
+    $tag = "latest"
+
+    $builds = @(
+        @{ Name = "mtogo-gateway";            Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.Gateway\Dockerfile" },
+        @{ Name = "mtogo-website";            Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.Website\Dockerfile" },
+        @{ Name = "mtogo-order";              Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.OrderService\Dockerfile" },
+        @{ Name = "mtogo-customerservice";    Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.CustomerService\Dockerfile" },
+        @{ Name = "mtogo-agentservice";       Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.AgentService\Dockerfile" },
+        @{ Name = "mtogo-agentbonus";         Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.AgentBonusService\Dockerfile" },
+        @{ Name = "mtogo-feedbackhub";        Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.FeedbackHubService\Dockerfile" },
+        @{ Name = "mtogo-notification";       Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.NotificationService\Dockerfile" },
+        @{ Name = "mtogo-partner";            Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.PartnerService\Dockerfile" },
+        @{ Name = "mtogo-websocketagent";     Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.WebSocketAgentService\Dockerfile" },
+        @{ Name = "mtogo-websocketcustomer";  Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.WebSocketCustomerService\Dockerfile" },
+        @{ Name = "mtogo-websocketpartner";   Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.WebSocketPartnerService\Dockerfile" },
+        @{ Name = "mtogo-management";         Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.ManagementService\Dockerfile" },
+        @{ Name = "mtogo-logcollector";       Context = "$RootDir\MToGo";       Dockerfile = "$RootDir\MToGo\src\MToGo.LogCollectorService\Dockerfile" },
+        @{ Name = "mtogo-legacy";             Context = "$RootDir\LegacyMToGo"; Dockerfile = "$RootDir\LegacyMToGo\Dockerfile" }
+    )
+
+    foreach ($b in $builds) {
+        $image = "$registry/$($b.Name):$tag"
+        Write-Host "Building $image" -ForegroundColor Cyan
+        docker build -t $image -f $b.Dockerfile $b.Context
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Error building $image" -ForegroundColor Red
+            exit 1
+        }
     }
 }
 
@@ -108,11 +138,9 @@ Write-Host "`nPod Status:" -ForegroundColor Cyan
 kubectl get pods -n mtogo
 
 Write-Host "`nAccess the application:" -ForegroundColor Cyan
-Write-Host "  Website:  kubectl port-forward -n mtogo svc/website 8081:8080" -ForegroundColor White
-Write-Host "            Then open: http://localhost:8081" -ForegroundColor Gray
-Write-Host ""
-Write-Host "  API:      kubectl port-forward -n mtogo svc/gateway 8080:8080" -ForegroundColor White
-Write-Host "            Then open: http://localhost:8080/api" -ForegroundColor Gray
+Write-Host "  Website:    http://localhost/" -ForegroundColor White
+Write-Host "  API:        http://localhost/api/v1/" -ForegroundColor White
+Write-Host "  Legacy API: http://localhost/legacy" -ForegroundColor White
 
 Write-Host "`nTo destroy:" -ForegroundColor Yellow
 Write-Host "  .\terraform\local\deploy-local.ps1 -Destroy" -ForegroundColor White

@@ -17,3 +17,8 @@ postgres_admin_password = "mtogo_password"
 
 # Install NGINX ingress controller
 install_ingress = true
+
+# ManagementService seeded admin credentials
+management_username = "admin"
+management_password = "admin"
+management_name     = "Management Admin"
