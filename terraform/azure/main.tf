@@ -109,12 +109,16 @@ module "mtogo_app" {
   postgres_admin_password = var.postgres_admin_password
   postgres_ssl_mode       = "Require"
   registry_secret_name    = "ghcr-secret"
-  
+
   # Azure provides managed services
-  deploy_postgres            = false  # Using Azure PostgreSQL
-  deploy_kafka               = true   # Deploy Kafka in cluster
+  deploy_postgres            = false # Using Azure PostgreSQL
+  deploy_kafka               = true  # Deploy Kafka in cluster
   install_ingress_controller = true
   kafka_bootstrap_servers    = "kafka:9092"
+
+  management_username = var.management_username
+  management_password = var.management_password
+  management_name     = var.management_name
 
   depends_on = [azurerm_kubernetes_cluster.main]
 }

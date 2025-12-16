@@ -83,3 +83,20 @@ variable "image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "management_username" {
+  description = "Initial ManagementService admin username"
+  type        = string
+}
+
+variable "management_password" {
+  description = "Initial ManagementService admin password"
+  type        = string
+  sensitive   = true
+}
+
+variable "management_name" {
+  description = "Display name for the seeded management user"
+  type        = string
+  default     = "Management Admin"
+}

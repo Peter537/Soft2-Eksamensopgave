@@ -55,7 +55,7 @@ output "website_url" {
 
 output "api_url" {
   description = "URL for the API gateway"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "pending")}/api"
+  value       = "http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "pending")}/api/v1"
 }
 
 output "legacy_api_url" {
@@ -88,7 +88,7 @@ output "connect_instructions" {
     
     6. Access the application:
        Website: http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "<pending>")}
-       API:     http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "<pending>")}/api
+       API:     http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "<pending>")}/api/v1
     
     EOT
 }

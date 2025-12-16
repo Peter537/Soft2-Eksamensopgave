@@ -34,3 +34,8 @@ ghcr_token             = "ghp_your_personal_access_token"
 
 # Docker image tag (usually the commit SHA)
 image_tag = "latest"
+
+# ManagementService seeded admin credentials
+management_username = "admin"
+management_password = "CHANGE_ME_TO_A_STRONG_PASSWORD"
+management_name     = "Management Admin"

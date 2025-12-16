@@ -28,7 +28,7 @@ resource "azurerm_kubernetes_cluster" "main" {
     name                = "default"
     vm_size             = var.node_vm_size
     enable_auto_scaling = var.enable_auto_scaling
-    
+
     # Node count settings
     node_count = var.enable_auto_scaling ? null : var.node_count
     min_count  = var.enable_auto_scaling ? var.node_count : null
@@ -116,6 +116,20 @@ resource "azurerm_postgresql_flexible_server_database" "partners" {
 
 resource "azurerm_postgresql_flexible_server_database" "legacy" {
   name      = "mtogo_legacy"
+  server_id = azurerm_postgresql_flexible_server.main.id
+  collation = "en_US.utf8"
+  charset   = "UTF8"
+}
+
+resource "azurerm_postgresql_flexible_server_database" "management" {
+  name      = "mtogo_management"
+  server_id = azurerm_postgresql_flexible_server.main.id
+  collation = "en_US.utf8"
+  charset   = "UTF8"
+}
+
+resource "azurerm_postgresql_flexible_server_database" "logs" {
+  name      = "mtogo_logs"
   server_id = azurerm_postgresql_flexible_server.main.id
   collation = "en_US.utf8"
   charset   = "UTF8"
