@@ -342,6 +342,8 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
 *.pyc
+# Python virtual environment
+venv311/
 
 # Cake - Uncomment if you are using it
 #tools/**
@@ -446,6 +448,7 @@ terraform.rc
 # Plan files
 *.tfplan
 tfplan
+
 # Stryker.NET mutation test reports
 mutation-reports/
 StrykerOutput/
