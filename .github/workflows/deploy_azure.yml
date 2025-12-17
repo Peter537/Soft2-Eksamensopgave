@@ -11,7 +11,6 @@
 name: Deploy to Azure
 
 on:
-  # Manual trigger with inputs
   workflow_dispatch:
     inputs:
       environment:
@@ -20,6 +19,7 @@ on:
         default: "prod"
         type: choice
         options:
+          - dev
           - prod
           - staging
       image_tag:
@@ -45,10 +45,7 @@ permissions:
 
 env:
   TERRAFORM_VERSION: "1.6.0"
-  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  TF_IN_AUTOMATION: "true"
 
 jobs:
   # ===========================================
@@ -98,9 +95,20 @@ jobs:
       run:
         working-directory: terraform/azure
 
+    outputs:
+      resource_group_name: ${{ steps.tf_outputs.outputs.resource_group_name }}
+      aks_cluster_name: ${{ steps.tf_outputs.outputs.aks_cluster_name }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -108,24 +116,33 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform Init
-        run: terraform init
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: terraform init -input=false
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        run: |
-          terraform plan \
-            -var="environment=${{ needs.prepare.outputs.environment }}" \
-            -var="image_tag=${{ needs.prepare.outputs.image_tag }}" \
-            -var="node_count=${{ github.event.inputs.node_count || 2 }}" \
-            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
-            -var="github_repository_owner=${{ github.repository_owner }}" \
-            -var="ghcr_username=${{ github.actor }}" \
-            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}" \
-            -out=tfplan \
-            -no-color
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: ${{ needs.prepare.outputs.environment }}
+          TF_VAR_image_tag: ${{ needs.prepare.outputs.image_tag }}
+          TF_VAR_node_count: ${{ github.event.inputs.node_count || '2' }}
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+        run: terraform plan -out=tfplan -input=false -no-color
         continue-on-error: true
 
       - name: Terraform Plan Status
@@ -134,12 +151,72 @@ jobs:
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply'
-        run: terraform apply -auto-approve tfplan
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: ${{ needs.prepare.outputs.environment }}
+          TF_VAR_image_tag: ${{ needs.prepare.outputs.image_tag }}
+          TF_VAR_node_count: ${{ github.event.inputs.node_count || '2' }}
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "============================================"
+            echo "Terraform apply (attempt $attempt/$max_attempts)"
+            echo "============================================"
+
+            set +e
+            output=$(terraform apply -auto-approve -input=false -no-color 2>&1)
+            exit_code=$?
+            set -e
+
+            echo "$output"
+
+            if [ $exit_code -eq 0 ]; then
+              echo "Apply succeeded."
+              break
+            fi
+
+            # Auto-import resources that already exist, then retry.
+            resource_id=$(echo "$output" | sed -n 's/.*A resource with the ID "\([^"]*\)" already exists.*/\1/p' | head -n 1)
+            resource_addr=$(echo "$output" | sed -n 's/.*with \([^,]*\),.*/\1/p' | head -n 1)
+
+            if [ -n "$resource_id" ] && [ -n "$resource_addr" ]; then
+              echo "Detected existing resource; importing into state:"
+              echo "  Address: $resource_addr"
+              echo "  ID:      $resource_id"
+              terraform import -input=false -no-color "$resource_addr" "$resource_id"
+              attempt=$((attempt+1))
+              continue
+            fi
+
+            echo "Terraform apply failed and no importable resource was detected."
+            exit $exit_code
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Terraform apply failed after $max_attempts attempts."
+            exit 1
+          fi
 
       - name: Get Terraform Outputs
         if: github.event.inputs.action == 'apply'
-        id: outputs
+        id: tf_outputs
         run: |
+          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+
           echo "## Deployment Outputs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
@@ -165,22 +242,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          creds: |
-            {
-              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
-              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
-            }
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
 
       - name: Get AKS Credentials
         run: |
           az aks get-credentials \
-            --resource-group rg-mtogo-${{ needs.prepare.outputs.environment }} \
-            --name aks-mtogo-${{ needs.prepare.outputs.environment }} \
+            --resource-group ${{ needs.terraform.outputs.resource_group_name }} \
+            --name ${{ needs.terraform.outputs.aks_cluster_name }} \
             --overwrite-existing
 
       - name: Wait for deployments

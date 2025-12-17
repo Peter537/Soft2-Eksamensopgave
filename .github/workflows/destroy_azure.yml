@@ -17,6 +17,7 @@ on:
         default: "prod"
         type: choice
         options:
+          - dev
           - prod
           - staging
       confirm:
@@ -29,10 +30,7 @@ permissions:
 
 env:
   TERRAFORM_VERSION: "1.6.0"
-  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  TF_IN_AUTOMATION: "true"
 
 jobs:
   # ===========================================
@@ -68,38 +66,63 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform Init
-        run: terraform init
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: terraform init -input=false
 
       - name: Terraform Destroy Plan
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: ${{ github.event.inputs.environment }}
+          TF_VAR_image_tag: "latest"
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
         run: |
           echo "============================================"
           echo "⚠️  DESTROYING ENVIRONMENT: ${{ github.event.inputs.environment }}"
           echo "============================================"
 
-          terraform plan -destroy \
-            -var="environment=${{ github.event.inputs.environment }}" \
-            -var="image_tag=latest" \
-            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
-            -var="github_repository_owner=${{ github.repository_owner }}" \
-            -var="ghcr_username=${{ github.actor }}" \
-            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}" \
-            -no-color
+          terraform plan -destroy -input=false -no-color
 
       - name: Terraform Destroy
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: ${{ github.event.inputs.environment }}
+          TF_VAR_image_tag: "latest"
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
         run: |
-          terraform destroy -auto-approve \
-            -var="environment=${{ github.event.inputs.environment }}" \
-            -var="image_tag=latest" \
-            -var="postgres_admin_password=${{ secrets.POSTGRES_ADMIN_PASSWORD }}" \
-            -var="github_repository_owner=${{ github.repository_owner }}" \
-            -var="ghcr_username=${{ github.actor }}" \
-            -var="ghcr_token=${{ secrets.GITHUB_TOKEN }}"
+          terraform destroy -auto-approve -input=false
 
       - name: Summary
         run: |
