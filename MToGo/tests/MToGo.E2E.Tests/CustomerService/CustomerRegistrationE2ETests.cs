@@ -1,3 +1,5 @@
+extern alias CustomerServiceApp;
+
 using System.Net;
 using System.Net.Http.Json;
 using LegacyMToGo.Entities;
@@ -12,6 +14,7 @@ using MToGo.CustomerService.Models;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
 using CustomerModel = MToGo.CustomerService.Models.Customer;
+using CustomerServiceProgram = CustomerServiceApp::Program;
 
 namespace MToGo.CustomerService.Tests.E2E;
 
@@ -19,7 +22,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
 {
     private PostgreSqlContainer _postgresContainer = null!;
     private WebApplicationFactory<LegacyMToGo.Program> _legacyApiFactory = null!;
-    private WebApplicationFactory<Program> _customerServiceFactory = null!;
+    private WebApplicationFactory<CustomerServiceProgram> _customerServiceFactory = null!;
     private HttpClient _customerServiceClient = null!;
     private HttpClient _legacyClient = null!;
 
@@ -65,7 +68,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
         _legacyClient = _legacyApiFactory.CreateClient();
 
         // Setup Customer Service with E2E client pointing to Legacy API
-        _customerServiceFactory = new WebApplicationFactory<Program>()
+        _customerServiceFactory = new WebApplicationFactory<CustomerServiceProgram>()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services =>

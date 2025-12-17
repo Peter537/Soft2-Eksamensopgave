@@ -1,3 +1,5 @@
+extern alias NotificationServiceApp;
+
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authentication;
@@ -8,14 +10,15 @@ using MToGo.NotificationService.Clients;
 using MToGo.NotificationService.Exceptions;
 using MToGo.NotificationService.Models;
 using MToGo.Testing;
+using NotificationServiceProgram = NotificationServiceApp::Program;
 
 namespace MToGo.NotificationService.Tests.Integration;
 
-public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<NotificationServiceProgram>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<NotificationServiceProgram> _factory;
 
-    public NotificationIntegrationTests(WebApplicationFactory<Program> factory)
+    public NotificationIntegrationTests(WebApplicationFactory<NotificationServiceProgram> factory)
     {
         _factory = factory;
     }

@@ -1,3 +1,5 @@
+extern alias NotificationServiceApp;
+
 using System.Net;
 using System.Net.Http.Json;
 using LegacyMToGo.Entities;
@@ -12,6 +14,7 @@ using MToGo.NotificationService.Models;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
 using LegacyNotificationRequest = LegacyMToGo.Models.NotificationRequest;
+using NotificationServiceProgram = NotificationServiceApp::Program;
 
 namespace MToGo.NotificationService.Tests.E2E;
 
@@ -19,7 +22,7 @@ public class NotificationE2ETests : IAsyncLifetime
 {
     private PostgreSqlContainer _postgresContainer = null!;
     private WebApplicationFactory<LegacyMToGo.Program> _legacyApiFactory = null!;
-    private WebApplicationFactory<Program> _notificationServiceFactory = null!;
+    private WebApplicationFactory<NotificationServiceProgram> _notificationServiceFactory = null!;
     private HttpClient _notificationServiceClient = null!;
     private HttpClient _legacyClient = null!;
 
@@ -65,7 +68,7 @@ public class NotificationE2ETests : IAsyncLifetime
         _legacyClient = _legacyApiFactory.CreateClient();
 
         // Setup Notification Service with E2E client pointing to Legacy API
-        _notificationServiceFactory = new WebApplicationFactory<Program>()
+        _notificationServiceFactory = new WebApplicationFactory<NotificationServiceProgram>()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services =>

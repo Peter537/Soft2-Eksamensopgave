@@ -63,6 +63,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.Gateway.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.LogCollectorService", "src\MToGo.LogCollectorService\MToGo.LogCollectorService.csproj", "{E8C7B5A1-2F3D-4E5C-A6B9-8D0F1E2C3A4B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.E2E.Tests", "tests\MToGo.E2E.Tests\MToGo.E2E.Tests.csproj", "{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MToGo.Integration.Tests", "tests\MToGo.Integration.Tests\MToGo.Integration.Tests.csproj", "{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -409,12 +413,38 @@ Global
 		{957F870C-9F9A-47DF-92C8-0343A5A4373C}.Release|x64.Build.0 = Release|Any CPU
 		{957F870C-9F9A-47DF-92C8-0343A5A4373C}.Release|x86.ActiveCfg = Release|Any CPU
 		{957F870C-9F9A-47DF-92C8-0343A5A4373C}.Release|x86.Build.0 = Release|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Debug|x64.Build.0 = Debug|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Debug|x86.Build.0 = Debug|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Release|x64.ActiveCfg = Release|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Release|x64.Build.0 = Release|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Release|x86.ActiveCfg = Release|Any CPU
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2}.Release|x86.Build.0 = Release|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Debug|x64.Build.0 = Debug|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Debug|x86.Build.0 = Debug|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Release|x64.ActiveCfg = Release|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Release|x64.Build.0 = Release|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{957F870C-9F9A-47DF-92C8-0343A5A4373C} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{982FAA1E-6CC6-4F4F-A51E-71A8B42C4DF2} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{7C84F8CE-16F3-4844-B7A5-2876E0E9314E} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C48114A8-584E-4295-8645-507BAF77C785}

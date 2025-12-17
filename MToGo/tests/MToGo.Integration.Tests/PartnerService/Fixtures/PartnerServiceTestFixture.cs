@@ -1,3 +1,5 @@
+extern alias PartnerServiceApp;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -7,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MToGo.PartnerService.Entities;
 using MToGo.Testing;
 using Testcontainers.PostgreSql;
+using PartnerServiceProgram = PartnerServiceApp::Program;
 
 namespace MToGo.PartnerService.Tests.Fixtures;
 
@@ -36,7 +39,7 @@ public class PartnerServiceTestFixture : IAsyncLifetime
     public void MarkDatabaseInitialized() => _databaseInitialized = true;
 }
 
-public class PartnerServiceWebApplicationFactory : WebApplicationFactory<Program>
+public class PartnerServiceWebApplicationFactory : WebApplicationFactory<PartnerServiceProgram>
 {
     private readonly PartnerServiceTestFixture _fixture;
 

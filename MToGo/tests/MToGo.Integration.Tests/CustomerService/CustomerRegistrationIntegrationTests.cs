@@ -1,3 +1,5 @@
+extern alias CustomerServiceApp;
+
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authentication;
@@ -7,16 +9,16 @@ using Moq;
 using MToGo.CustomerService.Clients;
 using MToGo.CustomerService.Exceptions;
 using MToGo.CustomerService.Models;
-
 using MToGo.Testing;
+using CustomerServiceProgram = CustomerServiceApp::Program;
 
 namespace MToGo.CustomerService.Tests.Integration;
 
-public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplicationFactory<CustomerServiceProgram>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly WebApplicationFactory<CustomerServiceProgram> _factory;
 
-    public CustomerRegistrationIntegrationTests(WebApplicationFactory<Program> factory)
+    public CustomerRegistrationIntegrationTests(WebApplicationFactory<CustomerServiceProgram> factory)
     {
         _factory = factory;
     }
