@@ -1,0 +1,50 @@
+> test info
+
+
+
+test suite: `nbomber_default_test_suite_name`
+
+test name: `nbomber_default_test_name`
+
+session id: `2025-12-17_12.36.41_session_44903cd7`
+
+> scenario stats
+
+
+
+scenario: `stress_test`
+
+  - ok count: `720`
+
+  - fail count: `0`
+
+  - all data: `0.3` MB
+
+  - duration: `00:00:45`
+
+load simulations:
+
+  - `inject`, rate: `6`, interval: `00:00:01`, during: `00:00:15`
+
+  - `inject`, rate: `12`, interval: `00:00:01`, during: `00:00:15`
+
+  - `inject`, rate: `30`, interval: `00:00:01`, during: `00:00:15`
+
+|step|ok stats|
+|---|---|
+|name|`global information`|
+|request count|all = `720`, ok = `720`, RPS = `16`|
+|latency (ms)|min = `2.48`, mean = `3.77`, max = `11.58`, StdDev = `0.49`|
+|latency percentile (ms)|p50 = `3.74`, p75 = `3.96`, p95 = `4.31`, p99 = `4.82`|
+|data transfer (KB)|min = `0.399`, mean = `0.448`, max = `1.275`, all = `0.3` MB|
+
+
+> status codes for scenario: `stress_test`
+
+
+
+|status code|count|message|
+|---|---|---|
+|OK|720||
+
+
