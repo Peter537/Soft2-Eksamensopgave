@@ -155,30 +155,21 @@ For testing in a **production-like** environment locally.
 ### Quick Start
 
 ```powershell
-# 1. Build Docker images
-.\k8s\build-images.ps1
-
-# 2. Deploy with Terraform
-cd terraform/local
-terraform init
-terraform apply
-
-# 3. Access via port-forward
-kubectl port-forward -n mtogo svc/website 8081:8080
-# Open http://localhost:8081
+# Build Docker images and deploy to local Kubernetes
+.\terraform\deploy.ps1 -Context local -Build
 ```
 
 ### Using the Helper Script
 
 ```powershell
 # Build images and deploy
-.\terraform\local\deploy-local.ps1 -Build
+.\terraform\deploy.ps1 -Context local -Build
 
 # Deploy only (images already built)
-.\terraform\local\deploy-local.ps1
+.\terraform\deploy.ps1 -Context local
 
 # Destroy
-.\terraform\local\deploy-local.ps1 -Destroy
+.\terraform\deploy.ps1 -Context local -Destroy
 ```
 
 ### What Gets Deployed

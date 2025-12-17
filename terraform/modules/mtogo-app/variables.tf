@@ -17,19 +17,6 @@
 #     registry_secret_name    = "ghcr-secret"
 #   }
 
-terraform {
-  required_providers {
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.0"
-    }
-  }
-}
-
 # ===========================================
 # Variables
 # ===========================================
@@ -83,6 +70,25 @@ variable "registry_secret_name" {
   description = "Name of the Kubernetes secret for container registry auth (empty for local images)"
   type        = string
   default     = ""
+}
+
+variable "registry_server" {
+  description = "Container registry server for image pull secret (e.g., ghcr.io)"
+  type        = string
+  default     = ""
+}
+
+variable "registry_username" {
+  description = "Container registry username for image pull secret"
+  type        = string
+  default     = ""
+}
+
+variable "registry_password" {
+  description = "Container registry password/token for image pull secret"
+  type        = string
+  default     = ""
+  sensitive   = true
 }
 
 variable "install_ingress_controller" {

@@ -217,6 +217,8 @@ locals {
 resource "kubernetes_deployment" "services" {
   for_each = local.services
 
+  wait_for_rollout = each.key == "log-collector-service" ? false : true
+
   metadata {
     name      = each.key
     namespace = kubernetes_namespace.mtogo.metadata[0].name
@@ -247,7 +249,7 @@ resource "kubernetes_deployment" "services" {
         dynamic "image_pull_secrets" {
           for_each = local.use_image_pull_secret ? [1] : []
           content {
-            name = var.registry_secret_name
+            name = try(kubernetes_secret.registry[0].metadata[0].name, var.registry_secret_name)
           }
         }
 

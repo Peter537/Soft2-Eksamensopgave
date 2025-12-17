@@ -13,6 +13,40 @@ resource "kubernetes_namespace" "mtogo" {
 }
 
 # ===========================================
+# Container Registry Secret (Optional)
+# ===========================================
+
+locals {
+  create_registry_secret = var.registry_secret_name != "" && var.registry_server != "" && var.registry_username != "" && var.registry_password != ""
+}
+
+resource "kubernetes_secret" "registry" {
+  count = local.create_registry_secret ? 1 : 0
+
+  metadata {
+    name      = var.registry_secret_name
+    namespace = kubernetes_namespace.mtogo.metadata[0].name
+    labels = {
+      "app.kubernetes.io/part-of" = "mtogo-platform"
+    }
+  }
+
+  type = "kubernetes.io/dockerconfigjson"
+
+  data = {
+    ".dockerconfigjson" = jsonencode({
+      auths = {
+        "${var.registry_server}" = {
+          username = var.registry_username
+          password = var.registry_password
+          auth     = base64encode("${var.registry_username}:${var.registry_password}")
+        }
+      }
+    })
+  }
+}
+
+# ===========================================
 # NGINX Ingress Controller (Optional)
 # ===========================================
 

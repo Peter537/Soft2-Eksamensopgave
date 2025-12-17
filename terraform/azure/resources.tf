@@ -2,6 +2,10 @@
 # Resource Group
 # ===========================================
 
+locals {
+  location_slug = replace(lower(var.location), " ", "")
+}
+
 resource "azurerm_resource_group" "main" {
   name     = "rg-${var.project_name}-${var.environment}"
   location = var.location
@@ -18,10 +22,10 @@ resource "azurerm_resource_group" "main" {
 # ===========================================
 
 resource "azurerm_kubernetes_cluster" "main" {
-  name                = "aks-${var.project_name}-${var.environment}"
+  name                = "aks-${var.project_name}-${var.environment}-${local.location_slug}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  dns_prefix          = "${var.project_name}-${var.environment}"
+  dns_prefix          = "${var.project_name}-${var.environment}-${local.location_slug}"
   kubernetes_version  = var.kubernetes_version
 
   default_node_pool {

@@ -46,23 +46,30 @@ provider "azurerm" {
   }
 }
 
+locals {
+  kube_host = var.use_aks_kubeconfig ? azurerm_kubernetes_cluster.main.kube_config[0].host : "https://localhost"
+  kube_client_certificate = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate) : ""
+  kube_client_key = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key) : ""
+  kube_cluster_ca_certificate = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate) : ""
+}
+
 # ===========================================
 # Kubernetes Provider (connects to AKS)
 # ===========================================
 
 provider "kubernetes" {
-  host                   = azurerm_kubernetes_cluster.main.kube_config[0].host
-  client_certificate     = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate)
-  client_key             = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key)
-  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
+  host                   = local.kube_host
+  client_certificate     = local.kube_client_certificate
+  client_key             = local.kube_client_key
+  cluster_ca_certificate = local.kube_cluster_ca_certificate
 }
 
 provider "helm" {
   kubernetes {
-    host                   = azurerm_kubernetes_cluster.main.kube_config[0].host
-    client_certificate     = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate)
-    client_key             = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key)
-    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate)
+    host                   = local.kube_host
+    client_certificate     = local.kube_client_certificate
+    client_key             = local.kube_client_key
+    cluster_ca_certificate = local.kube_cluster_ca_certificate
   }
 }
 
@@ -70,28 +77,9 @@ provider "helm" {
 # Container Registry Secret
 # ===========================================
 
-resource "kubernetes_secret" "ghcr" {
-  metadata {
-    name      = "ghcr-secret"
-    namespace = module.mtogo_app.namespace
-  }
-
-  type = "kubernetes.io/dockerconfigjson"
-
-  data = {
-    ".dockerconfigjson" = jsonencode({
-      auths = {
-        "ghcr.io" = {
-          username = var.ghcr_username
-          password = var.ghcr_token
-          auth     = base64encode("${var.ghcr_username}:${var.ghcr_token}")
-        }
-      }
-    })
-  }
-
-  depends_on = [module.mtogo_app]
-}
+# NOTE: Registry secret is created inside the mtogo-app module so that
+# all deployments depend on it (and we avoid rollouts failing before the
+# secret exists).
 
 # ===========================================
 # MToGo Application Module
@@ -109,6 +97,9 @@ module "mtogo_app" {
   postgres_admin_password = var.postgres_admin_password
   postgres_ssl_mode       = "Require"
   registry_secret_name    = "ghcr-secret"
+  registry_server         = "ghcr.io"
+  registry_username       = var.ghcr_username
+  registry_password       = var.ghcr_token
 
   # Azure provides managed services
   deploy_postgres            = false # Using Azure PostgreSQL

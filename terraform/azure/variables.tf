@@ -5,7 +5,7 @@
 variable "location" {
   description = "Azure region for resources"
   type        = string
-  default     = "West Europe"
+  default     = "North Europe"
 }
 
 variable "environment" {
@@ -23,7 +23,7 @@ variable "project_name" {
 variable "kubernetes_version" {
   description = "Kubernetes version for AKS"
   type        = string
-  default     = "1.29"
+  default     = null
 }
 
 variable "node_count" {
@@ -47,7 +47,7 @@ variable "enable_auto_scaling" {
 variable "node_vm_size" {
   description = "VM size for the nodes"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_B2s_v2"
 }
 
 variable "postgres_admin_username" {
@@ -99,4 +99,10 @@ variable "management_name" {
   description = "Display name for the seeded management user"
   type        = string
   default     = "Management Admin"
+}
+
+variable "use_aks_kubeconfig" {
+  description = "When true, configure the Kubernetes/Helm providers from the AKS cluster outputs. Set to false for operations (like import) when AKS does not exist yet."
+  type        = bool
+  default     = true
 }

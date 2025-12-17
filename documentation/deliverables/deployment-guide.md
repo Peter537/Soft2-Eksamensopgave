@@ -13,13 +13,13 @@ Kopier filen `terraform\local\terraform.tfvars.example` til `terraform\local\ter
 Vær i Root-mappen af projektet og kør:
 
 ```powershell
-.\terraform\local\deploy-local.ps1 -Build
+.\terraform\deploy.ps1 -Context local -Build
 ```
 
 For at destruere deployment, kør:
 
 ```powershell
-.\terraform\local\deploy-local.ps1 -Destroy
+.\terraform\deploy.ps1 -Context local -Destroy
 ```
 
 Applikationen vil være tilgængelig på følgende URL'er efter deployment:

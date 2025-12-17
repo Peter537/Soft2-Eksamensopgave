@@ -35,6 +35,8 @@ output "postgres_admin_username" {
 
 # Get ingress IP from the nginx service
 data "kubernetes_service" "nginx_ingress" {
+  count = var.use_aks_kubeconfig ? 1 : 0
+
   metadata {
     name      = "ingress-nginx-controller"
     namespace = "ingress-nginx"
@@ -45,22 +47,22 @@ data "kubernetes_service" "nginx_ingress" {
 
 output "ingress_ip" {
   description = "IP address of the ingress controller load balancer"
-  value       = try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "pending")
+  value       = try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")
 }
 
 output "website_url" {
   description = "URL for the website"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "pending")}/"
+  value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/"
 }
 
 output "api_url" {
   description = "URL for the API gateway"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "pending")}/api/v1"
+  value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/api/v1"
 }
 
 output "legacy_api_url" {
   description = "URL for the legacy API"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "pending")}/legacy"
+  value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/legacy"
 }
 
 # Instructions for connecting to the cluster
@@ -87,8 +89,8 @@ output "connect_instructions" {
        kubectl get pods -n mtogo
     
     6. Access the application:
-       Website: http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "<pending>")}
-       API:     http://${try(data.kubernetes_service.nginx_ingress.status[0].load_balancer[0].ingress[0].ip, "<pending>")}/api/v1
+         Website: http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "<pending>")}
+         API:     http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "<pending>")}/api/v1
     
     EOT
 }
