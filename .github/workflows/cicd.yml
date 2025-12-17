@@ -32,6 +32,7 @@ jobs:
       notification: ${{ steps.filter.outputs.notification }}
       order: ${{ steps.filter.outputs.order }}
       partner: ${{ steps.filter.outputs.partner }}
+      logcollector: ${{ steps.filter.outputs.logcollector }}
       website: ${{ steps.filter.outputs.website }}
       websocketagent: ${{ steps.filter.outputs.websocketagent }}
       websocketcustomer: ${{ steps.filter.outputs.websocketcustomer }}
@@ -88,6 +89,9 @@ jobs:
               - 'MToGo/src/MToGo.PartnerService/**'
               - 'MToGo/tests/MToGo.PartnerService.Tests/**'
 
+            logcollector:
+              - 'MToGo/src/MToGo.LogCollectorService/**'
+
             website:
               - 'MToGo/src/MToGo.Website/**'
               - 'MToGo/tests/MToGo.Website.Tests/**'
@@ -110,6 +114,58 @@ jobs:
 
             legacy:
               - 'LegacyMToGo/**'
+
+    logcollector_ci:
+      name: LogCollector - build & docker
+      needs: detect_changes
+      if: ${{ needs.detect_changes.outputs.logcollector == 'true' || needs.detect_changes.outputs.shared == 'true' }}
+      runs-on: ubuntu-latest
+
+      steps:
+        - uses: actions/checkout@v4
+
+        - uses: actions/setup-dotnet@v4
+          with:
+            dotnet-version: "8.0.x"
+
+        - name: Cache NuGet packages
+          uses: actions/cache@v4
+          with:
+            path: ~/.nuget/packages
+            key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.LogCollectorService.csproj') }}
+            restore-keys: |
+              ${{ runner.os }}-nuget-
+
+        - name: Restore
+          run: dotnet restore MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj
+
+        - name: Build
+          run: dotnet build MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj -c Release --no-restore
+
+        - name: Set lowercase owner
+          run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
+        - name: Log in to GitHub Container Registry
+          uses: docker/login-action@v3
+          with:
+            registry: ghcr.io
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
+
+        - name: Build & push Docker image
+          uses: docker/build-push-action@v5
+          with:
+            context: MToGo/
+            file: MToGo/src/MToGo.LogCollectorService/Dockerfile
+            push: true
+            tags: |
+              ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:${{ env.IMAGE_TAG }}
+              ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-logcollector:latest', env.OWNER_LC) || '' }}
+            cache-from: type=gha
+            cache-to: type=gha,mode=max
 
   agentbonus_ci:
     name: AgentBonus - build, test & docker
@@ -1281,6 +1337,7 @@ jobs:
       - notification_ci
       - order_ci
       - partner_ci
+      - logcollector_ci
       - website_ci
       - websocketagent_ci
       - websocketcustomer_ci
@@ -1304,6 +1361,7 @@ jobs:
             "notification": "${{ needs.detect_changes.outputs.notification }}",
             "order": "${{ needs.detect_changes.outputs.order }}",
             "partner": "${{ needs.detect_changes.outputs.partner }}",
+            "logcollector": "${{ needs.detect_changes.outputs.logcollector }}",
             "website": "${{ needs.detect_changes.outputs.website }}",
             "websocketagent": "${{ needs.detect_changes.outputs.websocketagent }}",
             "websocketcustomer": "${{ needs.detect_changes.outputs.websocketcustomer }}",
@@ -1320,4 +1378,3 @@ jobs:
           name: build-outputs
           path: build-outputs.json
           retention-days: 1
-
