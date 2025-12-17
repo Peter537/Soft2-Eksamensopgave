@@ -14,13 +14,13 @@ public class LegacyNotificationAdapterTests
 {
     private readonly Mock<ILegacyNotificationApiClient> _mockLegacyClient;
     private readonly Mock<ILogger<LegacyNotificationAdapter>> _mockLogger;
-    private readonly LegacyNotificationAdapter _sut;
+    private readonly LegacyNotificationAdapter _target;
 
     public LegacyNotificationAdapterTests()
     {
         _mockLegacyClient = new Mock<ILegacyNotificationApiClient>();
         _mockLogger = new Mock<ILogger<LegacyNotificationAdapter>>();
-        _sut = new LegacyNotificationAdapter(_mockLegacyClient.Object, _mockLogger.Object);
+        _target = new LegacyNotificationAdapter(_mockLegacyClient.Object, _mockLogger.Object);
     }
 
     #region SendAsync Tests
@@ -38,7 +38,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true, Message = "Sent" });
 
         // Act
-        var result = await _sut.SendAsync(customerId, title, body);
+        var result = await _target.SendAsync(customerId, title, body);
 
         // Assert
         Assert.True(result.Success);
@@ -60,7 +60,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        await _sut.SendAsync(customerId, title, body);
+        await _target.SendAsync(customerId, title, body);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -84,7 +84,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        await _sut.SendAsync(customerId, title, body);
+        await _target.SendAsync(customerId, title, body);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -102,7 +102,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new CustomerNotFoundException("Customer not found"));
 
         // Act
-        var result = await _sut.SendAsync(customerId, "Title", "Body");
+        var result = await _target.SendAsync(customerId, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -118,7 +118,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new NotificationFailedException("Service error"));
 
         // Act
-        var result = await _sut.SendAsync(1, "Title", "Body");
+        var result = await _target.SendAsync(1, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -134,7 +134,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
         // Act
-        var result = await _sut.SendAsync(1, "Title", "Body");
+        var result = await _target.SendAsync(1, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -150,7 +150,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new InvalidOperationException("Unexpected"));
 
         // Act
-        var result = await _sut.SendAsync(1, "Title", "Body");
+        var result = await _target.SendAsync(1, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -174,7 +174,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        var result = await _sut.SendOrderUpdateAsync(customerId, orderId, status);
+        var result = await _target.SendOrderUpdateAsync(customerId, orderId, status);
 
         // Assert
         Assert.True(result.Success);
@@ -195,7 +195,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        await _sut.SendOrderUpdateAsync(customerId, orderId, status);
+        await _target.SendOrderUpdateAsync(customerId, orderId, status);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -218,7 +218,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        var result = await _sut.SendOrderUpdateAsync(1, 100, status);
+        var result = await _target.SendOrderUpdateAsync(1, 100, status);
 
         // Assert
         Assert.True(result.Success);
@@ -233,7 +233,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new CustomerNotFoundException("Customer not found"));
 
         // Act
-        var result = await _sut.SendOrderUpdateAsync(999, 100, "Delivered");
+        var result = await _target.SendOrderUpdateAsync(999, 100, "Delivered");
 
         // Assert
         Assert.False(result.Success);
@@ -257,7 +257,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        var result = await _sut.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
+        var result = await _target.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
 
         // Assert
         Assert.True(result.Success);
@@ -278,7 +278,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        await _sut.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
+        await _target.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -299,7 +299,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        var result = await _sut.SendPromotionAsync(1, title, details);
+        var result = await _target.SendPromotionAsync(1, title, details);
 
         // Assert
         Assert.True(result.Success);
@@ -314,7 +314,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new NotificationFailedException("Service unavailable"));
 
         // Act
-        var result = await _sut.SendPromotionAsync(1, "Sale", "Details");
+        var result = await _target.SendPromotionAsync(1, "Sale", "Details");
 
         // Assert
         Assert.False(result.Success);
@@ -383,8 +383,9 @@ public class LegacyNotificationAdapterTests
     public void LegacyNotificationAdapter_ImplementsINotificationAdapter()
     {
         // Assert
-        Assert.IsAssignableFrom<INotificationAdapter>(_sut);
+        Assert.IsAssignableFrom<INotificationAdapter>(_target);
     }
 
     #endregion
 }
+

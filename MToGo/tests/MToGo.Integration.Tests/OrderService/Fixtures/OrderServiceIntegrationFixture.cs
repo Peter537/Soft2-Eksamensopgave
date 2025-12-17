@@ -1,6 +1,5 @@
 extern alias OrderServiceApp;
 
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -123,13 +122,7 @@ public class OrderServiceWebApplicationFactory : WebApplicationFactory<OrderServ
             }
             services.AddSingleton(_agentServiceClientMock.Object);
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-            }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.AuthenticationScheme,
-                _ => { });
+            services.AddTestAuthentication();
         });
     }
 }
@@ -167,3 +160,4 @@ public class OrderServiceContainerFixture : IAsyncLifetime
 public class OrderServiceIntegrationCollection : ICollectionFixture<OrderServiceIntegrationFixture>
 {
 }
+

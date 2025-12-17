@@ -3,7 +3,6 @@ extern alias CustomerServiceApp;
 using System.Net;
 using System.Net.Http.Json;
 using LegacyMToGo.Entities;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,12 +28,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         // Create and start PostgreSQL container
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
-            .WithDatabase("legacy_mtogo")
-            .WithUsername("postgres")
-            .WithPassword("postgres")
-            .Build();
+        _postgresContainer = PostgreSqlContainerHelper.CreatePostgreSqlContainer("legacy_mtogo");
             
         await _postgresContainer.StartAsync();
 
@@ -100,13 +94,7 @@ public class CustomerRegistrationE2ETests : IAsyncLifetime
                     });
 
                     // Add test authentication
-                    services.AddAuthentication(options =>
-                    {
-                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                        options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-                    })
-                    .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                        TestAuthenticationHandler.AuthenticationScheme, options => { });
+                    services.AddTestAuthentication();
                 });
             });
 
@@ -748,3 +736,4 @@ internal class LegacyCustomerApiClientForE2E : ILegacyCustomerApiClient
         _logger.LogInformation("E2E: Customer deleted: {Id}", id);
     }
 }
+

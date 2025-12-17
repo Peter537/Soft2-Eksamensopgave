@@ -153,3 +153,4 @@ public class OrderPickedUpNotificationConsumerTests
         Assert.Equal(invocationReceived.Task, completed);
     }
 }
+

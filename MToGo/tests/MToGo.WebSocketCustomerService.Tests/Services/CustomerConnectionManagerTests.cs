@@ -7,13 +7,13 @@ namespace MToGo.WebSocketCustomerService.Tests.Services;
 
 public class CustomerConnectionManagerTests
 {
-    private readonly CustomerConnectionManager _sut;
+    private readonly CustomerConnectionManager _target;
     private readonly Mock<ILogger<CustomerConnectionManager>> _loggerMock;
 
     public CustomerConnectionManagerTests()
     {
         _loggerMock = new Mock<ILogger<CustomerConnectionManager>>();
-        _sut = new CustomerConnectionManager(_loggerMock.Object);
+        _target = new CustomerConnectionManager(_loggerMock.Object);
     }
 
     [Fact]
@@ -24,11 +24,11 @@ public class CustomerConnectionManagerTests
         var webSocketMock = CreateOpenWebSocketMock();
 
         // Act
-        await _sut.RegisterConnectionAsync(customerId, webSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, webSocketMock.Object);
 
         // Assert
-        Assert.True(_sut.IsConnected(customerId));
-        Assert.Equal(1, _sut.ConnectionCount);
+        Assert.True(_target.IsConnected(customerId));
+        Assert.Equal(1, _target.ConnectionCount);
     }
 
     [Fact]
@@ -39,14 +39,14 @@ public class CustomerConnectionManagerTests
         var oldWebSocketMock = CreateOpenWebSocketMock();
         var newWebSocketMock = CreateOpenWebSocketMock();
 
-        await _sut.RegisterConnectionAsync(customerId, oldWebSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, oldWebSocketMock.Object);
 
         // Act
-        await _sut.RegisterConnectionAsync(customerId, newWebSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, newWebSocketMock.Object);
 
         // Assert
-        Assert.True(_sut.IsConnected(customerId));
-        Assert.Equal(1, _sut.ConnectionCount);
+        Assert.True(_target.IsConnected(customerId));
+        Assert.Equal(1, _target.ConnectionCount);
         
         // Old connection should have been closed
         oldWebSocketMock.Verify(ws => ws.CloseAsync(
@@ -61,14 +61,14 @@ public class CustomerConnectionManagerTests
         // Arrange
         var customerId = 1;
         var webSocketMock = CreateOpenWebSocketMock();
-        await _sut.RegisterConnectionAsync(customerId, webSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, webSocketMock.Object);
 
         // Act
-        _sut.RemoveConnection(customerId);
+        _target.RemoveConnection(customerId);
 
         // Assert
-        Assert.False(_sut.IsConnected(customerId));
-        Assert.Equal(0, _sut.ConnectionCount);
+        Assert.False(_target.IsConnected(customerId));
+        Assert.Equal(0, _target.ConnectionCount);
     }
 
     [Fact]
@@ -78,10 +78,10 @@ public class CustomerConnectionManagerTests
         var customerId = 999;
 
         // Act
-        _sut.RemoveConnection(customerId);
+        _target.RemoveConnection(customerId);
 
         // Assert
-        Assert.Equal(0, _sut.ConnectionCount);
+        Assert.Equal(0, _target.ConnectionCount);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class CustomerConnectionManagerTests
         var payload = new { message = "test" };
 
         // Act
-        var result = await _sut.SendToCustomerAsync(customerId, "TestEvent", payload);
+        var result = await _target.SendToCustomerAsync(customerId, "TestEvent", payload);
 
         // Assert
         Assert.False(result);
@@ -104,11 +104,11 @@ public class CustomerConnectionManagerTests
         // Arrange
         var customerId = 1;
         var webSocketMock = CreateOpenWebSocketMock();
-        await _sut.RegisterConnectionAsync(customerId, webSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, webSocketMock.Object);
         var payload = new { orderId = 123 };
 
         // Act
-        var result = await _sut.SendToCustomerAsync(customerId, "OrderAccepted", payload);
+        var result = await _target.SendToCustomerAsync(customerId, "OrderAccepted", payload);
 
         // Assert
         Assert.True(result);
@@ -126,17 +126,17 @@ public class CustomerConnectionManagerTests
         var customerId = 1;
         var webSocketMock = new Mock<WebSocket>();
         webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Open);
-        await _sut.RegisterConnectionAsync(customerId, webSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, webSocketMock.Object);
 
         // Change state to closed
         webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Closed);
 
         // Act
-        var result = await _sut.SendToCustomerAsync(customerId, "TestEvent", new { });
+        var result = await _target.SendToCustomerAsync(customerId, "TestEvent", new { });
 
         // Assert
         Assert.False(result);
-        Assert.False(_sut.IsConnected(customerId));
+        Assert.False(_target.IsConnected(customerId));
     }
 
     [Fact]
@@ -152,21 +152,21 @@ public class CustomerConnectionManagerTests
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new WebSocketException("Connection lost"));
 
-        await _sut.RegisterConnectionAsync(customerId, webSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, webSocketMock.Object);
 
         // Act
-        var result = await _sut.SendToCustomerAsync(customerId, "TestEvent", new { });
+        var result = await _target.SendToCustomerAsync(customerId, "TestEvent", new { });
 
         // Assert
         Assert.False(result);
-        Assert.False(_sut.IsConnected(customerId));
+        Assert.False(_target.IsConnected(customerId));
     }
 
     [Fact]
     public void IsConnected_ShouldReturnFalse_WhenCustomerNotConnected()
     {
         // Act & Assert
-        Assert.False(_sut.IsConnected(999));
+        Assert.False(_target.IsConnected(999));
     }
 
     [Fact]
@@ -176,13 +176,13 @@ public class CustomerConnectionManagerTests
         var customerId = 1;
         var webSocketMock = new Mock<WebSocket>();
         webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Open);
-        await _sut.RegisterConnectionAsync(customerId, webSocketMock.Object);
+        await _target.RegisterConnectionAsync(customerId, webSocketMock.Object);
 
         // Change state to closed
         webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Closed);
 
         // Act & Assert
-        Assert.False(_sut.IsConnected(customerId));
+        Assert.False(_target.IsConnected(customerId));
     }
 
     [Fact]
@@ -194,22 +194,22 @@ public class CustomerConnectionManagerTests
         var ws3 = CreateOpenWebSocketMock();
 
         // Act
-        await _sut.RegisterConnectionAsync(1, ws1.Object);
-        await _sut.RegisterConnectionAsync(2, ws2.Object);
-        await _sut.RegisterConnectionAsync(3, ws3.Object);
+        await _target.RegisterConnectionAsync(1, ws1.Object);
+        await _target.RegisterConnectionAsync(2, ws2.Object);
+        await _target.RegisterConnectionAsync(3, ws3.Object);
 
         // Assert
-        Assert.Equal(3, _sut.ConnectionCount);
-        Assert.True(_sut.IsConnected(1));
-        Assert.True(_sut.IsConnected(2));
-        Assert.True(_sut.IsConnected(3));
+        Assert.Equal(3, _target.ConnectionCount);
+        Assert.True(_target.IsConnected(1));
+        Assert.True(_target.IsConnected(2));
+        Assert.True(_target.IsConnected(3));
 
         // Remove one
-        _sut.RemoveConnection(2);
-        Assert.Equal(2, _sut.ConnectionCount);
-        Assert.True(_sut.IsConnected(1));
-        Assert.False(_sut.IsConnected(2));
-        Assert.True(_sut.IsConnected(3));
+        _target.RemoveConnection(2);
+        Assert.Equal(2, _target.ConnectionCount);
+        Assert.True(_target.IsConnected(1));
+        Assert.False(_target.IsConnected(2));
+        Assert.True(_target.IsConnected(3));
     }
 
     private static Mock<WebSocket> CreateOpenWebSocketMock()
@@ -230,3 +230,4 @@ public class CustomerConnectionManagerTests
         return mock;
     }
 }
+

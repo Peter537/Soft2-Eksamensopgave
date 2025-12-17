@@ -7,13 +7,13 @@ namespace MToGo.WebSocketAgentService.Tests.Services;
 
 public class AgentConnectionManagerTests
 {
-    private readonly AgentConnectionManager _sut;
+    private readonly AgentConnectionManager _target;
     private readonly Mock<ILogger<AgentConnectionManager>> _loggerMock;
 
     public AgentConnectionManagerTests()
     {
         _loggerMock = new Mock<ILogger<AgentConnectionManager>>();
-        _sut = new AgentConnectionManager(_loggerMock.Object);
+        _target = new AgentConnectionManager(_loggerMock.Object);
     }
 
     #region Broadcast Connection Tests
@@ -26,10 +26,10 @@ public class AgentConnectionManagerTests
         var webSocketMock = CreateOpenWebSocketMock();
 
         // Act
-        await _sut.RegisterBroadcastConnectionAsync(connectionId, webSocketMock.Object);
+        await _target.RegisterBroadcastConnectionAsync(connectionId, webSocketMock.Object);
 
         // Assert
-        Assert.Equal(1, _sut.BroadcastConnectionCount);
+        Assert.Equal(1, _target.BroadcastConnectionCount);
     }
 
     [Fact]
@@ -41,12 +41,12 @@ public class AgentConnectionManagerTests
         var ws3 = CreateOpenWebSocketMock();
 
         // Act
-        await _sut.RegisterBroadcastConnectionAsync("conn1", ws1.Object);
-        await _sut.RegisterBroadcastConnectionAsync("conn2", ws2.Object);
-        await _sut.RegisterBroadcastConnectionAsync("conn3", ws3.Object);
+        await _target.RegisterBroadcastConnectionAsync("conn1", ws1.Object);
+        await _target.RegisterBroadcastConnectionAsync("conn2", ws2.Object);
+        await _target.RegisterBroadcastConnectionAsync("conn3", ws3.Object);
 
         // Assert
-        Assert.Equal(3, _sut.BroadcastConnectionCount);
+        Assert.Equal(3, _target.BroadcastConnectionCount);
     }
 
     [Fact]
@@ -55,23 +55,23 @@ public class AgentConnectionManagerTests
         // Arrange
         var connectionId = "test-connection";
         var webSocketMock = CreateOpenWebSocketMock();
-        await _sut.RegisterBroadcastConnectionAsync(connectionId, webSocketMock.Object);
+        await _target.RegisterBroadcastConnectionAsync(connectionId, webSocketMock.Object);
 
         // Act
-        _sut.RemoveBroadcastConnection(connectionId);
+        _target.RemoveBroadcastConnection(connectionId);
 
         // Assert
-        Assert.Equal(0, _sut.BroadcastConnectionCount);
+        Assert.Equal(0, _target.BroadcastConnectionCount);
     }
 
     [Fact]
     public void RemoveBroadcastConnection_ShouldDoNothing_WhenConnectionNotExists()
     {
         // Act
-        _sut.RemoveBroadcastConnection("non-existent");
+        _target.RemoveBroadcastConnection("non-existent");
 
         // Assert
-        Assert.Equal(0, _sut.BroadcastConnectionCount);
+        Assert.Equal(0, _target.BroadcastConnectionCount);
     }
 
     #endregion
@@ -86,11 +86,11 @@ public class AgentConnectionManagerTests
         var webSocketMock = CreateOpenWebSocketMock();
 
         // Act
-        await _sut.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
 
         // Assert
-        Assert.True(_sut.IsAgentConnected(agentId));
-        Assert.Equal(1, _sut.AgentConnectionCount);
+        Assert.True(_target.IsAgentConnected(agentId));
+        Assert.Equal(1, _target.AgentConnectionCount);
     }
 
     [Fact]
@@ -101,14 +101,14 @@ public class AgentConnectionManagerTests
         var oldWebSocketMock = CreateOpenWebSocketMock();
         var newWebSocketMock = CreateOpenWebSocketMock();
 
-        await _sut.RegisterAgentConnectionAsync(agentId, oldWebSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, oldWebSocketMock.Object);
 
         // Act
-        await _sut.RegisterAgentConnectionAsync(agentId, newWebSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, newWebSocketMock.Object);
 
         // Assert
-        Assert.True(_sut.IsAgentConnected(agentId));
-        Assert.Equal(1, _sut.AgentConnectionCount);
+        Assert.True(_target.IsAgentConnected(agentId));
+        Assert.Equal(1, _target.AgentConnectionCount);
 
         // Old connection should have been closed
         oldWebSocketMock.Verify(ws => ws.CloseAsync(
@@ -123,31 +123,31 @@ public class AgentConnectionManagerTests
         // Arrange
         var agentId = 1;
         var webSocketMock = CreateOpenWebSocketMock();
-        await _sut.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
 
         // Act
-        _sut.RemoveAgentConnection(agentId);
+        _target.RemoveAgentConnection(agentId);
 
         // Assert
-        Assert.False(_sut.IsAgentConnected(agentId));
-        Assert.Equal(0, _sut.AgentConnectionCount);
+        Assert.False(_target.IsAgentConnected(agentId));
+        Assert.Equal(0, _target.AgentConnectionCount);
     }
 
     [Fact]
     public void RemoveAgentConnection_ShouldDoNothing_WhenAgentNotConnected()
     {
         // Act
-        _sut.RemoveAgentConnection(999);
+        _target.RemoveAgentConnection(999);
 
         // Assert
-        Assert.Equal(0, _sut.AgentConnectionCount);
+        Assert.Equal(0, _target.AgentConnectionCount);
     }
 
     [Fact]
     public void IsAgentConnected_ShouldReturnFalse_WhenAgentNotConnected()
     {
         // Act & Assert
-        Assert.False(_sut.IsAgentConnected(999));
+        Assert.False(_target.IsAgentConnected(999));
     }
 
     #endregion
@@ -162,7 +162,7 @@ public class AgentConnectionManagerTests
         var payload = new { message = "test" };
 
         // Act
-        var result = await _sut.SendToAgentAsync(agentId, "TestEvent", payload);
+        var result = await _target.SendToAgentAsync(agentId, "TestEvent", payload);
 
         // Assert
         Assert.False(result);
@@ -174,11 +174,11 @@ public class AgentConnectionManagerTests
         // Arrange
         var agentId = 1;
         var webSocketMock = CreateOpenWebSocketMock();
-        await _sut.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
         var payload = new { orderId = 123 };
 
         // Act
-        var result = await _sut.SendToAgentAsync(agentId, "OrderReady", payload);
+        var result = await _target.SendToAgentAsync(agentId, "OrderReady", payload);
 
         // Assert
         Assert.True(result);
@@ -196,17 +196,17 @@ public class AgentConnectionManagerTests
         var agentId = 1;
         var webSocketMock = new Mock<WebSocket>();
         webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Open);
-        await _sut.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
 
         // Change state to closed
         webSocketMock.Setup(ws => ws.State).Returns(WebSocketState.Closed);
 
         // Act
-        var result = await _sut.SendToAgentAsync(agentId, "TestEvent", new { });
+        var result = await _target.SendToAgentAsync(agentId, "TestEvent", new { });
 
         // Assert
         Assert.False(result);
-        Assert.False(_sut.IsAgentConnected(agentId));
+        Assert.False(_target.IsAgentConnected(agentId));
     }
 
     [Fact]
@@ -222,14 +222,14 @@ public class AgentConnectionManagerTests
             It.IsAny<CancellationToken>()))
             .ThrowsAsync(new WebSocketException("Connection lost"));
 
-        await _sut.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
+        await _target.RegisterAgentConnectionAsync(agentId, webSocketMock.Object);
 
         // Act
-        var result = await _sut.SendToAgentAsync(agentId, "TestEvent", new { });
+        var result = await _target.SendToAgentAsync(agentId, "TestEvent", new { });
 
         // Assert
         Assert.False(result);
-        Assert.False(_sut.IsAgentConnected(agentId));
+        Assert.False(_target.IsAgentConnected(agentId));
     }
 
     #endregion
@@ -244,14 +244,14 @@ public class AgentConnectionManagerTests
         var ws2 = CreateOpenWebSocketMock();
         var ws3 = CreateOpenWebSocketMock();
 
-        await _sut.RegisterBroadcastConnectionAsync("conn1", ws1.Object);
-        await _sut.RegisterBroadcastConnectionAsync("conn2", ws2.Object);
-        await _sut.RegisterBroadcastConnectionAsync("conn3", ws3.Object);
+        await _target.RegisterBroadcastConnectionAsync("conn1", ws1.Object);
+        await _target.RegisterBroadcastConnectionAsync("conn2", ws2.Object);
+        await _target.RegisterBroadcastConnectionAsync("conn3", ws3.Object);
 
         var payload = new { orderId = 123 };
 
         // Act
-        await _sut.BroadcastToAllAgentsAsync("OrderAccepted", payload);
+        await _target.BroadcastToAllAgentsAsync("OrderAccepted", payload);
 
         // Assert
         ws1.Verify(ws => ws.SendAsync(
@@ -281,14 +281,14 @@ public class AgentConnectionManagerTests
         var deadWs = new Mock<WebSocket>();
         deadWs.Setup(ws => ws.State).Returns(WebSocketState.Closed);
 
-        await _sut.RegisterBroadcastConnectionAsync("live", liveWs.Object);
-        await _sut.RegisterBroadcastConnectionAsync("dead", deadWs.Object);
+        await _target.RegisterBroadcastConnectionAsync("live", liveWs.Object);
+        await _target.RegisterBroadcastConnectionAsync("dead", deadWs.Object);
 
         // Act
-        await _sut.BroadcastToAllAgentsAsync("TestEvent", new { });
+        await _target.BroadcastToAllAgentsAsync("TestEvent", new { });
 
         // Assert - dead connection should be removed
-        Assert.Equal(1, _sut.BroadcastConnectionCount);
+        Assert.Equal(1, _target.BroadcastConnectionCount);
 
         // Live connection should have received message
         liveWs.Verify(ws => ws.SendAsync(
@@ -302,10 +302,10 @@ public class AgentConnectionManagerTests
     public async Task BroadcastToAllAgentsAsync_ShouldNotFail_WhenNoConnections()
     {
         // Act - should not throw
-        await _sut.BroadcastToAllAgentsAsync("TestEvent", new { });
+        await _target.BroadcastToAllAgentsAsync("TestEvent", new { });
 
         // Assert
-        Assert.Equal(0, _sut.BroadcastConnectionCount);
+        Assert.Equal(0, _target.BroadcastConnectionCount);
     }
 
     #endregion
@@ -332,3 +332,4 @@ public class AgentConnectionManagerTests
 
     #endregion
 }
+

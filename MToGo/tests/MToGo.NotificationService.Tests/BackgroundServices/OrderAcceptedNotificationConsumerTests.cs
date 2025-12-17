@@ -164,3 +164,4 @@ public class OrderAcceptedNotificationConsumerTests
         Assert.Equal(invocationReceived.Task, completed);
     }
 }
+

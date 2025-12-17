@@ -3,7 +3,6 @@ extern alias OrderServiceApp;
 
 using System.Net.Http.Json;
 using LegacyMToGo.Entities;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -42,12 +41,7 @@ public class OrderJourneyFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        _legacyDbContainer = new PostgreSqlBuilder()
-            .WithImage("postgres:15-alpine")
-            .WithDatabase("legacy_mtogo")
-            .WithUsername("postgres")
-            .WithPassword("postgres")
-            .Build();
+        _legacyDbContainer = PostgreSqlContainerHelper.CreatePostgreSqlContainer("legacy_mtogo");
 
         _orderDbContainer = new OrderServicePostgresContainer();
 
@@ -285,13 +279,7 @@ internal class OrderServiceWebApplicationFactory : WebApplicationFactory<OrderSe
             }
             services.AddSingleton(_agentServiceClientMock.Object);
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-            }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.AuthenticationScheme,
-                _ => { });
+            services.AddTestAuthentication();
         });
     }
 
@@ -308,3 +296,4 @@ internal class OrderServiceWebApplicationFactory : WebApplicationFactory<OrderSe
 }
 
 public record KafkaPublication(string Topic, string Key, object Payload);
+

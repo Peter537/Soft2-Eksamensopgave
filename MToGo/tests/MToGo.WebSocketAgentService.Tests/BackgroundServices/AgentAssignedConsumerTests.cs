@@ -228,3 +228,4 @@ public class AgentAssignedConsumerTests
         return mock;
     }
 }
+

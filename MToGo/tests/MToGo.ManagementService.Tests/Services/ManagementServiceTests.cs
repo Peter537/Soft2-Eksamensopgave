@@ -15,7 +15,7 @@ public class ManagementServiceTests
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly Mock<IPasswordHasher> _mockPasswordHasher;
     private readonly Mock<IManagementUserRepository> _mockRepository;
-    private readonly ManagementService.Services.ManagementService _sut;
+    private readonly ManagementService.Services.ManagementService _target;
 
     private readonly ManagementUser _testUser = new()
     {
@@ -39,7 +39,7 @@ public class ManagementServiceTests
             .Setup(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()))
             .Returns((string password, string hash) => hash == $"hashed_{password}");
 
-        _sut = new ManagementService.Services.ManagementService(
+        _target = new ManagementService.Services.ManagementService(
             _mockRepository.Object,
             _mockJwtTokenService.Object,
             _mockPasswordHasher.Object
@@ -67,7 +67,7 @@ public class ManagementServiceTests
             .Returns("valid-jwt-token");
 
         // Act
-        var result = await _sut.LoginAsync(request);
+        var result = await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal("valid-jwt-token", result.Jwt);
@@ -90,7 +90,7 @@ public class ManagementServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
 
         _mockJwtTokenService.Verify(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -112,7 +112,7 @@ public class ManagementServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
 
         _mockJwtTokenService.Verify(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -134,7 +134,7 @@ public class ManagementServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
     }
 
@@ -154,7 +154,7 @@ public class ManagementServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
     }
 
@@ -177,7 +177,7 @@ public class ManagementServiceTests
             .Returns("valid-jwt-token");
 
         // Act
-        var result = await _sut.LoginAsync(request);
+        var result = await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal("valid-jwt-token", result.Jwt);
@@ -199,7 +199,7 @@ public class ManagementServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
     }
 
@@ -241,14 +241,14 @@ public class ManagementServiceTests
         // Act & Assert
         if (shouldSucceed)
         {
-            var result = await _sut.LoginAsync(request);
+            var result = await _target.LoginAsync(request);
             Assert.NotNull(result);
             Assert.Equal("valid-jwt-token", result.Jwt);
         }
         else
         {
             await Assert.ThrowsAsync<InvalidCredentialsException>(
-                () => _sut.LoginAsync(request)
+                () => _target.LoginAsync(request)
             );
         }
     }
@@ -274,7 +274,7 @@ public class ManagementServiceTests
             .Returns("token");
 
         // Act
-        await _sut.LoginAsync(request);
+        await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal(UserRoles.Management, capturedRole);
@@ -297,7 +297,7 @@ public class ManagementServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
     }
 
@@ -331,7 +331,7 @@ public class ManagementServiceTests
             .Returns("token");
 
         // Act
-        await _sut.LoginAsync(request);
+        await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal(42, capturedId);
@@ -367,7 +367,7 @@ public class ManagementServiceTests
             .Returns("token");
 
         // Act
-        await _sut.LoginAsync(request);
+        await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal("Custom Manager Name", capturedName);
@@ -375,3 +375,4 @@ public class ManagementServiceTests
 
     #endregion
 }
+

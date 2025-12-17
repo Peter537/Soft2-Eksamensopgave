@@ -14,7 +14,7 @@ public class CustomersControllerTests
     private readonly Mock<ICustomerService> _mockCustomerService;
     private readonly Mock<IUserContextAccessor> _mockUserContextAccessor;
     private readonly Mock<IUserContext> _mockUserContext;
-    private readonly CustomersController _sut;
+    private readonly CustomersController _target;
 
     public CustomersControllerTests()
     {
@@ -27,7 +27,7 @@ public class CustomersControllerTests
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
         _mockUserContextAccessor.Setup(x => x.UserContext).Returns(_mockUserContext.Object);
         
-        _sut = new CustomersController(_mockCustomerService.Object, _mockUserContextAccessor.Object);
+        _target = new CustomersController(_mockCustomerService.Object, _mockUserContextAccessor.Object);
     }
 
     #region Register Tests
@@ -53,7 +53,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -82,7 +82,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new DuplicateEmailException("A customer with this email already exists."));
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -113,7 +113,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -136,7 +136,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -156,7 +156,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -174,7 +174,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -203,7 +203,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetProfile(customerId);
+        var result = await _target.GetProfile(customerId);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -228,7 +228,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new KeyNotFoundException("Customer not found."));
 
         // Act
-        var result = await _sut.GetProfile(customerId);
+        var result = await _target.GetProfile(customerId);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -253,7 +253,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetProfile(customerId);
+        var result = await _target.GetProfile(customerId);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -294,7 +294,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateProfile(customerId, request);
+        var result = await _target.UpdateProfile(customerId, request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -325,7 +325,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new KeyNotFoundException("Customer not found."));
 
         // Act
-        var result = await _sut.UpdateProfile(customerId, request);
+        var result = await _target.UpdateProfile(customerId, request);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -350,7 +350,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new ArgumentException("Invalid notification method."));
 
         // Act
-        var result = await _sut.UpdateProfile(customerId, request);
+        var result = await _target.UpdateProfile(customerId, request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -382,7 +382,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateProfile(customerId, request);
+        var result = await _target.UpdateProfile(customerId, request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -418,7 +418,7 @@ public class CustomersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateProfile(customerId, request);
+        var result = await _target.UpdateProfile(customerId, request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -441,7 +441,7 @@ public class CustomersControllerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.DeleteAccount(customerId);
+        var result = await _target.DeleteAccount(customerId);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -460,7 +460,7 @@ public class CustomersControllerTests
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Customer);
 
         // Act
-        var result = await _sut.DeleteAccount(otherCustomerId);
+        var result = await _target.DeleteAccount(otherCustomerId);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
@@ -481,7 +481,7 @@ public class CustomersControllerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.DeleteAccount(customerId);
+        var result = await _target.DeleteAccount(customerId);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -504,7 +504,7 @@ public class CustomersControllerTests
             .ThrowsAsync(new KeyNotFoundException("Customer not found."));
 
         // Act
-        var result = await _sut.DeleteAccount(customerId);
+        var result = await _target.DeleteAccount(customerId);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -525,7 +525,7 @@ public class CustomersControllerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.DeleteAccount(customerId);
+        var result = await _target.DeleteAccount(customerId);
 
         // Assert - Returns 204 NoContent (client should handle logout)
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -535,3 +535,4 @@ public class CustomersControllerTests
 
     #endregion
 }
+

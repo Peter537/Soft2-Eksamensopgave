@@ -244,8 +244,11 @@ public class CorsPolicyTests
         }
     }
 
-    [Fact]
-    public async Task MultipleAllowedOrigins_EachOriginIsAllowed()
+    [Theory]
+    [InlineData("http://localhost:8081")]
+    [InlineData("http://localhost:5000")]
+    [InlineData("https://mtogo.example.com")]
+    public async Task MultipleAllowedOrigins_EachOriginIsAllowed(string testOrigin)
     {
         // Arrange
         var settings = new CorsSettings
@@ -264,19 +267,17 @@ public class CorsPolicyTests
         await host.StartAsync();
         var client = host.GetTestClient();
 
-        foreach (var origin in settings.AllowedOrigins)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-            request.Headers.Add("Origin", origin);
-            request.Headers.Add("Access-Control-Request-Method", "GET");
+        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
+        request.Headers.Add("Origin", testOrigin);
+        request.Headers.Add("Access-Control-Request-Method", "GET");
 
-            // Act
-            var response = await client.SendAsync(request);
+        // Act
+        var response = await client.SendAsync(request);
 
-            // Assert
-            Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"),
-                $"Origin {origin} should be allowed");
-            Assert.Equal(origin, response.Headers.GetValues("Access-Control-Allow-Origin").First());
-        }
+        // Assert
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"),
+            $"Origin {testOrigin} should be allowed");
+        Assert.Equal(testOrigin, response.Headers.GetValues("Access-Control-Allow-Origin").First());
     }
 }
+

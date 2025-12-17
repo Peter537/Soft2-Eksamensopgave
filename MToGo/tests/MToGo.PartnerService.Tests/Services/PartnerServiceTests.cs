@@ -16,7 +16,7 @@ public class PartnerServiceTests
     private readonly Mock<IPasswordHasher> _mockPasswordHasher;
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly Mock<ILogger<PartnerService.Services.PartnerService>> _mockLogger;
-    private readonly PartnerService.Services.PartnerService _sut;
+    private readonly PartnerService.Services.PartnerService _target;
 
     public PartnerServiceTests()
     {
@@ -25,7 +25,7 @@ public class PartnerServiceTests
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         _mockLogger = new Mock<ILogger<PartnerService.Services.PartnerService>>();
 
-        _sut = new PartnerService.Services.PartnerService(
+        _target = new PartnerService.Services.PartnerService(
             _mockPartnerRepository.Object,
             _mockPasswordHasher.Object,
             _mockJwtTokenService.Object,
@@ -68,7 +68,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        var result = await _sut.RegisterPartnerAsync(request);
+        var result = await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -92,7 +92,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<EmptyMenuException>(
-            () => _sut.RegisterPartnerAsync(request)
+            () => _target.RegisterPartnerAsync(request)
         );
         Assert.Equal("Menu cannot be empty. At least one menu item is required.", exception.Message);
 
@@ -115,7 +115,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<EmptyMenuException>(
-            () => _sut.RegisterPartnerAsync(request)
+            () => _target.RegisterPartnerAsync(request)
         );
         Assert.Equal("Menu cannot be empty. At least one menu item is required.", exception.Message);
 
@@ -144,7 +144,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<DuplicateEmailException>(
-            () => _sut.RegisterPartnerAsync(request)
+            () => _target.RegisterPartnerAsync(request)
         );
         Assert.Equal("A partner with this email already exists.", exception.Message);
 
@@ -186,7 +186,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        await _sut.RegisterPartnerAsync(request);
+        await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.NotNull(capturedPartner);
@@ -229,7 +229,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        await _sut.RegisterPartnerAsync(request);
+        await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.NotNull(capturedPartner);
@@ -273,7 +273,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        await _sut.RegisterPartnerAsync(request);
+        await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.NotNull(capturedPartner);
@@ -328,7 +328,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        await _sut.RegisterPartnerAsync(request);
+        await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.NotNull(capturedPartner);
@@ -370,7 +370,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        var result = await _sut.RegisterPartnerAsync(request);
+        var result = await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -409,7 +409,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        var result = await _sut.RegisterPartnerAsync(request);
+        var result = await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -450,7 +450,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        await _sut.RegisterPartnerAsync(request);
+        await _target.RegisterPartnerAsync(request);
 
         // Assert
         Assert.NotNull(capturedPartner);
@@ -474,7 +474,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<EmptyMenuException>(
-            () => _sut.RegisterPartnerAsync(request)
+            () => _target.RegisterPartnerAsync(request)
         );
 
         // Email check should never be called if menu validation fails first
@@ -518,7 +518,7 @@ public class PartnerServiceTests
             .Returns("jwt-token-123");
 
         // Act
-        var result = await _sut.LoginAsync(request);
+        var result = await _target.LoginAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -544,7 +544,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
         Assert.Equal("Invalid email or password.", exception.Message);
 
@@ -582,7 +582,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidCredentialsException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
         Assert.Equal("Invalid email or password.", exception.Message);
 
@@ -623,7 +623,7 @@ public class PartnerServiceTests
             .Returns("jwt-token");
 
         // Act
-        await _sut.LoginAsync(request);
+        await _target.LoginAsync(request);
 
         // Assert - verify that VerifyPassword is called with the plain text password and the hashed password
         _mockPasswordHasher.Verify(x => x.VerifyPassword("SecurePass123!", "$2a$12$hashedpasswordvalue"), Times.Once);
@@ -662,7 +662,7 @@ public class PartnerServiceTests
             .Returns("jwt-token");
 
         // Act
-        await _sut.LoginAsync(request);
+        await _target.LoginAsync(request);
 
         // Assert - verify the role is "Partner"
         _mockJwtTokenService.Verify(x => x.GenerateToken(5, "pizza@example.com", "Partner", "Pizza Palace"), Times.Once);
@@ -713,7 +713,7 @@ public class PartnerServiceTests
             .Returns("jwt-token");
 
         // Act
-        await _sut.LoginAsync(request);
+        await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal(42, capturedUserId);
@@ -758,7 +758,7 @@ public class PartnerServiceTests
             .Returns("jwt-token");
 
         // Act
-        var result = await _sut.LoginAsync(request);
+        var result = await _target.LoginAsync(request);
 
         // Assert
         Assert.NotNull(result);
@@ -804,7 +804,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        var result = await _sut.AddMenuItemAsync(partnerId, request);
+        var result = await _target.AddMenuItemAsync(partnerId, request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -830,7 +830,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<PartnerNotFoundException>(
-            () => _sut.AddMenuItemAsync(partnerId, request)
+            () => _target.AddMenuItemAsync(partnerId, request)
         );
         Assert.Contains(partnerId.ToString(), exception.Message);
     }
@@ -870,7 +870,7 @@ public class PartnerServiceTests
             });
 
         // Act
-        var result = await _sut.AddMenuItemAsync(partnerId, request);
+        var result = await _target.AddMenuItemAsync(partnerId, request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -923,7 +923,7 @@ public class PartnerServiceTests
             .ReturnsAsync((MenuItem m) => m);
 
         // Act
-        await _sut.UpdateMenuItemAsync(partnerId, menuItemId, request);
+        await _target.UpdateMenuItemAsync(partnerId, menuItemId, request);
 
         // Assert
         _mockPartnerRepository.Verify(x => x.UpdateMenuItemAsync(It.Is<MenuItem>(m => 
@@ -973,7 +973,7 @@ public class PartnerServiceTests
             .ReturnsAsync((MenuItem m) => m);
 
         // Act
-        await _sut.UpdateMenuItemAsync(partnerId, menuItemId, request);
+        await _target.UpdateMenuItemAsync(partnerId, menuItemId, request);
 
         // Assert
         _mockPartnerRepository.Verify(x => x.UpdateMenuItemAsync(It.Is<MenuItem>(m => 
@@ -1024,7 +1024,7 @@ public class PartnerServiceTests
             .ReturnsAsync((MenuItem m) => m);
 
         // Act
-        await _sut.UpdateMenuItemAsync(partnerId, menuItemId, request);
+        await _target.UpdateMenuItemAsync(partnerId, menuItemId, request);
 
         // Assert
         _mockPartnerRepository.Verify(x => x.UpdateMenuItemAsync(It.Is<MenuItem>(m => 
@@ -1062,7 +1062,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<MenuItemNotFoundException>(
-            () => _sut.UpdateMenuItemAsync(partnerId, menuItemId, request)
+            () => _target.UpdateMenuItemAsync(partnerId, menuItemId, request)
         );
     }
 
@@ -1107,7 +1107,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedMenuItemAccessException>(
-            () => _sut.UpdateMenuItemAsync(partnerId, menuItemId, request)
+            () => _target.UpdateMenuItemAsync(partnerId, menuItemId, request)
         );
     }
 
@@ -1154,7 +1154,7 @@ public class PartnerServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.DeleteMenuItemAsync(partnerId, menuItemId);
+        await _target.DeleteMenuItemAsync(partnerId, menuItemId);
 
         // Assert
         _mockPartnerRepository.Verify(x => x.DeleteMenuItemAsync(It.Is<MenuItem>(m => m.Id == menuItemId)), Times.Once);
@@ -1187,7 +1187,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<MenuItemNotFoundException>(
-            () => _sut.DeleteMenuItemAsync(partnerId, menuItemId)
+            () => _target.DeleteMenuItemAsync(partnerId, menuItemId)
         );
     }
 
@@ -1228,7 +1228,7 @@ public class PartnerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedMenuItemAccessException>(
-            () => _sut.DeleteMenuItemAsync(partnerId, menuItemId)
+            () => _target.DeleteMenuItemAsync(partnerId, menuItemId)
         );
     }
 
@@ -1261,7 +1261,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetPartnerByIdAsync(partnerId);
+        var result = await _target.GetPartnerByIdAsync(partnerId);
 
         // Assert
         Assert.NotNull(result);
@@ -1282,7 +1282,7 @@ public class PartnerServiceTests
             .ReturnsAsync((Partner?)null);
 
         // Act
-        var result = await _sut.GetPartnerByIdAsync(partnerId);
+        var result = await _target.GetPartnerByIdAsync(partnerId);
 
         // Assert
         Assert.Null(result);
@@ -1309,7 +1309,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetPartnerByIdAsync(partnerId);
+        var result = await _target.GetPartnerByIdAsync(partnerId);
 
         // Assert - inactive partners are still returned
         Assert.NotNull(result);
@@ -1336,7 +1336,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partners);
 
         // Act
-        var result = await _sut.GetAllActivePartnersAsync();
+        var result = await _target.GetAllActivePartnersAsync();
 
         // Assert
         var resultList = result.ToList();
@@ -1356,7 +1356,7 @@ public class PartnerServiceTests
             .ReturnsAsync(new List<Partner>());
 
         // Act
-        var result = await _sut.GetAllActivePartnersAsync();
+        var result = await _target.GetAllActivePartnersAsync();
 
         // Assert
         Assert.Empty(result);
@@ -1391,7 +1391,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetPartnerMenuAsync(partnerId);
+        var result = await _target.GetPartnerMenuAsync(partnerId);
 
         // Assert
         Assert.NotNull(result);
@@ -1414,7 +1414,7 @@ public class PartnerServiceTests
             .ReturnsAsync((Partner?)null);
 
         // Act
-        var result = await _sut.GetPartnerMenuAsync(partnerId);
+        var result = await _target.GetPartnerMenuAsync(partnerId);
 
         // Assert
         Assert.Null(result);
@@ -1444,7 +1444,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetPartnerMenuAsync(partnerId);
+        var result = await _target.GetPartnerMenuAsync(partnerId);
 
         // Assert
         Assert.NotNull(result);
@@ -1472,7 +1472,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetPartnerMenuAsync(partnerId);
+        var result = await _target.GetPartnerMenuAsync(partnerId);
 
         // Assert
         Assert.NotNull(result);
@@ -1509,7 +1509,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+        var result = await _target.GetMenuItemAsync(partnerId, menuItemId);
 
         // Assert
         Assert.NotNull(result);
@@ -1530,7 +1530,7 @@ public class PartnerServiceTests
             .ReturnsAsync((Partner?)null);
 
         // Act
-        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+        var result = await _target.GetMenuItemAsync(partnerId, menuItemId);
 
         // Assert
         Assert.Null(result);
@@ -1561,7 +1561,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+        var result = await _target.GetMenuItemAsync(partnerId, menuItemId);
 
         // Assert
         Assert.Null(result);
@@ -1592,7 +1592,7 @@ public class PartnerServiceTests
             .ReturnsAsync(partner);
 
         // Act
-        var result = await _sut.GetMenuItemAsync(partnerId, menuItemId);
+        var result = await _target.GetMenuItemAsync(partnerId, menuItemId);
 
         // Assert
         Assert.Null(result);
@@ -1628,7 +1628,7 @@ public class PartnerServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, newActiveStatus);
+        var result = await _target.SetPartnerActiveStatusAsync(partnerId, newActiveStatus);
 
         // Assert
         Assert.True(result);
@@ -1648,7 +1648,7 @@ public class PartnerServiceTests
             .ReturnsAsync((Partner?)null);
 
         // Act
-        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, newActiveStatus);
+        var result = await _target.SetPartnerActiveStatusAsync(partnerId, newActiveStatus);
 
         // Assert
         Assert.False(result);
@@ -1683,7 +1683,7 @@ public class PartnerServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, targetStatus);
+        var result = await _target.SetPartnerActiveStatusAsync(partnerId, targetStatus);
 
         // Assert
         Assert.True(result);
@@ -1715,7 +1715,7 @@ public class PartnerServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, true);
+        var result = await _target.SetPartnerActiveStatusAsync(partnerId, true);
 
         // Assert
         Assert.True(result);
@@ -1747,7 +1747,7 @@ public class PartnerServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.SetPartnerActiveStatusAsync(partnerId, false);
+        var result = await _target.SetPartnerActiveStatusAsync(partnerId, false);
 
         // Assert
         Assert.True(result);
@@ -1756,3 +1756,4 @@ public class PartnerServiceTests
 
     #endregion
 }
+

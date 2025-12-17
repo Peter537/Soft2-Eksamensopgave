@@ -37,31 +37,19 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
             TestAuthenticationHandler.ClearTestUser();
         }
 
-        return _factory.WithWebHostBuilder(builder =>
+        return _factory.CreateAuthenticatedClient(services =>
         {
-            builder.ConfigureServices(services =>
+            // Remove existing registration
+            var descriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(ILegacyCustomerApiClient));
+            if (descriptor != null)
             {
-                // Remove existing registration
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(ILegacyCustomerApiClient));
-                if (descriptor != null)
-                {
-                    services.Remove(descriptor);
-                }
+                services.Remove(descriptor);
+            }
 
-                // Add mock
-                services.AddSingleton(mockLegacyClient.Object);
-
-                // Add test authentication
-                services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                    options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-                })
-                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                    TestAuthenticationHandler.AuthenticationScheme, options => { });
-            });
-        }).CreateClient();
+            // Add mock
+            services.AddSingleton(mockLegacyClient.Object);
+        });
     }
 
     #region US-1: Customer Registration Acceptance Criteria Tests
@@ -611,3 +599,4 @@ public class CustomerRegistrationIntegrationTests : IClassFixture<WebApplication
 
     #endregion
 }
+

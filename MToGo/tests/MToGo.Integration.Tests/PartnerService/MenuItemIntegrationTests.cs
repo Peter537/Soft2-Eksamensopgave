@@ -425,3 +425,4 @@ public class MenuItemIntegrationTests : IAsyncLifetime
 
     #endregion
 }
+

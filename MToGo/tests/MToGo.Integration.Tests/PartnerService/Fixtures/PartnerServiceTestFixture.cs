@@ -1,6 +1,5 @@
 extern alias PartnerServiceApp;
 
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -87,13 +86,7 @@ public class PartnerServiceWebApplicationFactory : WebApplicationFactory<Partner
         builder.ConfigureServices(services =>
         {
             // Add test authentication
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-            })
-            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                TestAuthenticationHandler.AuthenticationScheme, options => { });
+            services.AddTestAuthentication();
         });
     }
 }
@@ -102,3 +95,4 @@ public class PartnerServiceWebApplicationFactory : WebApplicationFactory<Partner
 public class PartnerServiceTestCollection : ICollectionFixture<PartnerServiceTestFixture>
 {
 }
+

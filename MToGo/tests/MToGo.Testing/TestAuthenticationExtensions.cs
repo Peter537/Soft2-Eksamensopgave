@@ -8,6 +8,24 @@ namespace MToGo.Testing;
 public static class TestAuthenticationExtensions
 {
     /// <summary>
+    /// Adds test authentication to the service collection.
+    /// Use this in ConfigureServices when setting up WebApplicationFactory.
+    /// Use TestAuthenticationHandler.SetTestUser() before making requests to set up the authenticated user.
+    /// </summary>
+    public static IServiceCollection AddTestAuthentication(this IServiceCollection services)
+    {
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
+            options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
+        })
+        .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+            TestAuthenticationHandler.AuthenticationScheme, _ => { });
+
+        return services;
+    }
+
+    /// <summary>
     /// Creates an HttpClient with test authentication configured.
     /// Use TestAuthenticationHandler.SetTestUser() before making requests to set up the authenticated user.
     /// </summary>
@@ -19,14 +37,7 @@ public static class TestAuthenticationExtensions
         {
             builder.ConfigureServices(services =>
             {
-                // Remove existing authentication schemes and add test authentication
-                services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                    options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-                })
-                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                    TestAuthenticationHandler.AuthenticationScheme, options => { });
+                services.AddTestAuthentication();
 
                 // Allow additional service configuration
                 configureServices?.Invoke(services);
@@ -45,14 +56,7 @@ public static class TestAuthenticationExtensions
         {
             builder.ConfigureServices(services =>
             {
-                // Remove existing authentication schemes and add test authentication
-                services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = TestAuthenticationHandler.AuthenticationScheme;
-                    options.DefaultChallengeScheme = TestAuthenticationHandler.AuthenticationScheme;
-                })
-                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                    TestAuthenticationHandler.AuthenticationScheme, options => { });
+                services.AddTestAuthentication();
 
                 // Allow additional service configuration
                 configureServices?.Invoke(services);
@@ -60,3 +64,4 @@ public static class TestAuthenticationExtensions
         });
     }
 }
+

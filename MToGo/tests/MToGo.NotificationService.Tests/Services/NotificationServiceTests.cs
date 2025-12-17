@@ -8,12 +8,12 @@ namespace MToGo.NotificationService.Tests.Services;
 public class NotificationServiceTests
 {
     private readonly Mock<ILegacyNotificationApiClient> _mockLegacyClient;
-    private readonly NotificationService.Services.NotificationService _sut;
+    private readonly NotificationService.Services.NotificationService _target;
 
     public NotificationServiceTests()
     {
         _mockLegacyClient = new Mock<ILegacyNotificationApiClient>();
-        _sut = new NotificationService.Services.NotificationService(_mockLegacyClient.Object);
+        _target = new NotificationService.Services.NotificationService(_mockLegacyClient.Object);
     }
 
     #region SendNotificationAsync Tests
@@ -38,7 +38,7 @@ public class NotificationServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.SendNotificationAsync(request);
+        var result = await _target.SendNotificationAsync(request);
 
         // Assert
         Assert.True(result.Success);
@@ -62,7 +62,7 @@ public class NotificationServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<CustomerNotFoundException>(
-            () => _sut.SendNotificationAsync(request)
+            () => _target.SendNotificationAsync(request)
         );
     }
 
@@ -82,7 +82,7 @@ public class NotificationServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<NotificationFailedException>(
-            () => _sut.SendNotificationAsync(request)
+            () => _target.SendNotificationAsync(request)
         );
     }
 
@@ -109,7 +109,7 @@ public class NotificationServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.SendNotificationAsync(request);
+        var result = await _target.SendNotificationAsync(request);
 
         // Assert
         Assert.True(result.Success);
@@ -138,7 +138,7 @@ public class NotificationServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        await _sut.SendNotificationAsync(request);
+        await _target.SendNotificationAsync(request);
 
         // Assert
         _mockLegacyClient.Verify(
@@ -166,7 +166,7 @@ public class NotificationServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        await _sut.SendNotificationAsync(request);
+        await _target.SendNotificationAsync(request);
 
         // Assert
         _mockLegacyClient.Verify(
@@ -177,3 +177,4 @@ public class NotificationServiceTests
 
     #endregion
 }
+

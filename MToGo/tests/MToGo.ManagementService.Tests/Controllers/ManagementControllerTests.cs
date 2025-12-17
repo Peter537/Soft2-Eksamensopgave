@@ -10,12 +10,12 @@ namespace MToGo.ManagementService.Tests.Controllers;
 public class ManagementControllerTests
 {
     private readonly Mock<IManagementService> _mockManagementService;
-    private readonly ManagementController _sut;
+    private readonly ManagementController _target;
 
     public ManagementControllerTests()
     {
         _mockManagementService = new Mock<IManagementService>();
-        _sut = new ManagementController(_mockManagementService.Object);
+        _target = new ManagementController(_mockManagementService.Object);
     }
 
     #region Login Tests
@@ -36,7 +36,7 @@ public class ManagementControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -60,7 +60,7 @@ public class ManagementControllerTests
             .ThrowsAsync(new InvalidCredentialsException());
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -82,7 +82,7 @@ public class ManagementControllerTests
             .ThrowsAsync(new InvalidCredentialsException());
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -104,7 +104,7 @@ public class ManagementControllerTests
             .ThrowsAsync(new InvalidCredentialsException());
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -134,7 +134,7 @@ public class ManagementControllerTests
             .ReturnsAsync(new ManagementLoginResponse { Jwt = "token" });
 
         // Act
-        await _sut.Login(request);
+        await _target.Login(request);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -161,7 +161,7 @@ public class ManagementControllerTests
             .ReturnsAsync(new ManagementLoginResponse { Jwt = "token" });
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         Assert.IsType<OkObjectResult>(result);
@@ -171,3 +171,4 @@ public class ManagementControllerTests
 
     #endregion
 }
+

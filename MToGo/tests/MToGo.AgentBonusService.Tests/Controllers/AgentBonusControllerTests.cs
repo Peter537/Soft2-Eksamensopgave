@@ -13,17 +13,17 @@ public class AgentBonusControllerTests
 {
     private readonly Mock<IAgentBonusService> _bonusServiceMock;
     private readonly Mock<ILogger<AgentBonusController>> _loggerMock;
-    private readonly AgentBonusController _sut;
+    private readonly AgentBonusController _target;
     private readonly DefaultHttpContext _httpContext;
 
     public AgentBonusControllerTests()
     {
         _bonusServiceMock = new Mock<IAgentBonusService>();
         _loggerMock = new Mock<ILogger<AgentBonusController>>();
-        _sut = new AgentBonusController(_bonusServiceMock.Object, _loggerMock.Object);
+        _target = new AgentBonusController(_bonusServiceMock.Object, _loggerMock.Object);
         
         _httpContext = new DefaultHttpContext();
-        _sut.ControllerContext = new ControllerContext
+        _target.ControllerContext = new ControllerContext
         {
             HttpContext = _httpContext
         };
@@ -46,7 +46,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _sut.CalculateBonus(agentId, startDate, endDate);
+        var result = await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -73,7 +73,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(CreateQualifiedBonusResult(agentId, 87.00m));
 
         // Act
-        await _sut.CalculateBonus(agentId, startDate, endDate);
+        await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         // GetAuthToken strips "Bearer " prefix
@@ -103,7 +103,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(notQualifiedResult);
 
         // Act
-        var result = await _sut.CalculateBonus(agentId, startDate, endDate);
+        var result = await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -133,7 +133,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(CreateQualifiedBonusResult(agentId, 50.00m));
 
         // Act
-        await _sut.CalculateBonus(agentId, startDate, endDate);
+        await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         capturedStart.Should().Be(startDate);
@@ -149,7 +149,7 @@ public class AgentBonusControllerTests
         var endDate = new DateTime(2025, 12, 1); // Before start date
 
         // Act
-        var result = await _sut.CalculateBonus(agentId, startDate, endDate);
+        var result = await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         result.Result.Should().BeOfType<BadRequestObjectResult>();
@@ -164,7 +164,7 @@ public class AgentBonusControllerTests
         var endDate = new DateTime(2025, 12, 31); // More than 1 year
 
         // Act
-        var result = await _sut.CalculateBonus(agentId, startDate, endDate);
+        var result = await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         result.Result.Should().BeOfType<BadRequestObjectResult>();
@@ -187,7 +187,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(CreateQualifiedBonusResult(agentId, 75.00m));
 
         // Act
-        var result = await _sut.GetBonusPreview(agentId, startDate, endDate);
+        var result = await _target.GetBonusPreview(agentId, startDate, endDate);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -211,7 +211,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(CreateQualifiedBonusResult(agentId, 50.00m));
 
         // Act
-        await _sut.GetBonusPreview(agentId, startDate, endDate);
+        await _target.GetBonusPreview(agentId, startDate, endDate);
 
         // Assert
         capturedToken.Should().Be("preview-token");
@@ -226,7 +226,7 @@ public class AgentBonusControllerTests
         var endDate = new DateTime(2025, 12, 1); // Before start date
 
         // Act
-        var result = await _sut.GetBonusPreview(agentId, startDate, endDate);
+        var result = await _target.GetBonusPreview(agentId, startDate, endDate);
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -253,7 +253,7 @@ public class AgentBonusControllerTests
             .ReturnsAsync(resultWithWarnings);
 
         // Act
-        var result = await _sut.CalculateBonus(agentId, startDate, endDate);
+        var result = await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -275,7 +275,7 @@ public class AgentBonusControllerTests
             .ThrowsAsync(new Exception("Service error"));
 
         // Act
-        var result = await _sut.CalculateBonus(agentId, startDate, endDate);
+        var result = await _target.CalculateBonus(agentId, startDate, endDate);
 
         // Assert
         var statusCodeResult = result.Result.Should().BeOfType<ObjectResult>().Subject;
@@ -286,7 +286,7 @@ public class AgentBonusControllerTests
     public void Health_ReturnsOk()
     {
         // Act
-        var result = _sut.Health();
+        var result = _target.Health();
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
@@ -326,3 +326,4 @@ public class AgentBonusControllerTests
 
     #endregion
 }
+
