@@ -89,6 +89,7 @@ jobs:
     needs: wait_for_cicd
     runs-on: ubuntu-latest
     outputs:
+      cicd-run-id: ${{ needs.wait_for_cicd.outputs.cicd-run-id }}
       shared: ${{ steps.parse.outputs.shared }}
       agentbonus: ${{ steps.parse.outputs.agentbonus }}
       agentservice: ${{ steps.parse.outputs.agentservice }}
@@ -272,14 +273,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull CustomerService image from GHCR
+      - name: Pull CustomerService image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-customerservice
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-customerservice.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-customerservice:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -314,7 +338,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-customerservice-image.sarif
           ignore-unfixed: true
@@ -357,14 +381,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Order & Delivery image from GHCR
+      - name: Pull Order & Delivery image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-order
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-order.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-order:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -399,7 +446,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-order-image.sarif
           ignore-unfixed: true
@@ -442,14 +489,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull AgentBonus image from GHCR
+      - name: Pull AgentBonus image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-agentbonus
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-agentbonus.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-agentbonus:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -484,7 +554,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-agentbonus-image.sarif
           ignore-unfixed: true
@@ -527,14 +597,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull AgentService image from GHCR
+      - name: Pull AgentService image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-agentservice
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-agentservice.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-agentservice:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -569,7 +662,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-agentservice-image.sarif
           ignore-unfixed: true
@@ -612,14 +705,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull FeedbackHub image from GHCR
+      - name: Pull FeedbackHub image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-feedbackhub
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-feedbackhub.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-feedbackhub:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -654,7 +770,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-feedbackhub-image.sarif
           ignore-unfixed: true
@@ -697,14 +813,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Gateway image from GHCR
+      - name: Pull Gateway image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-gateway
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-gateway.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-gateway:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -739,7 +878,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-gateway-image.sarif
           ignore-unfixed: true
@@ -782,14 +921,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Notification image from GHCR
+      - name: Pull Notification image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-notification
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-notification.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-notification:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -824,7 +986,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-notification-image.sarif
           ignore-unfixed: true
@@ -867,14 +1029,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Partner image from GHCR
+      - name: Pull Partner image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-partner
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-partner.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-partner:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -909,7 +1094,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-partner-image.sarif
           ignore-unfixed: true
@@ -952,14 +1137,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull LogCollector image from GHCR
+      - name: Pull LogCollector image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-logcollector
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-logcollector.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-logcollector:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -994,7 +1202,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-logcollector-image.sarif
           ignore-unfixed: true
@@ -1037,14 +1245,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Website image from GHCR
+      - name: Pull Website image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-website
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-website.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-website:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -1079,7 +1310,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-website-image.sarif
           ignore-unfixed: true
@@ -1122,14 +1353,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull WebSocketAgent image from GHCR
+      - name: Pull WebSocketAgent image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-websocketagent
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-websocketagent.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-websocketagent:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -1164,7 +1418,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-websocketagent-image.sarif
           ignore-unfixed: true
@@ -1207,14 +1461,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull WebSocketCustomer image from GHCR
+      - name: Pull WebSocketCustomer image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-websocketcustomer
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-websocketcustomer.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-websocketcustomer:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -1249,7 +1526,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-websocketcustomer-image.sarif
           ignore-unfixed: true
@@ -1292,14 +1569,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull WebSocketPartner image from GHCR
+      - name: Pull WebSocketPartner image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-websocketpartner
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-websocketpartner.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-websocketpartner:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -1334,7 +1634,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-websocketpartner-image.sarif
           ignore-unfixed: true
@@ -1377,14 +1677,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull Management image from GHCR
+      - name: Pull Management image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-management
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-management.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-management:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -1419,7 +1742,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-management-image.sarif
           ignore-unfixed: true
@@ -1462,14 +1785,37 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull LegacyMToGo image from GHCR
+      - name: Pull LegacyMToGo image from GHCR (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ env.IMAGE_TAG }}
+
+      - name: Set image ref (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: echo "IMAGE_REF=ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
+
+      - name: Download Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: image-mtogo-legacy
+          path: /tmp
+          run-id: ${{ needs.detect_changed_services.outputs.cicd-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load Docker image (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker load -i /tmp/mtogo-legacy.tar
+
+      - name: Set image ref (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        run: echo "IMAGE_REF=mtogo-legacy:${{ env.IMAGE_TAG }}" >> "$GITHUB_ENV"
 
       - name: Install gitleaks
         run: |
@@ -1504,7 +1850,7 @@ jobs:
         continue-on-error: true
         with:
           scan-type: image
-          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ env.IMAGE_TAG }}
+          image-ref: ${{ env.IMAGE_REF }}
           format: sarif
           output: trivy-legacy-image.sarif
           ignore-unfixed: true
