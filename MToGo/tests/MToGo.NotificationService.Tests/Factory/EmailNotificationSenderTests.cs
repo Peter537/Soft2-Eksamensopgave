@@ -10,12 +10,12 @@ namespace MToGo.NotificationService.Tests.Factory;
 public class EmailNotificationSenderTests
 {
     private readonly Mock<ILogger<EmailNotificationSender>> _mockLogger;
-    private readonly EmailNotificationSender _sut;
+    private readonly EmailNotificationSender _target;
 
     public EmailNotificationSenderTests()
     {
         _mockLogger = new Mock<ILogger<EmailNotificationSender>>();
-        _sut = new EmailNotificationSender(_mockLogger.Object);
+        _target = new EmailNotificationSender(_mockLogger.Object);
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class EmailNotificationSenderTests
         var message = "Your order has been confirmed!";
 
         // Act
-        await _sut.SendAsync(destination, message);
+        await _target.SendAsync(destination, message);
 
         // Assert - verify logging was called
         _mockLogger.Verify(
@@ -46,7 +46,7 @@ public class EmailNotificationSenderTests
     public async Task SendAsync_WithVariousInputs_LogsCorrectly(string destination, string message)
     {
         // Act
-        await _sut.SendAsync(destination, message);
+        await _target.SendAsync(destination, message);
 
         // Assert
         _mockLogger.Verify(
@@ -70,7 +70,7 @@ public class EmailNotificationSenderTests
         var destination = "test@example.com";
 
         // Act
-        await _sut.SendAsync(destination, message);
+        await _target.SendAsync(destination, message);
 
         // Assert - Should complete without throwing
         _mockLogger.Verify(
@@ -91,7 +91,7 @@ public class EmailNotificationSenderTests
         string? message = null;
 
         // Act & Assert - Should not throw
-        await _sut.SendAsync(destination, message!);
+        await _target.SendAsync(destination, message!);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class EmailNotificationSenderTests
         var cts = new CancellationTokenSource();
 
         // Act
-        var task = _sut.SendAsync(destination, message, cts.Token);
+        var task = _target.SendAsync(destination, message, cts.Token);
 
         // Assert - Should complete immediately (simulated)
         await task;
@@ -113,10 +113,11 @@ public class EmailNotificationSenderTests
     public async Task SendAsync_ImplementsINotificationSender()
     {
         // Assert - Verify the type implements the interface
-        Assert.IsAssignableFrom<INotificationSender>(_sut);
+        Assert.IsAssignableFrom<INotificationSender>(_target);
         
         // Act & Assert - Should be callable through interface
-        INotificationSender sender = _sut;
+        INotificationSender sender = _target;
         await sender.SendAsync("test@test.com", "message");
     }
 }
+

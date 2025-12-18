@@ -15,7 +15,7 @@ public class AgentServiceTests
     private readonly Mock<IAgentRepository> _mockAgentRepository;
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
     private readonly Mock<IPasswordHasher> _mockPasswordHasher;
-    private readonly AgentService.Services.AgentService _sut;
+    private readonly AgentService.Services.AgentService _target;
 
     public AgentServiceTests()
     {
@@ -23,7 +23,7 @@ public class AgentServiceTests
         _mockJwtTokenService = new Mock<IJwtTokenService>();
         _mockPasswordHasher = new Mock<IPasswordHasher>();
 
-        _sut = new AgentService.Services.AgentService(
+        _target = new AgentService.Services.AgentService(
             _mockAgentRepository.Object,
             _mockJwtTokenService.Object,
             _mockPasswordHasher.Object
@@ -60,7 +60,7 @@ public class AgentServiceTests
             });
 
         // Act
-        var result = await _sut.RegisterAgentAsync(request);
+        var result = await _target.RegisterAgentAsync(request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -86,7 +86,7 @@ public class AgentServiceTests
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<DuplicateEmailException>(
-            () => _sut.RegisterAgentAsync(request)
+            () => _target.RegisterAgentAsync(request)
         );
         Assert.Equal("An agent with this email already exists.", exception.Message);
 
@@ -123,7 +123,7 @@ public class AgentServiceTests
             });
 
         // Act
-        await _sut.RegisterAgentAsync(request);
+        await _target.RegisterAgentAsync(request);
 
         // Assert
         Assert.NotNull(capturedAgent);
@@ -161,7 +161,7 @@ public class AgentServiceTests
             });
 
         // Act
-        await _sut.RegisterAgentAsync(request);
+        await _target.RegisterAgentAsync(request);
 
         // Assert
         Assert.NotNull(capturedAgent);
@@ -198,7 +198,7 @@ public class AgentServiceTests
             });
 
         // Act
-        var result = await _sut.RegisterAgentAsync(request);
+        var result = await _target.RegisterAgentAsync(request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -240,7 +240,7 @@ public class AgentServiceTests
             .Returns("valid-jwt-token");
 
         // Act
-        var result = await _sut.LoginAsync(request);
+        var result = await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal("valid-jwt-token", result.Jwt);
@@ -276,7 +276,7 @@ public class AgentServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
 
         _mockJwtTokenService.Verify(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -298,7 +298,7 @@ public class AgentServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
 
         _mockJwtTokenService.Verify(x => x.GenerateToken(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -343,11 +343,11 @@ public class AgentServiceTests
 
         // Act & Assert - Both should throw the same exception type with the same message
         var ex1 = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _sut.LoginAsync(requestWithExistingEmail)
+            () => _target.LoginAsync(requestWithExistingEmail)
         );
 
         var ex2 = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _sut.LoginAsync(requestWithNonExistentEmail)
+            () => _target.LoginAsync(requestWithNonExistentEmail)
         );
 
         Assert.Equal(ex1.Message, ex2.Message);
@@ -376,7 +376,7 @@ public class AgentServiceTests
             .ReturnsAsync(agent);
 
         // Act
-        var result = await _sut.GetAgentAsync(agentId);
+        var result = await _target.GetAgentAsync(agentId);
 
         // Assert
         Assert.Equal(agentId, result.Id);
@@ -397,7 +397,7 @@ public class AgentServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => _sut.GetAgentAsync(agentId)
+            () => _target.GetAgentAsync(agentId)
         );
     }
 
@@ -420,7 +420,7 @@ public class AgentServiceTests
             .ReturnsAsync(agent);
 
         // Act
-        var result = await _sut.GetAgentAsync(agentId);
+        var result = await _target.GetAgentAsync(agentId);
 
         // Assert - The response type should not contain password
         var responseType = result.GetType();
@@ -446,7 +446,7 @@ public class AgentServiceTests
             .ReturnsAsync(inactiveAgent);
 
         // Act
-        var result = await _sut.GetAgentAsync(agentId);
+        var result = await _target.GetAgentAsync(agentId);
 
         // Assert
         Assert.False(result.IsActive);
@@ -479,7 +479,7 @@ public class AgentServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.DeleteAgentAsync(agentId);
+        await _target.DeleteAgentAsync(agentId);
 
         // Assert
         _mockAgentRepository.Verify(x => x.DeleteAsync(agentId), Times.Once);
@@ -497,7 +497,7 @@ public class AgentServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => _sut.DeleteAgentAsync(agentId)
+            () => _target.DeleteAgentAsync(agentId)
         );
 
         _mockAgentRepository.Verify(x => x.DeleteAsync(It.IsAny<int>()), Times.Never);
@@ -531,7 +531,7 @@ public class AgentServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.DeleteAgentAsync(agentId);
+        await _target.DeleteAgentAsync(agentId);
 
         // Assert
         Assert.True(deleteCalledAfterGet, "Delete should be called after verifying agent exists");
@@ -564,7 +564,7 @@ public class AgentServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.SetActiveStatusAsync(agentId, true);
+        var result = await _target.SetActiveStatusAsync(agentId, true);
 
         // Assert
         Assert.True(result);
@@ -582,7 +582,7 @@ public class AgentServiceTests
             .ReturnsAsync((Agent?)null);
 
         // Act
-        var result = await _sut.SetActiveStatusAsync(agentId, true);
+        var result = await _target.SetActiveStatusAsync(agentId, true);
 
         // Assert
         Assert.False(result);
@@ -612,7 +612,7 @@ public class AgentServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.SetActiveStatusAsync(agentId, true);
+        await _target.SetActiveStatusAsync(agentId, true);
 
         // Assert
         _mockAgentRepository.Verify(x => x.UpdateActiveStatusAsync(agentId, true), Times.Once);
@@ -641,7 +641,7 @@ public class AgentServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.SetActiveStatusAsync(agentId, false);
+        await _target.SetActiveStatusAsync(agentId, false);
 
         // Assert
         _mockAgentRepository.Verify(x => x.UpdateActiveStatusAsync(agentId, false), Times.Once);
@@ -675,7 +675,7 @@ public class AgentServiceTests
             .Returns(Task.CompletedTask);
 
         // Act
-        await _sut.SetActiveStatusAsync(agentId, true);
+        await _target.SetActiveStatusAsync(agentId, true);
 
         // Assert
         Assert.True(updateCalledAfterGet, "UpdateActiveStatusAsync should be called after verifying agent exists");
@@ -683,3 +683,4 @@ public class AgentServiceTests
 
     #endregion
 }
+

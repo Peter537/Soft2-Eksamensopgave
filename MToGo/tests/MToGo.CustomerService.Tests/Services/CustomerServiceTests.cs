@@ -14,14 +14,14 @@ public class CustomerServiceTests
     private readonly Mock<ILegacyCustomerApiClient> _mockLegacyClient;
     private readonly Mock<IPasswordHasher> _mockPasswordHasher;
     private readonly Mock<IJwtTokenService> _mockJwtTokenService;
-    private readonly CustomerService.Services.CustomerService _sut;
+    private readonly CustomerService.Services.CustomerService _target;
 
     public CustomerServiceTests()
     {
         _mockLegacyClient = new Mock<ILegacyCustomerApiClient>();
         _mockPasswordHasher = new Mock<IPasswordHasher>();
         _mockJwtTokenService = new Mock<IJwtTokenService>();
-        _sut = new CustomerService.Services.CustomerService(
+        _target = new CustomerService.Services.CustomerService(
             _mockLegacyClient.Object,
             _mockPasswordHasher.Object,
             _mockJwtTokenService.Object);
@@ -54,7 +54,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.RegisterCustomerAsync(request);
+        var result = await _target.RegisterCustomerAsync(request);
 
         // Assert
         Assert.Equal(expectedResponse.Id, result.Id);
@@ -87,7 +87,7 @@ public class CustomerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<DuplicateEmailException>(
-            () => _sut.RegisterCustomerAsync(request)
+            () => _target.RegisterCustomerAsync(request)
         );
     }
 
@@ -119,7 +119,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.RegisterCustomerAsync(request);
+        var result = await _target.RegisterCustomerAsync(request);
 
         // Assert
         Assert.Equal(1, result.Id);
@@ -150,7 +150,7 @@ public class CustomerServiceTests
             .Returns(expectedJwt);
 
         // Act
-        var result = await _sut.LoginAsync(request);
+        var result = await _target.LoginAsync(request);
 
         // Assert
         Assert.Equal(expectedJwt, result.Jwt);
@@ -176,7 +176,7 @@ public class CustomerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
     }
 
@@ -192,7 +192,7 @@ public class CustomerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
-            () => _sut.LoginAsync(request)
+            () => _target.LoginAsync(request)
         );
     }
 
@@ -218,7 +218,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetCustomerAsync(customerId);
+        var result = await _target.GetCustomerAsync(customerId);
 
         // Assert
         Assert.Equal(expectedResponse.Name, result.Name);
@@ -239,7 +239,7 @@ public class CustomerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => _sut.GetCustomerAsync(customerId)
+            () => _target.GetCustomerAsync(customerId)
         );
     }
 
@@ -261,7 +261,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetCustomerAsync(customerId);
+        var result = await _target.GetCustomerAsync(customerId);
 
         // Assert
         Assert.Equal("Jane Doe", result.Name);
@@ -300,7 +300,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateCustomerAsync(customerId, request);
+        var result = await _target.UpdateCustomerAsync(customerId, request);
 
         // Assert
         Assert.Equal(expectedResponse.Name, result.Name);
@@ -327,7 +327,7 @@ public class CustomerServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => _sut.UpdateCustomerAsync(customerId, request)
+            () => _target.UpdateCustomerAsync(customerId, request)
         );
     }
 
@@ -356,7 +356,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateCustomerAsync(customerId, request);
+        var result = await _target.UpdateCustomerAsync(customerId, request);
 
         // Assert
         Assert.Equal("Original Name", result.Name);
@@ -391,7 +391,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateCustomerAsync(customerId, request);
+        var result = await _target.UpdateCustomerAsync(customerId, request);
 
         // Assert
         Assert.Equal(notificationMethod, result.NotificationMethod);
@@ -424,7 +424,7 @@ public class CustomerServiceTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.UpdateCustomerAsync(customerId, request);
+        var result = await _target.UpdateCustomerAsync(customerId, request);
 
         // Assert
         Assert.Equal(language, result.LanguagePreference);
@@ -432,3 +432,4 @@ public class CustomerServiceTests
 
     #endregion
 }
+

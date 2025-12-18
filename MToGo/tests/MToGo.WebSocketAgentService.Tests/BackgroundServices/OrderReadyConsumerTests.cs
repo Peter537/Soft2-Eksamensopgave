@@ -265,3 +265,4 @@ public class OrderReadyConsumerTests
         return mock;
     }
 }
+

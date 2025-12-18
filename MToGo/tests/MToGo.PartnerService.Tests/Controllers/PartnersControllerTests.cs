@@ -12,13 +12,13 @@ public class PartnersControllerTests
 {
     private readonly Mock<IPartnerService> _mockPartnerService;
     private readonly Mock<ILogger<PartnersController>> _mockLogger;
-    private readonly PartnersController _sut;
+    private readonly PartnersController _target;
 
     public PartnersControllerTests()
     {
         _mockPartnerService = new Mock<IPartnerService>();
         _mockLogger = new Mock<ILogger<PartnersController>>();
-        _sut = new PartnersController(_mockPartnerService.Object, _mockLogger.Object);
+        _target = new PartnersController(_mockPartnerService.Object, _mockLogger.Object);
     }
 
     #region Register Tests
@@ -45,7 +45,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -72,7 +72,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new EmptyMenuException("Menu cannot be empty. At least one menu item is required."));
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -100,7 +100,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new DuplicateEmailException("A partner with this email already exists."));
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -129,7 +129,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -161,7 +161,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -193,7 +193,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -219,7 +219,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new EmptyMenuException(expectedErrorMessage));
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -254,7 +254,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new DuplicateEmailException(expectedErrorMessage));
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -291,7 +291,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        await _sut.Register(request);
+        await _target.Register(request);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -324,7 +324,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -348,7 +348,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new InvalidCredentialsException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -370,7 +370,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new InvalidCredentialsException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -392,7 +392,7 @@ public class PartnersControllerTests
             .ThrowsAsync(new InvalidCredentialsException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -423,7 +423,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        await _sut.Login(request);
+        await _target.Login(request);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -450,7 +450,7 @@ public class PartnersControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -459,3 +459,4 @@ public class PartnersControllerTests
 
     #endregion
 }
+

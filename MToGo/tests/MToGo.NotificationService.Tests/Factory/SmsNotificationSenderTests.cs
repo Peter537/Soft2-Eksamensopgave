@@ -10,12 +10,12 @@ namespace MToGo.NotificationService.Tests.Factory;
 public class SmsNotificationSenderTests
 {
     private readonly Mock<ILogger<SmsNotificationSender>> _mockLogger;
-    private readonly SmsNotificationSender _sut;
+    private readonly SmsNotificationSender _target;
 
     public SmsNotificationSenderTests()
     {
         _mockLogger = new Mock<ILogger<SmsNotificationSender>>();
-        _sut = new SmsNotificationSender(_mockLogger.Object);
+        _target = new SmsNotificationSender(_mockLogger.Object);
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class SmsNotificationSenderTests
         var message = "Your order has been confirmed!";
 
         // Act
-        await _sut.SendAsync(destination, message);
+        await _target.SendAsync(destination, message);
 
         // Assert - verify logging was called
         _mockLogger.Verify(
@@ -46,7 +46,7 @@ public class SmsNotificationSenderTests
     public async Task SendAsync_WithVariousPhoneNumbers_LogsCorrectly(string destination, string message)
     {
         // Act
-        await _sut.SendAsync(destination, message);
+        await _target.SendAsync(destination, message);
 
         // Assert
         _mockLogger.Verify(
@@ -70,7 +70,7 @@ public class SmsNotificationSenderTests
         var destination = "+4512345678";
 
         // Act
-        await _sut.SendAsync(destination, message);
+        await _target.SendAsync(destination, message);
 
         // Assert - Should complete without throwing and sanitize newlines
         _mockLogger.Verify(
@@ -91,17 +91,18 @@ public class SmsNotificationSenderTests
         string? message = null;
 
         // Act & Assert - Should not throw
-        await _sut.SendAsync(destination, message!);
+        await _target.SendAsync(destination, message!);
     }
 
     [Fact]
     public async Task SendAsync_ImplementsINotificationSender()
     {
         // Assert - Verify the type implements the interface
-        Assert.IsAssignableFrom<INotificationSender>(_sut);
+        Assert.IsAssignableFrom<INotificationSender>(_target);
         
         // Act & Assert - Should be callable through interface
-        INotificationSender sender = _sut;
+        INotificationSender sender = _target;
         await sender.SendAsync("+4512345678", "message");
     }
 }
+

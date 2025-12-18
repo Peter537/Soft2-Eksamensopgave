@@ -75,17 +75,17 @@ frontend:
 e2e-test:
   - changed-files:
       - any-glob-to-any-file:
-          - MToGo/tests/MToGo.E2ETest/**
+          - MToGo/tests/MToGo.E2E.Tests/**
 
 integration-test:
   - changed-files:
       - any-glob-to-any-file:
-          - MToGo/tests/MToGo.IntegrationTest/**
+          - MToGo/tests/MToGo.Integration.Tests/**
 
 performance-test:
   - changed-files:
       - any-glob-to-any-file:
-          - MToGo/tests/MToGo.PerformanceTest/**
+          - MToGo/tests/MToGo.Performance.Tests/**
 
 test:
   - changed-files:

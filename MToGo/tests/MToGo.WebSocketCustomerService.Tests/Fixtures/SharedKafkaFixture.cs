@@ -38,3 +38,4 @@ public class SharedKafkaFixture : IAsyncLifetime
 public class KafkaCollection : ICollectionFixture<SharedKafkaFixture>
 {
 }
+

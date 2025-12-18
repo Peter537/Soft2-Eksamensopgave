@@ -9,7 +9,7 @@ namespace MToGo.WebSocketCustomerService.Tests.Handlers;
 
 public class CustomerWebSocketHandlerTests
 {
-    private readonly CustomerWebSocketHandler _sut;
+    private readonly CustomerWebSocketHandler _target;
     private readonly CustomerConnectionManager _connectionManager;
     private readonly Mock<ILogger<CustomerWebSocketHandler>> _loggerMock;
 
@@ -18,7 +18,7 @@ public class CustomerWebSocketHandlerTests
         var connectionManagerLogger = new Mock<ILogger<CustomerConnectionManager>>();
         _connectionManager = new CustomerConnectionManager(connectionManagerLogger.Object);
         _loggerMock = new Mock<ILogger<CustomerWebSocketHandler>>();
-        _sut = new CustomerWebSocketHandler(_connectionManager, _loggerMock.Object);
+        _target = new CustomerWebSocketHandler(_connectionManager, _loggerMock.Object);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class CustomerWebSocketHandlerTests
         var customerId = 1;
 
         // Act
-        await _sut.HandleConnectionAsync(context, customerId);
+        await _target.HandleConnectionAsync(context, customerId);
 
         // Assert
         Assert.Equal(400, context.Response.StatusCode);
@@ -60,10 +60,11 @@ public class CustomerWebSocketHandlerTests
         contextMock.Setup(c => c.Response).Returns(new DefaultHttpContext().Response);
 
         // Act
-        await _sut.HandleConnectionAsync(contextMock.Object, customerId);
+        await _target.HandleConnectionAsync(contextMock.Object, customerId);
 
         // Assert - after handler completes, connection should be removed
         Assert.False(_connectionManager.IsConnected(customerId));
         Assert.Equal(0, _connectionManager.ConnectionCount);
     }
 }
+

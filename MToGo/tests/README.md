@@ -10,7 +10,6 @@ Denne mappe indeholder alle tests for MToGo-platformen.
 | MToGo.AgentService.Tests             | Unit tests for Agent Service              |
 | MToGo.CustomerService.Tests          | Unit tests for Customer Service           |
 | MToGo.FeedbackHubService.Tests       | Unit tests for Feedback Hub Service       |
-| MToGo.Gateway.Tests                  | Unit tests for Gateway                    |
 | MToGo.ManagementService.Tests        | Unit tests for Management Service         |
 | MToGo.NotificationService.Tests      | Unit tests for Notification Service       |
 | MToGo.OrderService.Tests             | Unit tests for Order Service              |

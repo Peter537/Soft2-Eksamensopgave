@@ -12,12 +12,12 @@ namespace MToGo.NotificationService.Tests.Factory;
 public class NotificationSenderFactoryTests
 {
     private readonly Mock<IServiceProvider> _mockServiceProvider;
-    private readonly NotificationSenderFactory _sut;
+    private readonly NotificationSenderFactory _target;
 
     public NotificationSenderFactoryTests()
     {
         _mockServiceProvider = new Mock<IServiceProvider>();
-        _sut = new NotificationSenderFactory(_mockServiceProvider.Object);
+        _target = new NotificationSenderFactory(_mockServiceProvider.Object);
     }
 
     #region CreateSender Tests
@@ -34,7 +34,7 @@ public class NotificationSenderFactoryTests
             .Returns(emailSender);
 
         // Act
-        var result = _sut.CreateSender(NotificationMethod.Email);
+        var result = _target.CreateSender(NotificationMethod.Email);
 
         // Assert
         Assert.NotNull(result);
@@ -53,7 +53,7 @@ public class NotificationSenderFactoryTests
             .Returns(smsSender);
 
         // Act
-        var result = _sut.CreateSender(NotificationMethod.Sms);
+        var result = _target.CreateSender(NotificationMethod.Sms);
 
         // Assert
         Assert.NotNull(result);
@@ -67,7 +67,7 @@ public class NotificationSenderFactoryTests
         var invalidMethod = (NotificationMethod)999;
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => _sut.CreateSender(invalidMethod));
+        var exception = Assert.Throws<ArgumentException>(() => _target.CreateSender(invalidMethod));
         Assert.Contains("Unsupported notification method", exception.Message);
     }
 
@@ -80,7 +80,7 @@ public class NotificationSenderFactoryTests
         SetupMockServiceProvider(method);
 
         // Act
-        var result = _sut.CreateSender(method);
+        var result = _target.CreateSender(method);
 
         // Assert
         Assert.NotNull(result);
@@ -98,8 +98,8 @@ public class NotificationSenderFactoryTests
             .Returns(() => new EmailNotificationSender(mockLogger.Object));
 
         // Act
-        var result1 = _sut.CreateSender(NotificationMethod.Email);
-        var result2 = _sut.CreateSender(NotificationMethod.Email);
+        var result1 = _target.CreateSender(NotificationMethod.Email);
+        var result2 = _target.CreateSender(NotificationMethod.Email);
 
         // Assert
         Assert.NotNull(result1);
@@ -132,3 +132,4 @@ public class NotificationSenderFactoryTests
 
     #endregion
 }
+

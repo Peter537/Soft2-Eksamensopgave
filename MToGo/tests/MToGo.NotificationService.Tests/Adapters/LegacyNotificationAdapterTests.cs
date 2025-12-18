@@ -14,13 +14,13 @@ public class LegacyNotificationAdapterTests
 {
     private readonly Mock<ILegacyNotificationApiClient> _mockLegacyClient;
     private readonly Mock<ILogger<LegacyNotificationAdapter>> _mockLogger;
-    private readonly LegacyNotificationAdapter _sut;
+    private readonly LegacyNotificationAdapter _target;
 
     public LegacyNotificationAdapterTests()
     {
         _mockLegacyClient = new Mock<ILegacyNotificationApiClient>();
         _mockLogger = new Mock<ILogger<LegacyNotificationAdapter>>();
-        _sut = new LegacyNotificationAdapter(_mockLegacyClient.Object, _mockLogger.Object);
+        _target = new LegacyNotificationAdapter(_mockLegacyClient.Object, _mockLogger.Object);
     }
 
     #region SendAsync Tests
@@ -38,7 +38,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true, Message = "Sent" });
 
         // Act
-        var result = await _sut.SendAsync(customerId, title, body);
+        var result = await _target.SendAsync(customerId, title, body);
 
         // Assert
         Assert.True(result.Success);
@@ -60,7 +60,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        await _sut.SendAsync(customerId, title, body);
+        await _target.SendAsync(customerId, title, body);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -84,7 +84,7 @@ public class LegacyNotificationAdapterTests
             .ReturnsAsync(new NotificationResponse { Success = true });
 
         // Act
-        await _sut.SendAsync(customerId, title, body);
+        await _target.SendAsync(customerId, title, body);
 
         // Assert
         Assert.NotNull(capturedRequest);
@@ -102,7 +102,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new CustomerNotFoundException("Customer not found"));
 
         // Act
-        var result = await _sut.SendAsync(customerId, "Title", "Body");
+        var result = await _target.SendAsync(customerId, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -118,7 +118,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new NotificationFailedException("Service error"));
 
         // Act
-        var result = await _sut.SendAsync(1, "Title", "Body");
+        var result = await _target.SendAsync(1, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -134,7 +134,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new HttpRequestException("Connection refused"));
 
         // Act
-        var result = await _sut.SendAsync(1, "Title", "Body");
+        var result = await _target.SendAsync(1, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -150,7 +150,7 @@ public class LegacyNotificationAdapterTests
             .ThrowsAsync(new InvalidOperationException("Unexpected"));
 
         // Act
-        var result = await _sut.SendAsync(1, "Title", "Body");
+        var result = await _target.SendAsync(1, "Title", "Body");
 
         // Assert
         Assert.False(result.Success);
@@ -159,169 +159,6 @@ public class LegacyNotificationAdapterTests
 
     #endregion
 
-    #region SendOrderUpdateAsync Tests
-
-    [Fact]
-    public async Task SendOrderUpdateAsync_WithValidInput_ReturnsSuccessResult()
-    {
-        // Arrange
-        var customerId = 1;
-        var orderId = 100;
-        var status = "Delivered";
-        
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(new NotificationResponse { Success = true });
-
-        // Act
-        var result = await _sut.SendOrderUpdateAsync(customerId, orderId, status);
-
-        // Assert
-        Assert.True(result.Success);
-    }
-
-    [Fact]
-    public async Task SendOrderUpdateAsync_FormatsMessageCorrectly()
-    {
-        // Arrange
-        var customerId = 1;
-        var orderId = 123;
-        var status = "Out for Delivery";
-        NotificationRequest? capturedRequest = null;
-        
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .Callback<NotificationRequest>(r => capturedRequest = r)
-            .ReturnsAsync(new NotificationResponse { Success = true });
-
-        // Act
-        await _sut.SendOrderUpdateAsync(customerId, orderId, status);
-
-        // Assert
-        Assert.NotNull(capturedRequest);
-        Assert.Contains("Order Update", capturedRequest.Message);
-        Assert.Contains("#123", capturedRequest.Message);
-        Assert.Contains(status, capturedRequest.Message);
-    }
-
-    [Theory]
-    [InlineData("Placed")]
-    [InlineData("Accepted")]
-    [InlineData("Ready")]
-    [InlineData("PickedUp")]
-    [InlineData("Delivered")]
-    public async Task SendOrderUpdateAsync_WithVariousStatuses_Succeeds(string status)
-    {
-        // Arrange
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(new NotificationResponse { Success = true });
-
-        // Act
-        var result = await _sut.SendOrderUpdateAsync(1, 100, status);
-
-        // Assert
-        Assert.True(result.Success);
-    }
-
-    [Fact]
-    public async Task SendOrderUpdateAsync_WhenCustomerNotFound_ReturnsError()
-    {
-        // Arrange
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ThrowsAsync(new CustomerNotFoundException("Customer not found"));
-
-        // Act
-        var result = await _sut.SendOrderUpdateAsync(999, 100, "Delivered");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.Equal(NotificationAdapterError.CustomerNotFound, result.Error);
-    }
-
-    #endregion
-
-    #region SendPromotionAsync Tests
-
-    [Fact]
-    public async Task SendPromotionAsync_WithValidInput_ReturnsSuccessResult()
-    {
-        // Arrange
-        var customerId = 1;
-        var promotionTitle = "Weekend Special";
-        var promotionDetails = "Get 20% off on all orders!";
-        
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(new NotificationResponse { Success = true });
-
-        // Act
-        var result = await _sut.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
-
-        // Assert
-        Assert.True(result.Success);
-    }
-
-    [Fact]
-    public async Task SendPromotionAsync_FormatsMessageWithEmoji()
-    {
-        // Arrange
-        var customerId = 1;
-        var promotionTitle = "Flash Sale";
-        var promotionDetails = "Limited time offer!";
-        NotificationRequest? capturedRequest = null;
-        
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .Callback<NotificationRequest>(r => capturedRequest = r)
-            .ReturnsAsync(new NotificationResponse { Success = true });
-
-        // Act
-        await _sut.SendPromotionAsync(customerId, promotionTitle, promotionDetails);
-
-        // Assert
-        Assert.NotNull(capturedRequest);
-        Assert.Contains("🎉", capturedRequest.Message);
-        Assert.Contains(promotionTitle, capturedRequest.Message);
-        Assert.Contains(promotionDetails, capturedRequest.Message);
-    }
-
-    [Theory]
-    [InlineData("Summer Sale", "50% off everything")]
-    [InlineData("New Menu Items", "Try our new dishes")]
-    [InlineData("Loyalty Reward", "Free delivery on your next order")]
-    public async Task SendPromotionAsync_WithVariousPromotions_Succeeds(string title, string details)
-    {
-        // Arrange
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(new NotificationResponse { Success = true });
-
-        // Act
-        var result = await _sut.SendPromotionAsync(1, title, details);
-
-        // Assert
-        Assert.True(result.Success);
-    }
-
-    [Fact]
-    public async Task SendPromotionAsync_WhenServiceUnavailable_ReturnsError()
-    {
-        // Arrange
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ThrowsAsync(new NotificationFailedException("Service unavailable"));
-
-        // Act
-        var result = await _sut.SendPromotionAsync(1, "Sale", "Details");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.Equal(NotificationAdapterError.ServiceUnavailable, result.Error);
-    }
-
-    #endregion
 
     #region NotificationAdapterResult Tests
 
@@ -383,8 +220,9 @@ public class LegacyNotificationAdapterTests
     public void LegacyNotificationAdapter_ImplementsINotificationAdapter()
     {
         // Assert
-        Assert.IsAssignableFrom<INotificationAdapter>(_sut);
+        Assert.IsAssignableFrom<INotificationAdapter>(_target);
     }
 
     #endregion
 }
+

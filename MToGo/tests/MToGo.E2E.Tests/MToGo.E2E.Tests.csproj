@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Moq" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MToGo.CustomerService\MToGo.CustomerService.csproj" Aliases="global,CustomerServiceApp" />
+    <ProjectReference Include="..\..\src\MToGo.NotificationService\MToGo.NotificationService.csproj" Aliases="global,NotificationServiceApp" />
+    <ProjectReference Include="..\..\src\MToGo.OrderService\MToGo.OrderService.csproj" Aliases="global,OrderServiceApp" />
+    <ProjectReference Include="..\..\src\MToGo.Shared\MToGo.Shared.csproj" />
+    <ProjectReference Include="..\MToGo.Testing\MToGo.Testing.csproj" />
+    <ProjectReference Include="..\..\..\LegacyMToGo\LegacyMToGo.csproj" Aliases="global,LegacyApp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

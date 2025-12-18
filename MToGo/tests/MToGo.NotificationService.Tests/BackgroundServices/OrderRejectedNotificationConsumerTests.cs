@@ -210,3 +210,4 @@ public class OrderRejectedNotificationConsumerTests
         Assert.Equal(invocationReceived.Task, completed);
     }
 }
+

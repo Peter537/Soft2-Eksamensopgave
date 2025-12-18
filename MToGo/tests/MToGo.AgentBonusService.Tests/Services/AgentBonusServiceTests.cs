@@ -12,7 +12,7 @@ public class AgentBonusServiceTests
     private readonly Mock<IFeedbackHubClient> _feedbackClientMock;
     private readonly Mock<IAgentServiceClient> _agentClientMock;
     private readonly Mock<ILogger<AgentBonusService.Services.AgentBonusService>> _loggerMock;
-    private readonly IAgentBonusService _sut;
+    private readonly IAgentBonusService _target;
 
     public AgentBonusServiceTests()
     {
@@ -21,7 +21,7 @@ public class AgentBonusServiceTests
         _agentClientMock = new Mock<IAgentServiceClient>();
         _loggerMock = new Mock<ILogger<AgentBonusService.Services.AgentBonusService>>();
 
-        _sut = new AgentBonusService.Services.AgentBonusService(
+        _target = new AgentBonusService.Services.AgentBonusService(
             _orderClientMock.Object,
             _feedbackClientMock.Object,
             _agentClientMock.Object,
@@ -44,7 +44,7 @@ public class AgentBonusServiceTests
             .ReturnsAsync((AgentResponse?)null);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.Should().NotBeNull();
@@ -66,7 +66,7 @@ public class AgentBonusServiceTests
         SetupOrdersReturned(agentId, new List<AgentOrderResponse>());
         
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.AgentName.Should().Be(agentName);
@@ -90,7 +90,7 @@ public class AgentBonusServiceTests
             .ReturnsAsync((List<AgentOrderResponse>?)null);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.Qualified.Should().BeFalse();
@@ -115,7 +115,7 @@ public class AgentBonusServiceTests
         SetupOrdersReturned(agentId, orders);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.Qualified.Should().BeFalse();
@@ -137,7 +137,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.Qualified.Should().BeTrue();
@@ -165,7 +165,7 @@ public class AgentBonusServiceTests
         SetupOrdersReturned(agentId, orders);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.DeliveryCount.Should().Be(2); // Only "Delivered" orders count
@@ -191,7 +191,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.TotalDeliveryFees.Should().Be(580.00m);
@@ -219,7 +219,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.EarlyDeliveries.Should().Be(20);
@@ -244,7 +244,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.EarlyDeliveries.Should().Be(0);
@@ -269,7 +269,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.EarlyDeliveries.Should().Be(0);
@@ -295,7 +295,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.TimeScore.Should().Be(1.0m); // All early = max score
@@ -319,7 +319,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.UsedDefaultRating.Should().BeTrue();
@@ -343,7 +343,7 @@ public class AgentBonusServiceTests
         SetupReviewsReturned(agentId, reviews);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.UsedDefaultRating.Should().BeTrue();
@@ -366,7 +366,7 @@ public class AgentBonusServiceTests
         SetupReviewsReturned(agentId, reviews);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.UsedDefaultRating.Should().BeFalse();
@@ -400,7 +400,7 @@ public class AgentBonusServiceTests
         SetupReviewsReturned(agentId, reviews);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.TimeScore.Should().Be(1.0m);
@@ -431,7 +431,7 @@ public class AgentBonusServiceTests
         SetupReviewsReturned(agentId, reviews);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         // Contribution = 580 * 0.15 = 87.00
@@ -459,7 +459,7 @@ public class AgentBonusServiceTests
         SetupFeedbackHubUnavailable(agentId);
 
         // Act
-        var result = await _sut.CalculateBonusAsync(agentId, startDate, endDate, null);
+        var result = await _target.CalculateBonusAsync(agentId, startDate, endDate, null);
 
         // Assert
         result.Contribution.Should().Be(87.00m);
@@ -535,3 +535,4 @@ public class AgentBonusServiceTests
 
     #endregion
 }
+
