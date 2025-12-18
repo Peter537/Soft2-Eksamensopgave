@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -106,19 +107,18 @@ public class PerformanceTests
         
         var scenario = Scenario.Create("load_test", async context =>
         {
-            // Use different customer IDs to avoid caching effects
-            var customerId = Random.Shared.Next(1, 1000);
-            var token = GenerateTestToken(customerId);
+            // Use pre-generated customer identities to better simulate real clients
+            var identity = GetRandomCustomerIdentity();
             
             // Hit the customer orders endpoint - tests read operations with auth
-            var request = Http.CreateRequest("GET", $"{GatewayUrl}/api/v1/orders/customer/{customerId}")
-                .WithHeader("Authorization", $"Bearer {token}");
+            var request = Http.CreateRequest("GET", $"{GatewayUrl}/api/v1/orders/customer/{identity.CustomerId}")
+                .WithHeader("Authorization", $"Bearer {identity.Token}");
             return await Http.Send(_httpClient, request);
         })
-        .WithWarmUpDuration(TimeSpan.FromSeconds(5))
+        .WithWarmUpDuration(TimeSpan.FromSeconds(30))
         .WithLoadSimulations(
-            Simulation.RampingInject(rate: peakRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(10)),
-            Simulation.Inject(rate: peakRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(30))
+            Simulation.RampingInject(rate: peakRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromMinutes(1)),
+            Simulation.Inject(rate: peakRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromMinutes(5))
         );
 
         var result = NBomberRunner
@@ -135,6 +135,7 @@ public class PerformanceTests
         var errorRate = (double)stats.Fail.Request.Count / stats.AllRequestCount * 100;
         Assert.True(errorRate < 1, $"Error rate {errorRate:F2}% exceeds 1%");
         Assert.True(stats.Ok.Latency.Percent95 < 500, $"P95 latency {stats.Ok.Latency.Percent95}ms exceeds 500ms");
+        Assert.True(stats.Ok.Latency.Percent99 < 1000, $"P99 latency {stats.Ok.Latency.Percent99}ms exceeds 1000ms");
     }
 
     [SkippableFact]
@@ -149,20 +150,18 @@ public class PerformanceTests
         
         var scenario = Scenario.Create("stress_test", async context =>
         {
-            // Use different customer IDs to avoid caching effects
-            var customerId = Random.Shared.Next(1, 1000);
-            var token = GenerateTestToken(customerId);
+            var identity = GetRandomCustomerIdentity();
             
             // Hit the customer orders endpoint for stress testing read operations
-            var request = Http.CreateRequest("GET", $"{GatewayUrl}/api/v1/orders/customer/{customerId}")
-                .WithHeader("Authorization", $"Bearer {token}");
+            var request = Http.CreateRequest("GET", $"{GatewayUrl}/api/v1/orders/customer/{identity.CustomerId}")
+                .WithHeader("Authorization", $"Bearer {identity.Token}");
             return await Http.Send(_httpClient, request);
         })
-        .WithWarmUpDuration(TimeSpan.FromSeconds(3))
+        .WithWarmUpDuration(TimeSpan.FromSeconds(5))
         .WithLoadSimulations(
-            Simulation.Inject(rate: peakRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(15)),
-            Simulation.Inject(rate: peakRate * 2, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(15)),
-            Simulation.Inject(rate: peakRate * 5, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(15))
+            Simulation.Inject(rate: peakRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(30)),
+            Simulation.Inject(rate: peakRate * 2, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(30)),
+            Simulation.Inject(rate: peakRate * 5, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(30))
         );
 
         var result = NBomberRunner
@@ -185,6 +184,17 @@ public class PerformanceTests
     private const string JwtIssuer = "MToGo";
     private const string JwtAudience = "MToGo-Services";
 
+    // Pre-generated customer identities to avoid generating JWTs per request
+    private const int CustomerTokenPoolSize = 1000;
+
+    private static readonly (int CustomerId, string Token)[] CustomerIdentities =
+        Enumerable.Range(1, CustomerTokenPoolSize)
+            .Select(id => (CustomerId: id, Token: GenerateTestToken(id)))
+            .ToArray();
+
+    private static (int CustomerId, string Token) GetRandomCustomerIdentity()
+        => CustomerIdentities[Random.Shared.Next(CustomerIdentities.Length)];
+
     /// <summary>
     /// Generate a valid JWT token for testing.
     /// </summary>
@@ -204,9 +214,7 @@ public class PerformanceTests
         
         var scenario = Scenario.Create("order_flow", async context =>
         {
-            // Use different customer IDs to avoid caching effects
-            var customerId = Random.Shared.Next(1, 1000);
-            var token = GenerateTestToken(customerId);
+            var identity = GetRandomCustomerIdentity();
             
             // Vary the order data to simulate real traffic
             var itemCount = Random.Shared.Next(1, 5);
@@ -221,7 +229,7 @@ public class PerformanceTests
             
             var orderPayload = $$"""
             {
-                "customerId": {{customerId}},
+                "customerId": {{identity.CustomerId}},
                 "partnerId": {{Random.Shared.Next(1, 10)}},
                 "deliveryAddress": "Test St {{Random.Shared.Next(1, 100)}}, Copenhagen, 2100",
                 "deliveryFee": {{Random.Shared.Next(25, 50)}}.00,
@@ -232,14 +240,14 @@ public class PerformanceTests
             
             var request = Http.CreateRequest("POST", $"{GatewayUrl}/api/v1/orders/order")
                 .WithHeader("Content-Type", "application/json")
-                .WithHeader("Authorization", $"Bearer {token}")
+                .WithHeader("Authorization", $"Bearer {identity.Token}")
                 .WithBody(new StringContent(orderPayload, Encoding.UTF8, "application/json"));
             
             return await Http.Send(_httpClient, request);
         })
-        .WithWarmUpDuration(TimeSpan.FromSeconds(5))
+        .WithWarmUpDuration(TimeSpan.FromSeconds(30))
         .WithLoadSimulations(
-            Simulation.Inject(rate: orderRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(30))
+            Simulation.Inject(rate: orderRate, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromMinutes(5))
         );
 
         var result = NBomberRunner
@@ -254,5 +262,7 @@ public class PerformanceTests
         
         var errorRate = (double)stats.Fail.Request.Count / stats.AllRequestCount * 100;
         Assert.True(errorRate < 5, $"Error rate {errorRate:F2}% exceeds 5%");
+        Assert.True(stats.Ok.Latency.Percent95 < 1000, $"P95 latency {stats.Ok.Latency.Percent95}ms exceeds 1000ms");
+        Assert.True(stats.Ok.Latency.Percent99 < 2000, $"P99 latency {stats.Ok.Latency.Percent99}ms exceeds 2000ms");
     }
 }

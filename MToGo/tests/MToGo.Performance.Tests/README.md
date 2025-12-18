@@ -23,20 +23,20 @@ dotnet test -e RUN_PERFORMANCE_TESTS=true
 | Test | What it does | Load | Endpoint |
 |------|--------------|------|----------|
 | **Smoke** | Check system is alive | 1 req/s for 10s | `/health` |
-| **Load** | Normal peak read traffic | 6 req/s for 40s (with 10s ramp-up) | `/api/v1/orders/customer/{id}` |
-| **Stress** | Find read breaking point | 6 → 12 → 30 req/s | `/api/v1/orders/customer/{id}` |
-| **OrderFlow** | Create orders (with auth) | 3 req/s for 30s | `/api/v1/orders/order` |
+| **Load** | Normal peak read traffic | ~6 req/s, 1 min ramp-up + 5 min steady | `/api/v1/orders/customer/{id}` |
+| **Stress** | Find read breaking point | ~6 → ~12 → ~30 req/s, 30s at each level | `/api/v1/orders/customer/{id}` |
+| **OrderFlow** | Create orders (with auth) | ~3 req/s, 30s warm-up + 5 min steady | `/api/v1/orders/order` |
 
 ## Realistic Traffic Simulation
 
-All tests use **randomized users and data** to simulate real-world usage:
+All tests use **randomized users and data** to approximate real-world usage:
 
-- **Random customer IDs** (1-999) prevent database query caching
+- **Pre-generated JWT tokens** for a large pool of customer IDs (1-1000), reused across requests to mimic real clients keeping a session token
+- **Random customer selection** from that pool to spread load across many users and reduce cache bias
 - **Varied order payloads** with random items, quantities, and prices
 - **Different addresses/fees** for each request
-- **No caching effects** - each request is unique like real user traffic
 
-This ensures accurate performance measurements that reflect production behavior.
+This setup balances realism (token reuse, repeated users) with variability (many different customers and orders).
 
 ## Traffic Calculation (Simple Queueing Theory)
 
@@ -139,11 +139,12 @@ Since the `bin/Debug/net8.0/reports/` folder is generated at runtime and not com
 MToGo.Performance.Tests/
 ├── PerformanceTests.cs       # All tests + traffic calculations + JWT token generation
 ├── README.md
-└── bin/Debug/net8.0/reports/ # Generated HTML reports (after running tests)
+├── bin/Debug/net8.0/reports/ # Generated HTML reports (after running tests)
+└── reports/                  # Example reports from previous test runs
 ```
 
 **Key Features:**
 - Uses shared JWT service for consistent token generation
-- Randomized users/data to prevent caching effects
+- Pre-generated token pool and randomized users/data to approximate real traffic
 - Real API endpoints for accurate performance measurements
 - Queueing theory calculations for scientifically-grounded load testing

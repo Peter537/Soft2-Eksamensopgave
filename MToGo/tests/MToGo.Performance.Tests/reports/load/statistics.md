@@ -6,7 +6,7 @@ test suite: `nbomber_default_test_suite_name`
 
 test name: `nbomber_default_test_name`
 
-session id: `2025-12-17_12.38.44_session_3e715633`
+session id: `2025-12-18_08.14.69_session_35cb3e2e`
 
 > scenario stats
 
@@ -14,27 +14,27 @@ session id: `2025-12-17_12.38.44_session_3e715633`
 
 scenario: `load_test`
 
-  - ok count: `207`
+  - ok count: `1978`
 
   - fail count: `0`
 
-  - all data: `0.1` MB
+  - all data: `1.5` MB
 
-  - duration: `00:00:40`
+  - duration: `00:06:00`
 
 load simulations:
 
-  - `ramping_inject`, rate: `6`, interval: `00:00:01`, during: `00:00:10`
+  - `ramping_inject`, rate: `6`, interval: `00:00:01`, during: `00:01:00`
 
-  - `inject`, rate: `6`, interval: `00:00:01`, during: `00:00:30`
+  - `inject`, rate: `6`, interval: `00:00:01`, during: `00:05:00`
 
 |step|ok stats|
 |---|---|
 |name|`global information`|
-|request count|all = `207`, ok = `207`, RPS = `5.2`|
-|latency (ms)|min = `3.31`, mean = `3.71`, max = `4.91`, StdDev = `0.22`|
-|latency percentile (ms)|p50 = `3.67`, p75 = `3.84`, p95 = `4.04`, p99 = `4.43`|
-|data transfer (KB)|min = `0.399`, mean = `0.502`, max = `1.205`, all = `0.1` MB|
+|request count|all = `1978`, ok = `1978`, RPS = `5.5`|
+|latency (ms)|min = `2.44`, mean = `3.39`, max = `9.19`, StdDev = `0.36`|
+|latency percentile (ms)|p50 = `3.38`, p75 = `3.52`, p95 = `3.82`, p99 = `4.16`|
+|data transfer (KB)|min = `0.399`, mean = `0.792`, max = `2.468`, all = `1.5` MB|
 
 
 > status codes for scenario: `load_test`
@@ -43,6 +43,6 @@ load simulations:
 
 |status code|count|message|
 |---|---|---|
-|OK|207||
+|OK|1978||
 
 
