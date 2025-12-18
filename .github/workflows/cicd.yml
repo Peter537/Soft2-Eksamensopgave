@@ -220,7 +220,7 @@ jobs:
           dotnet test MToGo.AgentBonusService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.AgentBonusService]*.Models.*;[MToGo.AgentBonusService]*.Entities.*;[MToGo.AgentBonusService]*.Exceptions.*" \
+            -p:CoverletExclude="[MToGo.AgentBonusService]*.Models.*%3B[MToGo.AgentBonusService]*.Entities.*%3B[MToGo.AgentBonusService]*.Exceptions.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
@@ -330,7 +330,7 @@ jobs:
           dotnet test MToGo.AgentService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.AgentService]*.Models.*;[MToGo.AgentService]*.Entities.*;[MToGo.AgentService]*.Exceptions.*;[MToGo.AgentService]*.Metrics.*" \
+            -p:CoverletExclude="[MToGo.AgentService]*.Models.*%3B[MToGo.AgentService]*.Entities.*%3B[MToGo.AgentService]*.Exceptions.*%3B[MToGo.AgentService]*.Metrics.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
@@ -440,7 +440,7 @@ jobs:
           dotnet test MToGo.CustomerService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.CustomerService]*.Models.*;[MToGo.CustomerService]*.Entities.*;[MToGo.CustomerService]*.Exceptions.*;[MToGo.CustomerService]*.Clients.*" \
+            -p:CoverletExclude="[MToGo.CustomerService]*.Models.*%3B[MToGo.CustomerService]*.Entities.*%3B[MToGo.CustomerService]*.Exceptions.*%3B[MToGo.CustomerService]*.Clients.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
@@ -550,7 +550,7 @@ jobs:
           dotnet test MToGo.FeedbackHubService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.FeedbackHubService]*.Models.*;[MToGo.FeedbackHubService]*.Entities.*;[MToGo.FeedbackHubService]*.Exceptions.*" \
+            -p:CoverletExclude="[MToGo.FeedbackHubService]*.Models.*%3B[MToGo.FeedbackHubService]*.Entities.*%3B[MToGo.FeedbackHubService]*.Exceptions.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
@@ -844,7 +844,7 @@ jobs:
           dotnet test MToGo.OrderService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.OrderService]*.Models.*;[MToGo.OrderService]*.Entities.*" \
+            -p:CoverletExclude="[MToGo.OrderService]*.Models.*%3B[MToGo.OrderService]*.Entities.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
@@ -954,7 +954,7 @@ jobs:
           dotnet test MToGo.PartnerService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.PartnerService]*.Models.*;[MToGo.PartnerService]*.Entities.*" \
+            -p:CoverletExclude="[MToGo.PartnerService]*.Models.*%3B[MToGo.PartnerService]*.Entities.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
@@ -1504,7 +1504,7 @@ jobs:
           dotnet test MToGo.ManagementService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
-            -p:CoverletExclude="[MToGo.ManagementService]*.Models.*;[MToGo.ManagementService]*.Entities.*;[MToGo.ManagementService]*.Exceptions.*" \
+            -p:CoverletExclude="[MToGo.ManagementService]*.Models.*%3B[MToGo.ManagementService]*.Entities.*%3B[MToGo.ManagementService]*.Exceptions.*" \
             -p:CoverletThreshold=80 \
             -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
