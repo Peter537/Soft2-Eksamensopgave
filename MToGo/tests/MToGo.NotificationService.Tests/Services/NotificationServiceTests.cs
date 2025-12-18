@@ -1,5 +1,5 @@
 using Moq;
-using MToGo.NotificationService.Clients;
+using MToGo.NotificationService.Adapters;
 using MToGo.NotificationService.Exceptions;
 using MToGo.NotificationService.Models;
 
@@ -7,13 +7,13 @@ namespace MToGo.NotificationService.Tests.Services;
 
 public class NotificationServiceTests
 {
-    private readonly Mock<ILegacyNotificationApiClient> _mockLegacyClient;
+    private readonly Mock<INotificationAdapter> _mockAdapter;
     private readonly NotificationService.Services.NotificationService _target;
 
     public NotificationServiceTests()
     {
-        _mockLegacyClient = new Mock<ILegacyNotificationApiClient>();
-        _target = new NotificationService.Services.NotificationService(_mockLegacyClient.Object);
+        _mockAdapter = new Mock<INotificationAdapter>();
+        _target = new NotificationService.Services.NotificationService(_mockAdapter.Object);
     }
 
     #region SendNotificationAsync Tests
@@ -27,15 +27,9 @@ public class NotificationServiceTests
             CustomerId = 1,
             Message = "Your order has been shipped!"
         };
-        var expectedResponse = new NotificationResponse
-        {
-            Success = true,
-            Message = "Notification sent successfully"
-        };
-
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(expectedResponse);
+        _mockAdapter
+            .Setup(x => x.SendAsync(request.CustomerId, It.IsAny<string>(), request.Message, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(NotificationAdapterResult.Succeeded("Notification sent successfully"));
 
         // Act
         var result = await _target.SendNotificationAsync(request);
@@ -43,7 +37,7 @@ public class NotificationServiceTests
         // Assert
         Assert.True(result.Success);
         Assert.Equal("Notification sent successfully", result.Message);
-        _mockLegacyClient.Verify(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()), Times.Once);
+        _mockAdapter.Verify(x => x.SendAsync(request.CustomerId, string.Empty, request.Message, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -56,9 +50,9 @@ public class NotificationServiceTests
             Message = "Test message"
         };
 
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ThrowsAsync(new CustomerNotFoundException("Customer with ID 999 not found."));
+        _mockAdapter
+            .Setup(x => x.SendAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(NotificationAdapterResult.Failed(NotificationAdapterError.CustomerNotFound, "Customer with ID 999 not found."));
 
         // Act & Assert
         await Assert.ThrowsAsync<CustomerNotFoundException>(
@@ -76,9 +70,9 @@ public class NotificationServiceTests
             Message = "Test message"
         };
 
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ThrowsAsync(new NotificationFailedException("Legacy API unavailable."));
+        _mockAdapter
+            .Setup(x => x.SendAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(NotificationAdapterResult.Failed(NotificationAdapterError.ServiceUnavailable, "Legacy API unavailable."));
 
         // Act & Assert
         await Assert.ThrowsAsync<NotificationFailedException>(
@@ -98,15 +92,9 @@ public class NotificationServiceTests
             CustomerId = 1,
             Message = message
         };
-        var expectedResponse = new NotificationResponse
-        {
-            Success = true,
-            Message = "Notification sent successfully"
-        };
-
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(expectedResponse);
+        _mockAdapter
+            .Setup(x => x.SendAsync(request.CustomerId, It.IsAny<string>(), request.Message, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(NotificationAdapterResult.Succeeded("Notification sent successfully"));
 
         // Act
         var result = await _target.SendNotificationAsync(request);
@@ -127,22 +115,16 @@ public class NotificationServiceTests
             CustomerId = customerId,
             Message = "Test notification"
         };
-        var expectedResponse = new NotificationResponse
-        {
-            Success = true,
-            Message = "Notification sent successfully"
-        };
-
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(expectedResponse);
+        _mockAdapter
+            .Setup(x => x.SendAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(NotificationAdapterResult.Succeeded("Notification sent successfully"));
 
         // Act
         await _target.SendNotificationAsync(request);
 
         // Assert
-        _mockLegacyClient.Verify(
-            x => x.SendNotificationAsync(It.Is<NotificationRequest>(r => r.CustomerId == customerId)),
+        _mockAdapter.Verify(
+            x => x.SendAsync(customerId, string.Empty, "Test notification", It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -155,23 +137,16 @@ public class NotificationServiceTests
             CustomerId = 42,
             Message = "Specific message content"
         };
-        var expectedResponse = new NotificationResponse
-        {
-            Success = true,
-            Message = "Notification sent successfully"
-        };
-
-        _mockLegacyClient
-            .Setup(x => x.SendNotificationAsync(It.IsAny<NotificationRequest>()))
-            .ReturnsAsync(expectedResponse);
+        _mockAdapter
+            .Setup(x => x.SendAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(NotificationAdapterResult.Succeeded("Notification sent successfully"));
 
         // Act
         await _target.SendNotificationAsync(request);
 
         // Assert
-        _mockLegacyClient.Verify(
-            x => x.SendNotificationAsync(It.Is<NotificationRequest>(r =>
-                r.CustomerId == 42 && r.Message == "Specific message content")),
+        _mockAdapter.Verify(
+            x => x.SendAsync(42, string.Empty, "Specific message content", It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

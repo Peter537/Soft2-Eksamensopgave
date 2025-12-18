@@ -154,7 +154,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -174,7 +174,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -196,7 +196,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -220,7 +220,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -240,7 +240,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -260,7 +260,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -280,7 +280,7 @@ public class NotificationE2ETests : IAsyncLifetime
         };
 
         // Act
-        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await _notificationServiceClient.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);

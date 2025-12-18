@@ -29,9 +29,9 @@ Servicen lytter til følgende Kafka topics:
 
 ## API Endpoint
 
-| Metode | Endpoint                       | Beskrivelse               |
-| ------ | ------------------------------ | ------------------------- |
-| POST   | `/api/v1/notifications/notify` | Send notifikation manuelt |
+| Metode | Endpoint                  | Beskrivelse               |
+| ------ | ------------------------- | ------------------------- |
+| POST   | `/api/v1/notifications`   | Send notifikation manuelt |
 
 ## Integration
 

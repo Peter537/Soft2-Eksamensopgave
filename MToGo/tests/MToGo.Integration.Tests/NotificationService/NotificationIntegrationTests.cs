@@ -75,7 +75,7 @@ public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await client.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -101,7 +101,7 @@ public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await client.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -124,7 +124,7 @@ public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await client.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
@@ -159,7 +159,7 @@ public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await client.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -189,7 +189,7 @@ public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await client.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
@@ -216,7 +216,7 @@ public class NotificationIntegrationTests : IClassFixture<WebApplicationFactory<
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/notifications/notify", request);
+        var response = await client.PostAsJsonAsync("/api/v1/notifications", request);
 
         // Assert
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
