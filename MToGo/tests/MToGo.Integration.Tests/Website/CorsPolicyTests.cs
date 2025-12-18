@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using MToGo.Shared.Security.Cors;
 using System.Net;
 
-namespace MToGo.Gateway.Tests.Cors;
+namespace MToGo.Integration.Tests.Website;
 
 /// <summary>
 /// Tests for CORS policy configuration and behavior.
@@ -78,6 +78,23 @@ public class CorsPolicyTests
         };
     }
 
+    private async Task<HttpResponseMessage> SendPreflightRequest(IHost host, string origin, string method = "GET")
+    {
+        var client = host.GetTestClient();
+        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", method);
+        return await client.SendAsync(request);
+    }
+
+    private async Task<HttpResponseMessage> SendGetRequest(IHost host, string origin)
+    {
+        var client = host.GetTestClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, TestEndpoint);
+        request.Headers.Add("Origin", origin);
+        return await client.SendAsync(request);
+    }
+
     [Fact]
     public async Task PreflightRequest_WithAllowedOrigin_ReturnsCorrectCorsHeaders()
     {
@@ -85,14 +102,9 @@ public class CorsPolicyTests
         var settings = CreateDefaultSettings();
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-        request.Headers.Add("Origin", AllowedOrigin);
-        request.Headers.Add("Access-Control-Request-Method", "GET");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendPreflightRequest(host, AllowedOrigin);
 
         // Assert
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
@@ -109,17 +121,11 @@ public class CorsPolicyTests
         var settings = CreateDefaultSettings();
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-        request.Headers.Add("Origin", BlockedOrigin);
-        request.Headers.Add("Access-Control-Request-Method", "GET");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendPreflightRequest(host, BlockedOrigin);
 
         // Assert
-        // The response should NOT contain Access-Control-Allow-Origin for blocked origins
         Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
     }
 
@@ -130,13 +136,9 @@ public class CorsPolicyTests
         var settings = CreateDefaultSettings();
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Get, TestEndpoint);
-        request.Headers.Add("Origin", AllowedOrigin);
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendGetRequest(host, AllowedOrigin);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -151,17 +153,11 @@ public class CorsPolicyTests
         var settings = CreateDefaultSettings();
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Get, TestEndpoint);
-        request.Headers.Add("Origin", BlockedOrigin);
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendGetRequest(host, BlockedOrigin);
 
         // Assert
-        // The request still succeeds (200 OK) but without CORS headers
-        // Browsers would block this response on the client side
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
     }
@@ -174,14 +170,9 @@ public class CorsPolicyTests
         settings.PreflightMaxAgeSeconds = 3600; // 1 hour
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-        request.Headers.Add("Origin", AllowedOrigin);
-        request.Headers.Add("Access-Control-Request-Method", "GET");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendPreflightRequest(host, AllowedOrigin);
 
         // Assert
         Assert.True(response.Headers.Contains("Access-Control-Max-Age"));
@@ -195,14 +186,9 @@ public class CorsPolicyTests
         var settings = CreateDefaultSettings();
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-        request.Headers.Add("Origin", AllowedOrigin);
-        request.Headers.Add("Access-Control-Request-Method", "POST");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendPreflightRequest(host, AllowedOrigin, "POST");
 
         // Assert
         Assert.True(response.Headers.Contains("Access-Control-Allow-Methods"));
@@ -221,14 +207,9 @@ public class CorsPolicyTests
         var settings = CreateDefaultSettings(); // Only allows http://localhost:8081
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-        request.Headers.Add("Origin", origin);
-        request.Headers.Add("Access-Control-Request-Method", "GET");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendPreflightRequest(host, origin);
 
         // Assert
         if (shouldBeAllowed)
@@ -265,14 +246,9 @@ public class CorsPolicyTests
 
         using var host = CreateTestServer(settings);
         await host.StartAsync();
-        var client = host.GetTestClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Options, TestEndpoint);
-        request.Headers.Add("Origin", testOrigin);
-        request.Headers.Add("Access-Control-Request-Method", "GET");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await SendPreflightRequest(host, testOrigin);
 
         // Assert
         Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"),
@@ -280,4 +256,3 @@ public class CorsPolicyTests
         Assert.Equal(testOrigin, response.Headers.GetValues("Access-Control-Allow-Origin").First());
     }
 }
-

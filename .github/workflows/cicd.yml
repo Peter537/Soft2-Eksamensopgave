@@ -74,7 +74,6 @@ jobs:
 
             gateway:
               - 'MToGo/src/MToGo.Gateway/**'
-              - 'MToGo/tests/MToGo.Gateway.Tests/**'
 
             notification:
               - 'MToGo/src/MToGo.NotificationService/**'
@@ -480,7 +479,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.Gateway.csproj', '**/MToGo.Gateway.Tests.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.Gateway.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
@@ -489,42 +488,6 @@ jobs:
 
       - name: Build
         run: dotnet build MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj -c Release --no-restore
-
-      - name: Test with coverage
-        run: |
-          dotnet test MToGo.Gateway.Tests.csproj -c Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults \
-            --property:CoverletExclude="[MToGo.Gateway]*.Models.*" \
-            --property:CoverletThreshold=80 \
-            --property:CoverletThresholdType=line \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        working-directory: MToGo/tests/MToGo.Gateway.Tests
-
-      - name: Restore dotnet tools
-        run: dotnet tool restore
-        working-directory: MToGo
-
-      - name: Verify coverage file
-        run: |
-          echo "Looking for coverage files..."
-          find MToGo/tests/MToGo.Gateway.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
-          ls -laR MToGo/tests/MToGo.Gateway.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
-
-      - name: Generate coverage report
-        run: |
-          dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.Gateway.Tests/TestResults/**/coverage.opencover.xml" \
-            "-targetdir:tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
-            -reporttypes:Html
-        working-directory: MToGo
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-gateway
-          path: MToGo/tests/MToGo.Gateway.Tests/TestResults/CoverageReport
-          retention-days: 7
 
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
