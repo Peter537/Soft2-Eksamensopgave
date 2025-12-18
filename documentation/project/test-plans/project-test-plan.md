@@ -79,6 +79,11 @@ Disse gælder alle services medmindre andet er angivet i individuelle testplaner
 | **E2E Tests**                      | Fulde brugerflows gennem hele systemet       | Alle (via Website) | Level 5  |
 | **Performance Tests (JMeter)**     | Load og stress testing                       | Alle               | Level 5  |
 
+### Regressionstests
+
+Når der sker en ændring i en service, skal alle relevante regressionstests køres for at sikre, at ændringen ikke introducerer nye fejl. Regressionstests omfatter unit- og acceptance-tests samt relevante sikkerhedstjek, de køres automatisk i CI/CD-pipelines ved hver pull request og push til main.
+
+
 ## **Modenhedsbaseret Udviklingsplan**
 
 Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testaktiviteter. Hver modenhedsniveau bygger på det forrige.
