@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-net/master/src/Stryker.Core/Stryker.Core/schema.json",
+  "stryker-config": {
+    "solution": "MToGo/MToGo.sln",
+    "project": "MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj",
+    "test-projects": [
+      "MToGo/tests/MToGo.OrderService.Tests/MToGo.OrderService.Tests.csproj"
+    ],
+    "test-case-filter": "FullyQualifiedName~MToGo.OrderService.Tests.Services|FullyQualifiedName~MToGo.OrderService.Tests.EquivalencePartitioning",
+    "reporters": [
+      "html",
+      "json",
+      "progress"
+    ],
+    "report-file-name": "mutation-report",
+    "mutate": [
+      "Services/OrderService.cs",
+      "!Services/OrderService.cs{276..282}"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 50
+    },
+    "concurrency": 2,
+    "ignore-methods": [
+      "Microsoft.Extensions.Logging.LoggerExtensions.Log*",
+      "*LogInformation*",
+      "*LogWarning*",
+      "*LogError*",
+      "*LogDebug*",
+      "*LogTrace*",
+      "*LogAudit*"
+    ]
+  }
+}
