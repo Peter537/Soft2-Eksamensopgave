@@ -448,3 +448,34 @@ jobs:
         with:
           sarif_file: trivy-legacy-image.sarif
           category: weekly-trivy-legacy
+
+  trivy_logcollector:
+    name: Trivy - LogCollector
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull LogCollector image
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:latest
+
+      - name: Trivy image scan (LogCollector)
+        uses: aquasecurity/trivy-action@0.24.0
+        continue-on-error: true
+        with:
+          scan-type: image
+          image-ref: ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:latest
+          format: sarif
+          output: trivy-logcollector-image.sarif
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy SARIF (LogCollector)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-logcollector-image.sarif
+          category: weekly-trivy-logcollector

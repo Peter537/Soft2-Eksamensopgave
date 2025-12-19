@@ -10,12 +10,12 @@ namespace MToGo.NotificationService.Tests.Controllers;
 public class NotificationsControllerTests
 {
     private readonly Mock<INotificationService> _mockNotificationService;
-    private readonly NotificationsController _sut;
+    private readonly NotificationsController _target;
 
     public NotificationsControllerTests()
     {
         _mockNotificationService = new Mock<INotificationService>();
-        _sut = new NotificationsController(_mockNotificationService.Object);
+        _target = new NotificationsController(_mockNotificationService.Object);
     }
 
     #region Notify Tests
@@ -40,7 +40,7 @@ public class NotificationsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Notify(request);
+        var result = await _target.Notify(request);
 
         // Assert
         var acceptedResult = Assert.IsType<AcceptedResult>(result);
@@ -64,7 +64,7 @@ public class NotificationsControllerTests
             .ThrowsAsync(new CustomerNotFoundException("Customer with ID 999 not found."));
 
         // Act
-        var result = await _sut.Notify(request);
+        var result = await _target.Notify(request);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -86,7 +86,7 @@ public class NotificationsControllerTests
             .ThrowsAsync(new NotificationFailedException("Failed to send notification."));
 
         // Act
-        var result = await _sut.Notify(request);
+        var result = await _target.Notify(request);
 
         // Assert
         var statusCodeResult = Assert.IsType<ObjectResult>(result);
@@ -116,7 +116,7 @@ public class NotificationsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Notify(request);
+        var result = await _target.Notify(request);
 
         // Assert
         var acceptedResult = Assert.IsType<AcceptedResult>(result);
@@ -146,7 +146,7 @@ public class NotificationsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Notify(request);
+        var result = await _target.Notify(request);
 
         // Assert
         var acceptedResult = Assert.IsType<AcceptedResult>(result);
@@ -173,7 +173,7 @@ public class NotificationsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        await _sut.Notify(request);
+        await _target.Notify(request);
 
         // Assert
         _mockNotificationService.Verify(
@@ -184,3 +184,4 @@ public class NotificationsControllerTests
 
     #endregion
 }
+

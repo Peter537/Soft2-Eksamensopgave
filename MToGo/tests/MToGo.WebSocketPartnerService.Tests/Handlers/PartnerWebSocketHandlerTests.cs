@@ -9,7 +9,7 @@ namespace MToGo.WebSocketPartnerService.Tests.Handlers;
 
 public class PartnerWebSocketHandlerTests
 {
-    private readonly PartnerWebSocketHandler _sut;
+    private readonly PartnerWebSocketHandler _target;
     private readonly PartnerConnectionManager _connectionManager;
     private readonly Mock<ILogger<PartnerWebSocketHandler>> _loggerMock;
 
@@ -18,7 +18,7 @@ public class PartnerWebSocketHandlerTests
         var connectionManagerLogger = new Mock<ILogger<PartnerConnectionManager>>();
         _connectionManager = new PartnerConnectionManager(connectionManagerLogger.Object);
         _loggerMock = new Mock<ILogger<PartnerWebSocketHandler>>();
-        _sut = new PartnerWebSocketHandler(_connectionManager, _loggerMock.Object);
+        _target = new PartnerWebSocketHandler(_connectionManager, _loggerMock.Object);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class PartnerWebSocketHandlerTests
         var partnerId = 1;
 
         // Act
-        await _sut.HandleConnectionAsync(context, partnerId);
+        await _target.HandleConnectionAsync(context, partnerId);
 
         // Assert
         Assert.Equal(400, context.Response.StatusCode);
@@ -60,10 +60,11 @@ public class PartnerWebSocketHandlerTests
         contextMock.Setup(c => c.Response).Returns(new DefaultHttpContext().Response);
 
         // Act
-        await _sut.HandleConnectionAsync(contextMock.Object, partnerId);
+        await _target.HandleConnectionAsync(contextMock.Object, partnerId);
 
         // Assert - after handler completes, connection should be removed
         Assert.False(_connectionManager.IsConnected(partnerId));
         Assert.Equal(0, _connectionManager.ConnectionCount);
     }
 }
+

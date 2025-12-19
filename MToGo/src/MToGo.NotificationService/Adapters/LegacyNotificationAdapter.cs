@@ -19,26 +19,6 @@ public interface INotificationAdapter
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The result of the notification operation.</returns>
     Task<NotificationAdapterResult> SendAsync(int customerId, string title, string body, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Sends an order update notification to a customer.
-    /// </summary>
-    /// <param name="customerId">The customer ID to notify.</param>
-    /// <param name="orderId">The order ID.</param>
-    /// <param name="status">The new order status.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The result of the notification operation.</returns>
-    Task<NotificationAdapterResult> SendOrderUpdateAsync(int customerId, int orderId, string status, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Sends a promotional notification to a customer.
-    /// </summary>
-    /// <param name="customerId">The customer ID to notify.</param>
-    /// <param name="promotionTitle">The promotion title.</param>
-    /// <param name="promotionDetails">The promotion details.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The result of the notification operation.</returns>
-    Task<NotificationAdapterResult> SendPromotionAsync(int customerId, string promotionTitle, string promotionDetails, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -67,37 +47,6 @@ public class LegacyNotificationAdapter : INotificationAdapter
 
         // Adapt the modern interface to the legacy API format
         var legacyRequest = AdaptToLegacyFormat(customerId, title, body);
-
-        return await ExecuteLegacyRequestAsync(legacyRequest, customerId);
-    }
-
-    /// <summary>
-    /// Sends an order status update notification using the legacy API.
-    /// </summary>
-    public async Task<NotificationAdapterResult> SendOrderUpdateAsync(int customerId, int orderId, string status, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Sending order update notification to customer {CustomerId} for order {OrderId}: {Status}", 
-            customerId, orderId, status);
-
-        var title = "Order Update";
-        var body = $"Your order #{orderId} is now {status}.";
-
-        var legacyRequest = AdaptToLegacyFormat(customerId, title, body);
-
-        return await ExecuteLegacyRequestAsync(legacyRequest, customerId);
-    }
-
-    /// <summary>
-    /// Sends a promotional notification using the legacy API.
-    /// </summary>
-    public async Task<NotificationAdapterResult> SendPromotionAsync(int customerId, string promotionTitle, string promotionDetails, CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("Sending promotion notification to customer {CustomerId}: {PromotionTitle}", 
-            customerId, promotionTitle);
-
-        var body = $"🎉 {promotionTitle}\n\n{promotionDetails}";
-
-        var legacyRequest = AdaptToLegacyFormat(customerId, promotionTitle, body);
 
         return await ExecuteLegacyRequestAsync(legacyRequest, customerId);
     }

@@ -14,7 +14,7 @@ public class AgentsControllerTests
     private readonly Mock<IAgentService> _mockAgentService;
     private readonly Mock<IUserContextAccessor> _mockUserContextAccessor;
     private readonly Mock<IUserContext> _mockUserContext;
-    private readonly AgentsController _sut;
+    private readonly AgentsController _target;
 
     public AgentsControllerTests()
     {
@@ -27,7 +27,7 @@ public class AgentsControllerTests
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
         _mockUserContextAccessor.Setup(x => x.UserContext).Returns(_mockUserContext.Object);
 
-        _sut = new AgentsController(_mockAgentService.Object, _mockUserContextAccessor.Object);
+        _target = new AgentsController(_mockAgentService.Object, _mockUserContextAccessor.Object);
     }
 
     #region Register Tests
@@ -49,7 +49,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -74,7 +74,7 @@ public class AgentsControllerTests
             .ThrowsAsync(new DuplicateEmailException("An agent with this email already exists."));
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -98,7 +98,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -125,7 +125,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Register(request);
+        var result = await _target.Register(request);
 
         // Assert
         var createdResult = Assert.IsType<CreatedResult>(result);
@@ -152,7 +152,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -176,7 +176,7 @@ public class AgentsControllerTests
             .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -198,7 +198,7 @@ public class AgentsControllerTests
             .ThrowsAsync(new UnauthorizedAccessException("Invalid email or password."));
 
         // Act
-        var result = await _sut.Login(request);
+        var result = await _target.Login(request);
 
         // Assert
         var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
@@ -230,7 +230,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetProfile(agentId);
+        var result = await _target.GetProfile(agentId);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -252,7 +252,7 @@ public class AgentsControllerTests
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         // Act
-        var result = await _sut.GetProfile(otherAgentId);
+        var result = await _target.GetProfile(otherAgentId);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
@@ -280,7 +280,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetProfile(agentId);
+        var result = await _target.GetProfile(agentId);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -302,7 +302,7 @@ public class AgentsControllerTests
             .ThrowsAsync(new KeyNotFoundException("Agent not found."));
 
         // Act
-        var result = await _sut.GetProfile(agentId);
+        var result = await _target.GetProfile(agentId);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -327,7 +327,7 @@ public class AgentsControllerTests
             .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _sut.GetProfile(agentId);
+        var result = await _target.GetProfile(agentId);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
@@ -356,7 +356,7 @@ public class AgentsControllerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.DeleteAccount(agentId);
+        var result = await _target.DeleteAccount(agentId);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -375,7 +375,7 @@ public class AgentsControllerTests
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         // Act
-        var result = await _sut.DeleteAccount(otherAgentId);
+        var result = await _target.DeleteAccount(otherAgentId);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
@@ -396,7 +396,7 @@ public class AgentsControllerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _sut.DeleteAccount(agentId);
+        var result = await _target.DeleteAccount(agentId);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -419,7 +419,7 @@ public class AgentsControllerTests
             .ThrowsAsync(new KeyNotFoundException("Agent not found."));
 
         // Act
-        var result = await _sut.DeleteAccount(agentId);
+        var result = await _target.DeleteAccount(agentId);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -445,7 +445,7 @@ public class AgentsControllerTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.SetActiveStatus(agentId, request);
+        var result = await _target.SetActiveStatus(agentId, request);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -465,7 +465,7 @@ public class AgentsControllerTests
         _mockUserContext.Setup(x => x.Role).Returns(UserRoles.Agent);
 
         // Act
-        var result = await _sut.SetActiveStatus(otherAgentId, request);
+        var result = await _target.SetActiveStatus(otherAgentId, request);
 
         // Assert
         Assert.IsType<ForbidResult>(result);
@@ -487,7 +487,7 @@ public class AgentsControllerTests
             .ReturnsAsync(true);
 
         // Act
-        var result = await _sut.SetActiveStatus(agentId, request);
+        var result = await _target.SetActiveStatus(agentId, request);
 
         // Assert
         var noContentResult = Assert.IsType<NoContentResult>(result);
@@ -511,7 +511,7 @@ public class AgentsControllerTests
             .ReturnsAsync(false);
 
         // Act
-        var result = await _sut.SetActiveStatus(agentId, request);
+        var result = await _target.SetActiveStatus(agentId, request);
 
         // Assert
         var notFoundResult = Assert.IsType<NotFoundObjectResult>(result);
@@ -533,7 +533,7 @@ public class AgentsControllerTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.SetActiveStatus(agentId, request);
+        await _target.SetActiveStatus(agentId, request);
 
         // Assert
         _mockAgentService.Verify(x => x.SetActiveStatusAsync(agentId, true), Times.Once);
@@ -554,7 +554,7 @@ public class AgentsControllerTests
             .ReturnsAsync(true);
 
         // Act
-        await _sut.SetActiveStatus(agentId, request);
+        await _target.SetActiveStatus(agentId, request);
 
         // Assert
         _mockAgentService.Verify(x => x.SetActiveStatusAsync(agentId, false), Times.Once);
@@ -562,3 +562,4 @@ public class AgentsControllerTests
 
     #endregion
 }
+

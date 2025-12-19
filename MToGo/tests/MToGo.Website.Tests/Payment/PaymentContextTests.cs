@@ -17,6 +17,18 @@ public class PaymentContextTests
         return new PaymentContext(strategies);
     }
 
+    private static PaymentRequest CreatePaymentRequest(decimal amount, int orderId, string paymentMethodId)
+    {
+        var details = paymentMethodId switch
+        {
+            "credit_card" => (PaymentDetails)new CreditCardDetails("4111111111111111", "12", "2027", "123"),
+            "paypal" => new PayPalDetails("test@example.com"),
+            "mobilepay" or "apple_pay" or "google_pay" => new TokenDetails("test-token-123"),
+            _ => new TokenDetails("default-token")
+        };
+        return new PaymentRequest(amount, orderId, details);
+    }
+
     #region GetAvailableStrategies Tests
 
     [Fact]
@@ -83,93 +95,25 @@ public class PaymentContextTests
 
     #endregion
 
-    #region SetStrategy Tests
-
-    [Fact]
-    public void SetStrategy_ValidId_ReturnsTrue()
-    {
-        var context = CreatePaymentContext();
-        var result = context.SetStrategy("paypal");
-
-        Assert.True(result);
-    }
-
-    [Fact]
-    public void SetStrategy_InvalidId_ReturnsFalse()
-    {
-        var context = CreatePaymentContext();
-        var result = context.SetStrategy("invalid_method");
-
-        Assert.False(result);
-    }
-
-    [Fact]
-    public void SetStrategy_ValidId_SetsCurrentStrategy()
-    {
-        var context = CreatePaymentContext();
-        context.SetStrategy("mobilepay");
-
-        Assert.NotNull(context.CurrentStrategy);
-        Assert.Equal("mobilepay", context.CurrentStrategy.PaymentMethodId);
-    }
-
-    [Fact]
-    public void SetStrategy_CanSwitchStrategies()
-    {
-        var context = CreatePaymentContext();
-
-        context.SetStrategy("credit_card");
-        Assert.Equal("credit_card", context.CurrentStrategy?.PaymentMethodId);
-
-        context.SetStrategy("paypal");
-        Assert.Equal("paypal", context.CurrentStrategy?.PaymentMethodId);
-
-        context.SetStrategy("google_pay");
-        Assert.Equal("google_pay", context.CurrentStrategy?.PaymentMethodId);
-    }
-
-    #endregion
-
-    #region CurrentStrategy Tests
-
-    [Fact]
-    public void CurrentStrategy_InitiallyNull()
-    {
-        var context = CreatePaymentContext();
-        Assert.Null(context.CurrentStrategy);
-    }
-
-    [Fact]
-    public void CurrentStrategy_AfterSetStrategy_IsSet()
-    {
-        var context = CreatePaymentContext();
-        context.SetStrategy("apple_pay");
-
-        Assert.NotNull(context.CurrentStrategy);
-        Assert.IsType<ApplePayPaymentStrategy>(context.CurrentStrategy);
-    }
-
-    #endregion
-
     #region ProcessPaymentAsync Tests
 
     [Fact]
-    public async Task ProcessPaymentAsync_NoStrategySelected_ReturnsFailed()
+    public async Task ProcessPaymentAsync_InvalidPaymentMethod_ReturnsFailed()
     {
         var context = CreatePaymentContext();
-        var result = await context.ProcessPaymentAsync(100.00m, 1);
+        var request = CreatePaymentRequest(100.00m, 1, "invalid");
+        var result = await context.ProcessPaymentAsync("invalid_method", request);
 
         Assert.False(result.Success);
-        Assert.Equal("No payment method selected", result.ErrorMessage);
+        Assert.Equal("Unknown payment method", result.ErrorMessage);
     }
 
     [Fact]
-    public async Task ProcessPaymentAsync_WithStrategy_ReturnsSuccess()
+    public async Task ProcessPaymentAsync_WithValidStrategy_ReturnsSuccess()
     {
         var context = CreatePaymentContext();
-        context.SetStrategy("credit_card");
-
-        var result = await context.ProcessPaymentAsync(100.00m, 1);
+        var request = CreatePaymentRequest(100.00m, 1, "credit_card");
+        var result = await context.ProcessPaymentAsync("credit_card", request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.TransactionId);
@@ -186,9 +130,8 @@ public class PaymentContextTests
         string paymentMethodId, string expectedPrefix)
     {
         var context = CreatePaymentContext();
-        context.SetStrategy(paymentMethodId);
-
-        var result = await context.ProcessPaymentAsync(50.00m, 123);
+        var request = CreatePaymentRequest(50.00m, 123, paymentMethodId);
+        var result = await context.ProcessPaymentAsync(paymentMethodId, request);
 
         Assert.True(result.Success);
         Assert.StartsWith(expectedPrefix, result.TransactionId);
@@ -198,12 +141,22 @@ public class PaymentContextTests
     public async Task ProcessPaymentAsync_TransactionIdContainsOrderId()
     {
         var context = CreatePaymentContext();
-        context.SetStrategy("credit_card");
-
         var orderId = 12345;
-        var result = await context.ProcessPaymentAsync(100.00m, orderId);
+        var request = CreatePaymentRequest(100.00m, orderId, "credit_card");
+        var result = await context.ProcessPaymentAsync("credit_card", request);
 
         Assert.Contains(orderId.ToString(), result.TransactionId);
+    }
+
+    [Fact]
+    public async Task ProcessPaymentAsync_InvalidAmount_ReturnsFailed()
+    {
+        var context = CreatePaymentContext();
+        var request = new PaymentRequest(0, 1, new TokenDetails("token"));
+        var result = await context.ProcessPaymentAsync("mobilepay", request);
+
+        Assert.False(result.Success);
+        Assert.Equal("Amount must be greater than zero", result.ErrorMessage);
     }
 
     #endregion
@@ -216,11 +169,11 @@ public class PaymentContextTests
         // Demonstrates the Strategy Pattern: same context, different behavior based on strategy
         var context = CreatePaymentContext();
 
-        context.SetStrategy("credit_card");
-        var ccResult = await context.ProcessPaymentAsync(100.00m, 1);
+        var ccRequest = CreatePaymentRequest(100.00m, 1, "credit_card");
+        var ccResult = await context.ProcessPaymentAsync("credit_card", ccRequest);
 
-        context.SetStrategy("paypal");
-        var ppResult = await context.ProcessPaymentAsync(100.00m, 1);
+        var ppRequest = CreatePaymentRequest(100.00m, 1, "paypal");
+        var ppResult = await context.ProcessPaymentAsync("paypal", ppRequest);
 
         // Same context, but different transaction prefixes based on strategy
         Assert.StartsWith("CC-", ccResult.TransactionId);
@@ -247,3 +200,4 @@ public class PaymentContextTests
 
     #endregion
 }
+

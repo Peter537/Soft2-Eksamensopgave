@@ -19,7 +19,7 @@ public class NotificationsController : ControllerBase
     /// <summary>
     /// Send a notification to a customer (sms/push via Legacy Notification Service)
     /// </summary>
-    [HttpPost("notify")]
+    [HttpPost]
     [ProducesResponseType(typeof(NotificationResponse), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

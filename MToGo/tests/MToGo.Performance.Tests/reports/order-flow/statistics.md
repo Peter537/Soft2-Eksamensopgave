@@ -1,0 +1,46 @@
+> test info
+
+
+
+test suite: `nbomber_default_test_suite_name`
+
+test name: `nbomber_default_test_name`
+
+session id: `2025-12-18_08.09.64_session_e26b3280`
+
+> scenario stats
+
+
+
+scenario: `order_flow`
+
+  - ok count: `900`
+
+  - fail count: `0`
+
+  - all data: `0.7` MB
+
+  - duration: `00:05:00`
+
+load simulations:
+
+  - `inject`, rate: `3`, interval: `00:00:01`, during: `00:05:00`
+
+|step|ok stats|
+|---|---|
+|name|`global information`|
+|request count|all = `900`, ok = `900`, RPS = `3`|
+|latency (ms)|min = `10.71`, mean = `13.42`, max = `20.79`, StdDev = `1.06`|
+|latency percentile (ms)|p50 = `13.26`, p75 = `14.06`, p95 = `15.24`, p99 = `16.4`|
+|data transfer (KB)|min = `0.651`, mean = `0.771`, max = `0.892`, all = `0.7` MB|
+
+
+> status codes for scenario: `order_flow`
+
+
+
+|status code|count|message|
+|---|---|---|
+|Created|900||
+
+

@@ -109,3 +109,4 @@ public class OrderPickedUpConsumerTests
         return mock;
     }
 }
+

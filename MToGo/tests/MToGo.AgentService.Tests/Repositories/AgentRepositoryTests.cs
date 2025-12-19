@@ -7,7 +7,7 @@ namespace MToGo.AgentService.Tests.Repositories;
 public class AgentRepositoryTests : IDisposable
 {
     private readonly AgentDbContext _context;
-    private readonly AgentRepository _sut;
+    private readonly AgentRepository _target;
 
     public AgentRepositoryTests()
     {
@@ -16,7 +16,7 @@ public class AgentRepositoryTests : IDisposable
             .Options;
 
         _context = new AgentDbContext(options);
-        _sut = new AgentRepository(_context);
+        _target = new AgentRepository(_context);
     }
 
     public void Dispose()
@@ -42,7 +42,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetByIdAsync(agent.Id);
+        var result = await _target.GetByIdAsync(agent.Id);
 
         // Assert
         Assert.NotNull(result);
@@ -55,7 +55,7 @@ public class AgentRepositoryTests : IDisposable
     public async Task GetByIdAsync_WithNonExistingId_ReturnsNull()
     {
         // Act
-        var result = await _sut.GetByIdAsync(999);
+        var result = await _target.GetByIdAsync(999);
 
         // Assert
         Assert.Null(result);
@@ -77,7 +77,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetByIdAsync(agent.Id);
+        var result = await _target.GetByIdAsync(agent.Id);
 
         // Assert
         Assert.Null(result);
@@ -102,7 +102,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetByEmailAsync("john@example.com");
+        var result = await _target.GetByEmailAsync("john@example.com");
 
         // Assert
         Assert.NotNull(result);
@@ -113,7 +113,7 @@ public class AgentRepositoryTests : IDisposable
     public async Task GetByEmailAsync_WithNonExistingEmail_ReturnsNull()
     {
         // Act
-        var result = await _sut.GetByEmailAsync("nonexistent@example.com");
+        var result = await _target.GetByEmailAsync("nonexistent@example.com");
 
         // Assert
         Assert.Null(result);
@@ -135,7 +135,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetByEmailAsync("deleted@example.com");
+        var result = await _target.GetByEmailAsync("deleted@example.com");
 
         // Assert
         Assert.Null(result);
@@ -156,7 +156,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetByEmailAsync("john@example.com");
+        var result = await _target.GetByEmailAsync("john@example.com");
 
         // Assert - Email comparison is case-sensitive by default in EF
         Assert.Null(result);
@@ -179,7 +179,7 @@ public class AgentRepositoryTests : IDisposable
         };
 
         // Act
-        var result = await _sut.CreateAsync(agent);
+        var result = await _target.CreateAsync(agent);
 
         // Assert
         Assert.True(result.Id > 0);
@@ -199,7 +199,7 @@ public class AgentRepositoryTests : IDisposable
         };
 
         // Act
-        var created = await _sut.CreateAsync(agent);
+        var created = await _target.CreateAsync(agent);
 
         // Assert
         var retrieved = await _context.Agents.FindAsync(created.Id);
@@ -222,7 +222,7 @@ public class AgentRepositoryTests : IDisposable
         };
 
         // Act
-        var result = await _sut.CreateAsync(agent);
+        var result = await _target.CreateAsync(agent);
         var afterCreate = DateTime.UtcNow.AddSeconds(1);
 
         // Assert
@@ -239,9 +239,9 @@ public class AgentRepositoryTests : IDisposable
         var agent3 = new Agent { Name = "Agent 3", Email = "agent3@example.com", Password = "hashed" };
 
         // Act
-        var result1 = await _sut.CreateAsync(agent1);
-        var result2 = await _sut.CreateAsync(agent2);
-        var result3 = await _sut.CreateAsync(agent3);
+        var result1 = await _target.CreateAsync(agent1);
+        var result2 = await _target.CreateAsync(agent2);
+        var result3 = await _target.CreateAsync(agent3);
 
         // Assert
         var ids = new[] { result1.Id, result2.Id, result3.Id };
@@ -268,7 +268,7 @@ public class AgentRepositoryTests : IDisposable
 
         // Act
         agent.Name = "Updated Name";
-        var result = await _sut.UpdateAsync(agent);
+        var result = await _target.UpdateAsync(agent);
 
         // Assert
         Assert.Equal("Updated Name", result.Name);
@@ -295,7 +295,7 @@ public class AgentRepositoryTests : IDisposable
 
         // Act
         agent.Name = "Updated Agent";
-        var result = await _sut.UpdateAsync(agent);
+        var result = await _target.UpdateAsync(agent);
         var afterUpdate = DateTime.UtcNow.AddSeconds(1);
 
         // Assert
@@ -324,7 +324,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        await _sut.DeleteAsync(agent.Id);
+        await _target.DeleteAsync(agent.Id);
 
         // Assert
         var retrieved = await _context.Agents.FindAsync(agent.Id);
@@ -349,7 +349,7 @@ public class AgentRepositoryTests : IDisposable
         var beforeDelete = DateTime.UtcNow.AddSeconds(-1);
 
         // Act
-        await _sut.DeleteAsync(agent.Id);
+        await _target.DeleteAsync(agent.Id);
         var afterDelete = DateTime.UtcNow.AddSeconds(1);
 
         // Assert
@@ -364,7 +364,7 @@ public class AgentRepositoryTests : IDisposable
     public async Task DeleteAsync_WithNonExistingId_DoesNotThrow()
     {
         // Act & Assert - Should not throw
-        await _sut.DeleteAsync(999);
+        await _target.DeleteAsync(999);
     }
 
     [Fact]
@@ -382,8 +382,8 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        await _sut.DeleteAsync(agent.Id);
-        var result = await _sut.GetByIdAsync(agent.Id);
+        await _target.DeleteAsync(agent.Id);
+        var result = await _target.GetByIdAsync(agent.Id);
 
         // Assert
         Assert.Null(result);
@@ -408,7 +408,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.EmailExistsAsync("existing@example.com");
+        var result = await _target.EmailExistsAsync("existing@example.com");
 
         // Assert
         Assert.True(result);
@@ -418,7 +418,7 @@ public class AgentRepositoryTests : IDisposable
     public async Task EmailExistsAsync_WithNonExistingEmail_ReturnsFalse()
     {
         // Act
-        var result = await _sut.EmailExistsAsync("nonexistent@example.com");
+        var result = await _target.EmailExistsAsync("nonexistent@example.com");
 
         // Assert
         Assert.False(result);
@@ -440,7 +440,7 @@ public class AgentRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.EmailExistsAsync("deleted@example.com");
+        var result = await _target.EmailExistsAsync("deleted@example.com");
 
         // Assert
         Assert.False(result);
@@ -459,10 +459,10 @@ public class AgentRepositoryTests : IDisposable
         };
         _context.Agents.Add(agent);
         await _context.SaveChangesAsync();
-        await _sut.DeleteAsync(agent.Id);
+        await _target.DeleteAsync(agent.Id);
 
         // Act - Check if email can be reused
-        var emailExists = await _sut.EmailExistsAsync("reuse@example.com");
+        var emailExists = await _target.EmailExistsAsync("reuse@example.com");
 
         // Assert
         Assert.False(emailExists);
@@ -470,3 +470,4 @@ public class AgentRepositoryTests : IDisposable
 
     #endregion
 }
+

@@ -348,7 +348,6 @@
     private void SelectPaymentMethod(string paymentMethodId)
     {
         selectedPaymentMethod = paymentMethodId;
-        PaymentContext.SetStrategy(paymentMethodId);
     }
 
     private void IncreaseQuantity(OrderItemModel item)
@@ -409,7 +408,8 @@
         try
         {
             // Process payment using the Strategy Pattern
-            var paymentResult = await PaymentContext.ProcessPaymentAsync(CalculateTotal(), 0);
+            var paymentRequest = new PaymentRequest(CalculateTotal(), 0, CreatePaymentDetails());
+            var paymentResult = await PaymentContext.ProcessPaymentAsync(selectedPaymentMethod!, paymentRequest);
             
             if (!paymentResult.Success)
             {
@@ -470,6 +470,21 @@
         {
             isSubmitting = false;
         }
+    }
+
+    private PaymentDetails CreatePaymentDetails()
+    {
+        return selectedPaymentMethod switch
+        {
+            "credit_card" => new CreditCardDetails(
+                CardNumber: "4111111111111111",
+                ExpiryMonth: "12",
+                ExpiryYear: DateTime.UtcNow.AddYears(2).Year.ToString(),
+                Cvc: "123"),
+            "paypal" => new PayPalDetails("customer@example.com"),
+            "mobilepay" or "apple_pay" or "google_pay" => new TokenDetails(Guid.NewGuid().ToString("N")),
+            _ => new TokenDetails(Guid.NewGuid().ToString("N"))
+        };
     }
 
     public class MenuResponse

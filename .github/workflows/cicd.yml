@@ -32,6 +32,7 @@ jobs:
       notification: ${{ steps.filter.outputs.notification }}
       order: ${{ steps.filter.outputs.order }}
       partner: ${{ steps.filter.outputs.partner }}
+      logcollector: ${{ steps.filter.outputs.logcollector }}
       website: ${{ steps.filter.outputs.website }}
       websocketagent: ${{ steps.filter.outputs.websocketagent }}
       websocketcustomer: ${{ steps.filter.outputs.websocketcustomer }}
@@ -74,7 +75,6 @@ jobs:
 
             gateway:
               - 'MToGo/src/MToGo.Gateway/**'
-              - 'MToGo/tests/MToGo.Gateway.Tests/**'
 
             notification:
               - 'MToGo/src/MToGo.NotificationService/**'
@@ -87,6 +87,9 @@ jobs:
             partner:
               - 'MToGo/src/MToGo.PartnerService/**'
               - 'MToGo/tests/MToGo.PartnerService.Tests/**'
+
+            logcollector:
+              - 'MToGo/src/MToGo.LogCollectorService/**'
 
             website:
               - 'MToGo/src/MToGo.Website/**'
@@ -110,6 +113,80 @@ jobs:
 
             legacy:
               - 'LegacyMToGo/**'
+
+  logcollector_ci:
+    name: LogCollector - build & docker
+    needs: detect_changes
+    if: ${{ needs.detect_changes.outputs.logcollector == 'true' || needs.detect_changes.outputs.shared == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.LogCollectorService.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj
+
+      - name: Build
+        run: dotnet build MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj -c Release --no-restore
+
+      - name: Set lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.LogCollectorService/Dockerfile
+          push: false
+          tags: mtogo-logcollector:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-logcollector.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-logcollector
+          path: /tmp/mtogo-logcollector.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.LogCollectorService/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:${{ env.IMAGE_TAG }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-logcollector:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   agentbonus_ci:
     name: AgentBonus - build, test & docker
@@ -143,6 +220,9 @@ jobs:
           dotnet test MToGo.AgentBonusService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.AgentBonusService]*.Models.*%3B[MToGo.AgentBonusService]*.Entities.*%3B[MToGo.AgentBonusService]*.Exceptions.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.AgentBonusService.Tests
 
@@ -175,6 +255,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -184,7 +265,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.AgentBonusService/Dockerfile
+          push: false
+          tags: mtogo-agentbonus:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-agentbonus.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-agentbonus
+          path: /tmp/mtogo-agentbonus.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -192,7 +294,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentbonus:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-agentbonus:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -228,6 +330,9 @@ jobs:
           dotnet test MToGo.AgentService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.AgentService]*.Models.*%3B[MToGo.AgentService]*.Entities.*%3B[MToGo.AgentService]*.Exceptions.*%3B[MToGo.AgentService]*.Metrics.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.AgentService.Tests
 
@@ -260,6 +365,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -269,7 +375,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.AgentService/Dockerfile
+          push: false
+          tags: mtogo-agentservice:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-agentservice.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-agentservice
+          path: /tmp/mtogo-agentservice.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -277,7 +404,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-agentservice:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-agentservice:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -313,6 +440,9 @@ jobs:
           dotnet test MToGo.CustomerService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.CustomerService]*.Models.*%3B[MToGo.CustomerService]*.Entities.*%3B[MToGo.CustomerService]*.Exceptions.*%3B[MToGo.CustomerService]*.Clients.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.CustomerService.Tests
 
@@ -345,6 +475,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -354,7 +485,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.CustomerService/Dockerfile
+          push: false
+          tags: mtogo-customerservice:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-customerservice.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-customerservice
+          path: /tmp/mtogo-customerservice.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -362,7 +514,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-customerservice:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-customerservice:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -398,6 +550,9 @@ jobs:
           dotnet test MToGo.FeedbackHubService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.FeedbackHubService]*.Models.*%3B[MToGo.FeedbackHubService]*.Entities.*%3B[MToGo.FeedbackHubService]*.Exceptions.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.FeedbackHubService.Tests
 
@@ -430,6 +585,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -439,7 +595,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.FeedbackHubService/Dockerfile
+          push: false
+          tags: mtogo-feedbackhub:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-feedbackhub.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-feedbackhub
+          path: /tmp/mtogo-feedbackhub.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -447,7 +624,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-feedbackhub:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-feedbackhub:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -468,7 +645,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.Gateway.csproj', '**/MToGo.Gateway.Tests.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/MToGo.Gateway.csproj') }}
           restore-keys: |
             ${{ runner.os }}-nuget-
 
@@ -478,43 +655,11 @@ jobs:
       - name: Build
         run: dotnet build MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj -c Release --no-restore
 
-      - name: Test with coverage
-        run: |
-          dotnet test MToGo.Gateway.Tests.csproj -c Release \
-            --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        working-directory: MToGo/tests/MToGo.Gateway.Tests
-
-      - name: Restore dotnet tools
-        run: dotnet tool restore
-        working-directory: MToGo
-
-      - name: Verify coverage file
-        run: |
-          echo "Looking for coverage files..."
-          find MToGo/tests/MToGo.Gateway.Tests/TestResults -name "*.xml" 2>/dev/null || echo "No XML files found"
-          ls -laR MToGo/tests/MToGo.Gateway.Tests/TestResults/ 2>/dev/null || echo "Directory not found"
-
-      - name: Generate coverage report
-        run: |
-          dotnet tool run reportgenerator \
-            "-reports:tests/MToGo.Gateway.Tests/TestResults/**/coverage.opencover.xml" \
-            "-targetdir:tests/MToGo.Gateway.Tests/TestResults/CoverageReport" \
-            -reporttypes:Html
-        working-directory: MToGo
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-gateway
-          path: MToGo/tests/MToGo.Gateway.Tests/TestResults/CoverageReport
-          retention-days: 7
-
       - name: Set lowercase owner
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -524,7 +669,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.Gateway/Dockerfile
+          push: false
+          tags: mtogo-gateway:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-gateway.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-gateway
+          path: /tmp/mtogo-gateway.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -532,7 +698,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-gateway:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-gateway:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -568,6 +734,9 @@ jobs:
           dotnet test MToGo.NotificationService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.NotificationService]*.Models.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.NotificationService.Tests
 
@@ -600,6 +769,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -609,7 +779,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.NotificationService/Dockerfile
+          push: false
+          tags: mtogo-notification:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-notification.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-notification
+          path: /tmp/mtogo-notification.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -617,7 +808,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-notification:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-notification:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -653,6 +844,9 @@ jobs:
           dotnet test MToGo.OrderService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.OrderService]*.Models.*%3B[MToGo.OrderService]*.Entities.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.OrderService.Tests
 
@@ -685,6 +879,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -694,7 +889,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.OrderService/Dockerfile
+          push: false
+          tags: mtogo-order:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-order.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-order
+          path: /tmp/mtogo-order.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -702,7 +918,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-order:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-order:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-order:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -738,6 +954,9 @@ jobs:
           dotnet test MToGo.PartnerService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.PartnerService]*.Models.*%3B[MToGo.PartnerService]*.Entities.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.PartnerService.Tests
 
@@ -770,6 +989,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -779,7 +999,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.PartnerService/Dockerfile
+          push: false
+          tags: mtogo-partner:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-partner.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-partner
+          path: /tmp/mtogo-partner.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -787,7 +1028,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-partner:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-partner:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -823,6 +1064,9 @@ jobs:
           dotnet test MToGo.Website.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.Website]*.Models.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.Website.Tests
 
@@ -855,6 +1099,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -864,7 +1109,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.Website/Dockerfile
+          push: false
+          tags: mtogo-website:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-website.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-website
+          path: /tmp/mtogo-website.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -872,7 +1138,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-website:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-website:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-website:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -908,6 +1174,9 @@ jobs:
           dotnet test MToGo.WebSocketAgentService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.WebSocketAgentService]*.Models.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.WebSocketAgentService.Tests
 
@@ -940,6 +1209,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -949,7 +1219,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.WebSocketAgentService/Dockerfile
+          push: false
+          tags: mtogo-websocketagent:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-websocketagent.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-websocketagent
+          path: /tmp/mtogo-websocketagent.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -957,7 +1248,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketagent:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketagent:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -993,6 +1284,9 @@ jobs:
           dotnet test MToGo.WebSocketCustomerService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.WebSocketCustomerService]*.Models.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.WebSocketCustomerService.Tests
 
@@ -1025,6 +1319,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -1034,7 +1329,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.WebSocketCustomerService/Dockerfile
+          push: false
+          tags: mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-websocketcustomer.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-websocketcustomer
+          path: /tmp/mtogo-websocketcustomer.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -1042,7 +1358,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketcustomer:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketcustomer:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -1078,6 +1394,9 @@ jobs:
           dotnet test MToGo.WebSocketPartnerService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.WebSocketPartnerService]*.Models.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.WebSocketPartnerService.Tests
 
@@ -1110,6 +1429,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -1119,7 +1439,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.WebSocketPartnerService/Dockerfile
+          push: false
+          tags: mtogo-websocketpartner:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-websocketpartner.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-websocketpartner
+          path: /tmp/mtogo-websocketpartner.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -1127,7 +1468,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-websocketpartner:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-websocketpartner:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -1163,6 +1504,9 @@ jobs:
           dotnet test MToGo.ManagementService.Tests.csproj -c Release \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults \
+            -p:CoverletExclude="[MToGo.ManagementService]*.Models.*%3B[MToGo.ManagementService]*.Entities.*%3B[MToGo.ManagementService]*.Exceptions.*" \
+            -p:CoverletThreshold=80 \
+            -p:CoverletThresholdType=line \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         working-directory: MToGo/tests/MToGo.ManagementService.Tests
 
@@ -1195,6 +1539,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -1204,7 +1549,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: MToGo/
+          file: MToGo/src/MToGo.ManagementService/Dockerfile
+          push: false
+          tags: mtogo-management:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-management.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-management
+          path: /tmp/mtogo-management.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: MToGo/
@@ -1212,7 +1578,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-management:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-management:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-management:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -1247,6 +1613,7 @@ jobs:
         run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -1256,7 +1623,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & push Docker image
+      - name: Build Docker image tar (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/build-push-action@v5
+        with:
+          context: LegacyMToGo/
+          file: LegacyMToGo/Dockerfile
+          push: false
+          tags: mtogo-legacy:${{ env.IMAGE_TAG }}
+          outputs: type=docker,dest=/tmp/mtogo-legacy.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload Docker image artifact (PR)
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-mtogo-legacy
+          path: /tmp/mtogo-legacy.tar
+          retention-days: 1
+
+      - name: Build & push Docker image (main)
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: docker/build-push-action@v5
         with:
           context: LegacyMToGo/
@@ -1264,7 +1652,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:${{ env.IMAGE_TAG }}
-            ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && format('ghcr.io/{0}/mtogo-legacy:latest', env.OWNER_LC) || '' }}
+            ghcr.io/${{ env.OWNER_LC }}/mtogo-legacy:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -1281,6 +1669,7 @@ jobs:
       - notification_ci
       - order_ci
       - partner_ci
+      - logcollector_ci
       - website_ci
       - websocketagent_ci
       - websocketcustomer_ci
@@ -1304,6 +1693,7 @@ jobs:
             "notification": "${{ needs.detect_changes.outputs.notification }}",
             "order": "${{ needs.detect_changes.outputs.order }}",
             "partner": "${{ needs.detect_changes.outputs.partner }}",
+            "logcollector": "${{ needs.detect_changes.outputs.logcollector }}",
             "website": "${{ needs.detect_changes.outputs.website }}",
             "websocketagent": "${{ needs.detect_changes.outputs.websocketagent }}",
             "websocketcustomer": "${{ needs.detect_changes.outputs.websocketcustomer }}",
@@ -1320,4 +1710,3 @@ jobs:
           name: build-outputs
           path: build-outputs.json
           retention-days: 1
-

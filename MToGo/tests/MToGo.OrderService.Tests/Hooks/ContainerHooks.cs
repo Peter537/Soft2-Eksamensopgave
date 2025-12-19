@@ -75,3 +75,4 @@ namespace MToGo.OrderService.Tests.Hooks
         }
     }
 }
+

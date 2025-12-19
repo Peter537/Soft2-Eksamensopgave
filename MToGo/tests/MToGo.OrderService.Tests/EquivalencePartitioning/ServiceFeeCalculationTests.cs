@@ -23,8 +23,8 @@ namespace MToGo.OrderService.Tests
         private readonly Mock<IKafkaProducer> _mockKafkaProducer;
         private readonly Mock<IPartnerServiceClient> _mockPartnerClient;
         private readonly Mock<IAgentServiceClient> _mockAgentClient;
-        private readonly Mock<ILogger<Services.OrderService>> _mockLogger;
-        private readonly Services.OrderService _orderService;
+        private readonly Mock<ILogger<OrderService.Services.OrderService>> _mockLogger;
+        private readonly OrderService.Services.OrderService _orderService;
 
         public ServiceFeeCalculationTests()
         {
@@ -32,9 +32,9 @@ namespace MToGo.OrderService.Tests
             _mockKafkaProducer = new Mock<IKafkaProducer>();
             _mockPartnerClient = new Mock<IPartnerServiceClient>();
             _mockAgentClient = new Mock<IAgentServiceClient>();
-            _mockLogger = new Mock<ILogger<Services.OrderService>>();
+            _mockLogger = new Mock<ILogger<OrderService.Services.OrderService>>();
 
-            _orderService = new Services.OrderService(
+            _orderService = new OrderService.Services.OrderService(
                 _mockRepository.Object,
                 _mockKafkaProducer.Object,
                 _mockPartnerClient.Object,
@@ -79,9 +79,8 @@ namespace MToGo.OrderService.Tests
         {
             // Arrange - Value from Partition 2 (100 < x < 1000)
             var orderTotal = 500m;
-            // Formula: rate = 0.06 - (orderTotal - 100) / 900 * 0.03
-            // rate = 0.06 - (500 - 100) / 900 * 0.03 = 0.06 - 400/900 * 0.03 = 0.06 - 0.0133... = 0.0466...
-            var expectedServiceFee = 23.33m; // 500 * 0.04666... ≈ 23.33
+            var expectedRate = 0.06m - (orderTotal - 100m) / 900m * 0.03m;
+            var expectedServiceFee = orderTotal * expectedRate;
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -93,7 +92,7 @@ namespace MToGo.OrderService.Tests
             // Assert
             result.Should().NotBeNull();
             _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.01m // Allow small rounding difference
+                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.000001m
             )), Times.Once);
         }
 
@@ -185,8 +184,8 @@ namespace MToGo.OrderService.Tests
         {
             // Arrange - Just above boundary
             var orderTotal = 101m;
-            // rate = 0.06 - (101 - 100) / 900 * 0.03 = 0.06 - 1/900 * 0.03 ≈ 0.05996666...
-            var expectedServiceFee = 6.06m; // 101 * 0.05996666... ≈ 6.06
+            var expectedRate = 0.06m - (orderTotal - 100m) / 900m * 0.03m;
+            var expectedServiceFee = orderTotal * expectedRate;
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -198,7 +197,7 @@ namespace MToGo.OrderService.Tests
             // Assert
             result.Should().NotBeNull();
             _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.01m
+                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.000001m
             )), Times.Once);
         }
 
@@ -211,8 +210,8 @@ namespace MToGo.OrderService.Tests
         {
             // Arrange - Just below boundary
             var orderTotal = 999m;
-            // rate = 0.06 - (999 - 100) / 900 * 0.03 = 0.06 - 899/900 * 0.03 ≈ 0.030033...
-            var expectedServiceFee = 30.00m; // 999 * 0.030033... ≈ 30.00
+            var expectedRate = 0.06m - (orderTotal - 100m) / 900m * 0.03m;
+            var expectedServiceFee = orderTotal * expectedRate;
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -224,7 +223,7 @@ namespace MToGo.OrderService.Tests
             // Assert
             result.Should().NotBeNull();
             _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.01m
+                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.000001m
             )), Times.Once);
         }
 
@@ -332,3 +331,4 @@ namespace MToGo.OrderService.Tests
         #endregion
     }
 }
+

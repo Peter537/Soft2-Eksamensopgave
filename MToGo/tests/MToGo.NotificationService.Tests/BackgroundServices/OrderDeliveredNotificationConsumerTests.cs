@@ -207,3 +207,4 @@ public class OrderDeliveredNotificationConsumerTests
         Assert.Equal(customerId, request.CustomerId);
     }
 }
+
