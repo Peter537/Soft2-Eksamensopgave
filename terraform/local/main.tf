@@ -61,7 +61,7 @@ provider "helm" {
 module "mtogo_app" {
   source = "../modules/mtogo-app"
 
-  environment             = "dev"
+  environment             = var.environment
   namespace               = "mtogo"
   image_registry          = var.image_registry
   image_tag               = var.image_tag

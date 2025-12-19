@@ -48,6 +48,8 @@ Eksempel på relevante værdier:
 - `image_registry` og `image_tag` (matcher `deploy.ps1 -Build` images: `mtogo/<service>:latest`)
 - Postgres credentials til den lokale in-cluster PostgreSQL
 - `install_ingress` (installer ingress-nginx via Helm)
+- `environment` (default: `dev`)
+- `discord_webhook_url` (valgfri; hvis sat, sender Alertmanager alerts til Discord)
 - Seeded ManagementService admin credentials
 
 Commit aldrig `terraform.tfvars`.
@@ -73,6 +75,17 @@ Ved ingress (default) routes trafikken typisk sådan:
 - Website: `http://localhost/`
 - API: `http://localhost/api/v1/`
 - Legacy API: `http://localhost/legacy`
+
+Monitoring installeres også i clusteren (for at matche de andre startup-modes):
+
+- Grafana (KPI): `http://localhost:3000`
+- Grafana (SLO): `http://localhost:3001`
+- Prometheus: `http://localhost:9090`
+- Alertmanager: `http://localhost:9093`
+
+Hvis `discord_webhook_url` ikke er sat, kører Alertmanager stadig, men sender ikke alerts til Discord.
+
+Bemærk: Den mest opdaterede liste udskrives af `deploy.ps1` via Terraform outputs.
 
 ## Filer
 

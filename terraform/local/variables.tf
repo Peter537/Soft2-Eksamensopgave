@@ -26,6 +26,12 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "environment" {
+  description = "Environment name (e.g., dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
+
 variable "postgres_admin_username" {
   description = "PostgreSQL admin username"
   type        = string
@@ -43,6 +49,45 @@ variable "install_ingress" {
   description = "Whether to install NGINX ingress controller"
   type        = bool
   default     = true
+}
+
+variable "install_monitoring" {
+  description = "Whether to install Prometheus/Alertmanager and two Grafana instances in the local Kubernetes cluster"
+  type        = bool
+  default     = true
+}
+
+variable "discord_webhook_url" {
+  description = "Discord webhook URL for alert notifications (used by local Alertmanager when install_monitoring=true)."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "grafana_kpi_admin_username" {
+  description = "Admin username for KPI Grafana (local Kubernetes)"
+  type        = string
+  default     = "kpi_admin"
+}
+
+variable "grafana_kpi_admin_password" {
+  description = "Admin password for KPI Grafana (local Kubernetes)"
+  type        = string
+  default     = "admin"
+  sensitive   = true
+}
+
+variable "grafana_slo_admin_username" {
+  description = "Admin username for SLO Grafana (local Kubernetes)"
+  type        = string
+  default     = "slo_admin"
+}
+
+variable "grafana_slo_admin_password" {
+  description = "Admin password for SLO Grafana (local Kubernetes)"
+  type        = string
+  default     = "admin"
+  sensitive   = true
 }
 
 variable "management_username" {
