@@ -7,9 +7,19 @@ public class GooglePayPaymentStrategy : IPaymentStrategy
     public string IconClass => "bi-google";
     public string Description => "Pay with Google Pay";
 
-    public Task<PaymentResult> ProcessPaymentAsync(decimal amount, int orderId)
+    public Task<PaymentResult> ProcessPaymentAsync(PaymentRequest request)
     {
-        var transactionId = $"GP-{DateTime.UtcNow:yyyyMMddHHmmss}-{orderId}";
+        if (request.Details is not TokenDetails details)
+        {
+            return Task.FromResult(PaymentResult.Failed("Google Pay token is required"));
+        }
+
+        if (string.IsNullOrWhiteSpace(details.Token) || details.Token.Length < 8)
+        {
+            return Task.FromResult(PaymentResult.Failed("Invalid Google Pay token"));
+        }
+
+        var transactionId = $"GP-{DateTime.UtcNow:yyyyMMddHHmmss}-{request.OrderId}";
         return Task.FromResult(PaymentResult.Successful(transactionId));
     }
 

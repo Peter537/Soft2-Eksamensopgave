@@ -31,7 +31,8 @@ public class PaymentStrategyTests
     public async Task CreditCardPaymentStrategy_ProcessPayment_ReturnsSuccess()
     {
         var strategy = new CreditCardPaymentStrategy();
-        var result = await strategy.ProcessPaymentAsync(100.00m, 1);
+        var request = new PaymentRequest(100.00m, 1, new CreditCardDetails("4111111111111111", "12", "2027", "123"));
+        var result = await strategy.ProcessPaymentAsync(request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.TransactionId);
@@ -68,7 +69,8 @@ public class PaymentStrategyTests
     public async Task PayPalPaymentStrategy_ProcessPayment_ReturnsSuccess()
     {
         var strategy = new PayPalPaymentStrategy();
-        var result = await strategy.ProcessPaymentAsync(50.00m, 2);
+        var request = new PaymentRequest(50.00m, 2, new PayPalDetails("test@example.com"));
+        var result = await strategy.ProcessPaymentAsync(request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.TransactionId);
@@ -104,7 +106,8 @@ public class PaymentStrategyTests
     public async Task MobilePayPaymentStrategy_ProcessPayment_ReturnsSuccess()
     {
         var strategy = new MobilePayPaymentStrategy();
-        var result = await strategy.ProcessPaymentAsync(75.50m, 3);
+        var request = new PaymentRequest(75.50m, 3, new TokenDetails("test-token"));
+        var result = await strategy.ProcessPaymentAsync(request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.TransactionId);
@@ -140,7 +143,8 @@ public class PaymentStrategyTests
     public async Task ApplePayPaymentStrategy_ProcessPayment_ReturnsSuccess()
     {
         var strategy = new ApplePayPaymentStrategy();
-        var result = await strategy.ProcessPaymentAsync(200.00m, 4);
+        var request = new PaymentRequest(200.00m, 4, new TokenDetails("apple-token"));
+        var result = await strategy.ProcessPaymentAsync(request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.TransactionId);
@@ -176,7 +180,8 @@ public class PaymentStrategyTests
     public async Task GooglePayPaymentStrategy_ProcessPayment_ReturnsSuccess()
     {
         var strategy = new GooglePayPaymentStrategy();
-        var result = await strategy.ProcessPaymentAsync(150.00m, 5);
+        var request = new PaymentRequest(150.00m, 5, new TokenDetails("google-token"));
+        var result = await strategy.ProcessPaymentAsync(request);
 
         Assert.True(result.Success);
         Assert.NotNull(result.TransactionId);

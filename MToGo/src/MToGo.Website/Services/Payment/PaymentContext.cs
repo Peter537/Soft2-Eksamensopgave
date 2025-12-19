@@ -3,7 +3,6 @@ namespace MToGo.Website.Services.Payment;
 public class PaymentContext
 {
     private readonly Dictionary<string, IPaymentStrategy> _strategies;
-    private IPaymentStrategy? _currentStrategy;
 
     public PaymentContext(IEnumerable<IPaymentStrategy> strategies)
     {
@@ -20,30 +19,24 @@ public class PaymentContext
         return _strategies.TryGetValue(paymentMethodId, out var strategy) ? strategy : null;
     }
 
-    public bool SetStrategy(string paymentMethodId)
+    public Task<PaymentResult> ProcessPaymentAsync(string paymentMethodId, PaymentRequest request)
     {
-        if (_strategies.TryGetValue(paymentMethodId, out var strategy))
+        if (request.Amount <= 0)
         {
-            _currentStrategy = strategy;
-            return true;
-        }
-        return false;
-    }
-
-    public IPaymentStrategy? CurrentStrategy => _currentStrategy;
-
-    public async Task<PaymentResult> ProcessPaymentAsync(decimal amount, int orderId)
-    {
-        if (_currentStrategy == null)
-        {
-            return PaymentResult.Failed("No payment method selected");
+            return Task.FromResult(PaymentResult.Failed("Amount must be greater than zero"));
         }
 
-        if (!_currentStrategy.IsAvailable())
+        var strategy = GetStrategy(paymentMethodId);
+        if (strategy == null)
         {
-            return PaymentResult.Failed($"Payment method '{_currentStrategy.DisplayName}' is not available");
+            return Task.FromResult(PaymentResult.Failed("Unknown payment method"));
         }
 
-        return await _currentStrategy.ProcessPaymentAsync(amount, orderId);
+        if (!strategy.IsAvailable())
+        {
+            return Task.FromResult(PaymentResult.Failed($"Payment method '{strategy.DisplayName}' is not available"));
+        }
+
+        return strategy.ProcessPaymentAsync(request);
     }
 }
