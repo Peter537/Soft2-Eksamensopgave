@@ -423,6 +423,9 @@ FodyWeavers.xsd
 *.tfstate
 *.tfstate.*
 
+# Terraform generated schema dumps (local tooling)
+terraform/**/_schema*
+
 # Crash log files
 crash.log
 crash.*.log
