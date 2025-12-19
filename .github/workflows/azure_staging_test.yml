@@ -55,13 +55,26 @@ jobs:
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
+      - name: Configure Terraform remote state backend (Azure Storage)
+        run: |
+          cat > backend.tf <<'EOF'
+          terraform {
+            backend "azurerm" {}
+          }
+          EOF
+
       - name: Terraform Init
         env:
           ARM_USE_OIDC: "true"
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: terraform init -input=false
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
+            -backend-config="key=mtogo.staging.tfstate"
 
       - name: Terraform Validate
         run: terraform validate
@@ -83,6 +96,7 @@ jobs:
           TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+          TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
         shell: bash
         run: |
           set -euo pipefail
@@ -126,6 +140,18 @@ jobs:
             echo "Terraform apply failed after $max_attempts attempts."
             exit 1
           fi
+
+      - name: Provision Azure Managed Grafana (dashboards + alerting)
+        shell: pwsh
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          az extension add --name amg --upgrade --yes | Out-Null
+          $rg = terraform output -raw resource_group_name
+          $kpi = terraform output -raw kpi_grafana_name
+          $slo = terraform output -raw slo_grafana_name
+          $prom = terraform output -raw prometheus_query_endpoint
+          ./provision_grafana.ps1 -ResourceGroupName $rg -KpiGrafanaName $kpi -SloGrafanaName $slo -PrometheusQueryEndpoint $prom
 
       - name: Get Terraform Outputs
         id: tf_outputs
@@ -320,7 +346,18 @@ jobs:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: terraform init -input=false
+        run: |
+          cat > backend.tf <<'EOF'
+          terraform {
+            backend "azurerm" {}
+          }
+          EOF
+
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
+            -backend-config="key=mtogo.staging.tfstate"
 
       - name: Terraform Destroy (staging)
         env:
