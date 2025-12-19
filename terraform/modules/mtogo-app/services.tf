@@ -22,7 +22,7 @@ locals {
   }
 
   # Wait for infrastructure if deployed locally
-  depends_on_infra = var.deploy_kafka ? [kubernetes_deployment.kafka[0]] : []
+  depends_on_infra = var.deploy_kafka ? [for d in [try(kubernetes_deployment.kafka[0], null)] : d if d != null] : []
 }
 
 # ===========================================
@@ -218,6 +218,12 @@ resource "kubernetes_deployment" "services" {
   for_each = local.services
 
   wait_for_rollout = each.key == "log-collector-service" ? false : true
+
+  timeouts {
+    create = "20m"
+    update = "20m"
+    delete = "20m"
+  }
 
   metadata {
     name      = each.key

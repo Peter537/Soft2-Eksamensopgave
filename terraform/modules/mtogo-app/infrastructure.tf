@@ -195,6 +195,12 @@ resource "kubernetes_service" "postgres" {
 resource "kubernetes_deployment" "kafka" {
   count = var.deploy_kafka ? 1 : 0
 
+  timeouts {
+    create = "20m"
+    update = "20m"
+    delete = "20m"
+  }
+
   metadata {
     name      = "kafka"
     namespace = kubernetes_namespace.mtogo.metadata[0].name

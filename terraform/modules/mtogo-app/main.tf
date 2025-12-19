@@ -60,9 +60,28 @@ resource "helm_release" "nginx_ingress" {
   create_namespace = true
   version          = "4.10.0"
 
+  # AKS can be slow to schedule the chart's pre-install hook jobs on first boot.
+  timeout = 900
+
+  # Be explicit: wait for resources (and hook jobs) to complete.
+  wait          = true
+  wait_for_jobs = true
+
   set {
     name  = "controller.service.type"
     value = "LoadBalancer"
+  }
+
+  # Avoid transient failures where the validating admission webhook exists but has no endpoints yet,
+  # which can block creating our app Ingress during initial cluster boot.
+  set {
+    name  = "controller.admissionWebhooks.enabled"
+    value = "false"
+  }
+
+  set {
+    name  = "controller.admissionWebhooks.patch.enabled"
+    value = "false"
   }
 }
 
