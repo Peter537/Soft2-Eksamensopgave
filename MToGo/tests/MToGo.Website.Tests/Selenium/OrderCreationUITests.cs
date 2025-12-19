@@ -40,6 +40,12 @@ namespace MToGo.Website.Tests.Selenium
 
         public OrderCreationUITests()
         {
+            // Skip test setup if UI tests are not enabled
+            if (!ShouldRunUITests)
+            {
+                throw new Xunit.SkipException("Set RUN_UI_TESTS=true to run UI tests");
+            }
+
             var options = new ChromeOptions();
             options.AddArgument("--headless"); 
             options.AddArgument("--no-sandbox");
@@ -66,7 +72,6 @@ namespace MToGo.Website.Tests.Selenium
         [SkippableFact]
         public void CompleteOrderFlow_CustomerCanBrowseMenuAndPlaceOrder()
         {
-            Skip.IfNot(ShouldRunUITests, "Set RUN_UI_TESTS=true to run");
             EnsureAuthenticatedCustomer();
             
             // Act - Navigate directly to a known partner menu (from seeded data)
@@ -129,7 +134,6 @@ namespace MToGo.Website.Tests.Selenium
         [SkippableFact]
         public void OrderCreation_QuantityControls_WorkCorrectly()
         {
-            Skip.IfNot(ShouldRunUITests, "Set RUN_UI_TESTS=true to run");
             // Arrange - Setup: Login and navigate to order page with an item
             SetupOrderPageWithItem();
             
@@ -174,7 +178,6 @@ namespace MToGo.Website.Tests.Selenium
         [SkippableFact]
         public void OrderCreation_WithoutRequiredFields_ShowsValidation()
         {
-            Skip.IfNot(ShouldRunUITests, "Set RUN_UI_TESTS=true to run");
             // Arrange - Setup: Login and navigate to order page with an item
             SetupOrderPageWithItem();
             
@@ -204,7 +207,6 @@ namespace MToGo.Website.Tests.Selenium
         [SkippableFact]
         public void OrderCreation_WithoutAuthentication_RedirectsToLogin()
         {
-            Skip.IfNot(ShouldRunUITests, "Set RUN_UI_TESTS=true to run");
             // Act - Try to access order creation page without login
             _driver.Navigate().GoToUrl($"{_baseUrl}/order/create?partnerId=1&itemId=1");
             
