@@ -6,7 +6,7 @@ public interface IPaymentStrategy
     string DisplayName { get; }
     string IconClass { get; }
     string Description { get; }
-    Task<PaymentResult> ProcessPaymentAsync(decimal amount, int orderId);
+    Task<PaymentResult> ProcessPaymentAsync(PaymentRequest request);
     bool IsAvailable();
 }
  

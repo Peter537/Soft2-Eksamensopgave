@@ -50,7 +50,7 @@ The second mutation testing run after fixing the issues produced the following r
 The final mutation testing report `mutation-report.html`, shows that all mutants were killed:
 ![img](./mutation-res/order-service-overview2.png)
 
-The previous examples of surviving mutants are now killed:
+The previous examples of surviving mutants are now killed:  
 ![img](./mutation-res/surviving-mutant-example1-fix.png)
 
 ![img](./mutation-res/surviving-mutant-example2-fix.png)
