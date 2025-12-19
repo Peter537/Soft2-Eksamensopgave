@@ -2,6 +2,7 @@ using MToGo.OrderService.Entities;
 using MToGo.OrderService.Metrics;
 using MToGo.OrderService.Repositories;
 using MToGo.OrderService.Services;
+using MToGo.OrderService.Middleware;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Logging;
 using MToGo.Shared.Metrics;
@@ -32,11 +33,13 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<IPartnerServiceClient, PartnerServiceClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? "http://localhost:8080");
+    client.Timeout = TimeSpan.FromSeconds(5);
 });
 
 builder.Services.AddHttpClient<IAgentServiceClient, AgentServiceClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Gateway:BaseUrl"] ?? "http://localhost:8080");
+    client.Timeout = TimeSpan.FromSeconds(5);
 });
 
 builder.Services.Configure<KafkaProducerConfig>(builder.Configuration.GetSection("Kafka"));
@@ -57,6 +60,9 @@ if (app.Environment.IsDevelopment())
 
 // Add HTTP metrics middleware
 app.UseMToGoHttpMetrics();
+
+// Ensure API returns fast, meaningful errors for dependency failures
+app.UseMiddleware<ApiExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
