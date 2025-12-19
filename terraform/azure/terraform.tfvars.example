@@ -5,22 +5,22 @@
 # NEVER commit terraform.tfvars to version control!
 
 # Azure region
-location = "West Europe"
+location = "North Europe"
 
 # Environment (dev, staging, prod)
-environment = "prod"
+environment = "dev"
 
 # Project name (used in resource names)
 project_name = "mtogo"
 
 # Kubernetes version
-kubernetes_version = "1.29"
+kubernetes_version = null
 
 # Node pool configuration
-node_count         = 2              # Min nodes (or fixed count if auto-scaling disabled)
-node_count_max     = 5              # Max nodes when auto-scaling
+node_count         = 1              # Min nodes (or fixed count if auto-scaling disabled)
+node_count_max     = 3              # Max nodes when auto-scaling
 enable_auto_scaling = true          # Enable/disable cluster auto-scaling
-node_vm_size       = "Standard_B2s"
+node_vm_size       = "Standard_B2s_v2"
 
 # PostgreSQL credentials
 postgres_admin_username = "mtogoadmin"
@@ -30,7 +30,7 @@ postgres_admin_password = "CHANGE_ME_TO_A_STRONG_PASSWORD"
 # Create a Personal Access Token (PAT) with read:packages scope
 github_repository_owner = "your-github-username"
 ghcr_username          = "your-github-username"
-ghcr_token             = "ghp_your_personal_access_token"
+ghcr_token             = "CHANGE_ME_GHCR_TOKEN"
 
 # Docker image tag (usually the commit SHA)
 image_tag = "latest"
@@ -39,3 +39,27 @@ image_tag = "latest"
 management_username = "admin"
 management_password = "CHANGE_ME_TO_A_STRONG_PASSWORD"
 management_name     = "Management Admin"
+
+# ===========================================
+# Azure Managed Grafana access (Entra ID)
+# ===========================================
+# NOTE: Azure Managed Grafana does NOT use a local admin username/password.
+# You sign in with Entra ID, and access is controlled by Azure RBAC.
+#
+# "Two different logins" is modeled as two different Entra ID user/group sets:
+# - SLO Grafana: ops/consultancy running the site (Admin)
+# - KPI Grafana: business analysts (Viewer by default; Editor optional)
+#
+# Use Entra ID *object IDs* (users or groups), e.g.:
+# ["00000000-0000-0000-0000-000000000000"]
+
+grafana_slo_admin_principal_ids  = []
+grafana_kpi_viewer_principal_ids = []
+grafana_kpi_editor_principal_ids = []
+
+# ===========================================
+# KPI Alerting (Discord)
+# ===========================================
+# Used by terraform/deploy.ps1 to provision KPI Grafana alert notifications.
+# Example: "https://discord.com/api/webhooks/<id>/<token>"
+discord_webhook_url = ""

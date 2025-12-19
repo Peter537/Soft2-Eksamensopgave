@@ -106,3 +106,34 @@ variable "use_aks_kubeconfig" {
   type        = bool
   default     = true
 }
+
+variable "grafana_slo_admin_principal_ids" {
+  description = "Entra ID (Azure AD) object IDs (users or groups) that should have Grafana Admin on the SLO Grafana instance (ops/consultancy running the site)."
+  type        = list(string)
+  default     = []
+}
+
+variable "grafana_kpi_viewer_principal_ids" {
+  description = "Entra ID (Azure AD) object IDs (users or groups) that should have Grafana Viewer on the KPI Grafana instance (business analysts)."
+  type        = list(string)
+  default     = []
+}
+
+variable "grafana_kpi_editor_principal_ids" {
+  description = "Entra ID (Azure AD) object IDs (users or groups) that should have Grafana Editor on the KPI Grafana instance (optional: allow KPI dashboard editing)."
+  type        = list(string)
+  default     = []
+}
+
+variable "grafana_kpi_admin_principal_ids" {
+  description = "Entra ID (Azure AD) object IDs (users or groups) that should have Grafana Admin on the KPI Grafana instance (needed for provisioning tasks like creating data sources). If empty, Terraform will fall back to grafana_slo_admin_principal_ids."
+  type        = list(string)
+  default     = []
+}
+
+variable "discord_webhook_url" {
+  description = "Discord webhook URL for KPI alert notifications (used by terraform/deploy.ps1 to provision Azure Managed Grafana alerting)."
+  type        = string
+  default     = null
+  sensitive   = true
+}

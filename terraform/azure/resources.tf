@@ -28,10 +28,17 @@ resource "azurerm_kubernetes_cluster" "main" {
   dns_prefix          = "${var.project_name}-${var.environment}-${local.location_slug}"
   kubernetes_version  = var.kubernetes_version
 
+  # Azure Monitor (Managed Prometheus)
+  # Exposes Prometheus metrics in Azure Monitor Workspace.
+  monitor_metrics {
+    annotations_allowed = null
+    labels_allowed      = null
+  }
+
   default_node_pool {
-    name                = "default"
-    vm_size             = var.node_vm_size
-    enable_auto_scaling = var.enable_auto_scaling
+    name                 = "default"
+    vm_size              = var.node_vm_size
+    auto_scaling_enabled = var.enable_auto_scaling
 
     # Node count settings
     node_count = var.enable_auto_scaling ? null : var.node_count
@@ -57,6 +64,136 @@ resource "azurerm_kubernetes_cluster" "main" {
     Project     = var.project_name
     ManagedBy   = "terraform"
   }
+}
+
+# ===========================================
+# Azure Monitor Workspace (Managed Prometheus storage)
+# ===========================================
+
+resource "azurerm_monitor_workspace" "slo" {
+  name                = "amw-${var.project_name}-${var.environment}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = azurerm_resource_group.main.location
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+    Purpose     = "slo-monitoring"
+  }
+}
+
+# ===========================================
+# Azure Managed Grafana (Separate SLO instance)
+# ===========================================
+
+resource "azurerm_dashboard_grafana" "slo" {
+  name                  = "grafana-slo-${var.project_name}-${var.environment}"
+  resource_group_name   = azurerm_resource_group.main.name
+  location              = azurerm_resource_group.main.location
+  grafana_major_version = 11
+
+  # Keep it reachable for demos/assessment.
+  public_network_access_enabled = true
+  api_key_enabled               = true
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+    Purpose     = "slo-visualization"
+  }
+}
+
+# ===========================================
+# Azure Managed Grafana (Separate KPI instance)
+# ===========================================
+
+resource "azurerm_dashboard_grafana" "kpi" {
+  name                  = "grafana-kpi-${var.project_name}-${var.environment}"
+  resource_group_name   = azurerm_resource_group.main.name
+  location              = azurerm_resource_group.main.location
+  grafana_major_version = 11
+
+  # Keep it reachable for demos/assessment.
+  public_network_access_enabled = true
+  api_key_enabled               = true
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+    Purpose     = "kpi-visualization"
+  }
+}
+
+# ===========================================
+# Azure Monitor Workspace RBAC for Grafana MSI
+# ===========================================
+# We create the Prometheus data source via deploy.ps1 using Grafana's system-assigned
+# managed identity (MSI). Without the built-in workspace integration, we must grant
+# the MSI rights to query the Azure Monitor Workspace.
+
+resource "azurerm_role_assignment" "grafana_slo_amw_monitoring_data_reader" {
+  scope                = azurerm_monitor_workspace.slo.id
+  role_definition_name = "Monitoring Data Reader"
+  principal_id         = azurerm_dashboard_grafana.slo.identity[0].principal_id
+}
+
+resource "azurerm_role_assignment" "grafana_kpi_amw_monitoring_data_reader" {
+  scope                = azurerm_monitor_workspace.slo.id
+  role_definition_name = "Monitoring Data Reader"
+  principal_id         = azurerm_dashboard_grafana.kpi.identity[0].principal_id
+}
+
+# ===========================================
+# Azure Managed Grafana RBAC (separate audiences)
+# ===========================================
+# Azure Managed Grafana uses Entra ID sign-in. “Two different logins” here means
+# assigning different Entra ID users/groups to the KPI vs SLO Grafana instances.
+
+resource "azurerm_role_assignment" "grafana_slo_admin" {
+  for_each = toset(var.grafana_slo_admin_principal_ids)
+
+  scope                = azurerm_dashboard_grafana.slo.id
+  role_definition_name = "Grafana Admin"
+  principal_id         = each.value
+}
+
+locals {
+  grafana_kpi_admin_principal_ids_effective = length(var.grafana_kpi_admin_principal_ids) > 0 ? var.grafana_kpi_admin_principal_ids : var.grafana_slo_admin_principal_ids
+}
+
+resource "azurerm_role_assignment" "grafana_kpi_admin" {
+  for_each = toset(local.grafana_kpi_admin_principal_ids_effective)
+
+  scope                = azurerm_dashboard_grafana.kpi.id
+  role_definition_name = "Grafana Admin"
+  principal_id         = each.value
+}
+
+resource "azurerm_role_assignment" "grafana_kpi_viewer" {
+  for_each = toset(var.grafana_kpi_viewer_principal_ids)
+
+  scope                = azurerm_dashboard_grafana.kpi.id
+  role_definition_name = "Grafana Viewer"
+  principal_id         = each.value
+}
+
+resource "azurerm_role_assignment" "grafana_kpi_editor" {
+  for_each = toset(var.grafana_kpi_editor_principal_ids)
+
+  scope                = azurerm_dashboard_grafana.kpi.id
+  role_definition_name = "Grafana Editor"
+  principal_id         = each.value
 }
 
 # ===========================================

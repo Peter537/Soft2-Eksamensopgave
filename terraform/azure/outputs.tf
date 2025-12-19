@@ -33,6 +33,51 @@ output "postgres_admin_username" {
   value       = var.postgres_admin_username
 }
 
+output "azure_monitor_workspace_id" {
+  description = "Azure Monitor Workspace resource id (Managed Prometheus)"
+  value       = azurerm_monitor_workspace.slo.id
+}
+
+output "azure_monitor_workspace_query_endpoint" {
+  description = "Azure Monitor Workspace query endpoint"
+  value       = azurerm_monitor_workspace.slo.query_endpoint
+}
+
+output "slo_grafana_endpoint" {
+  description = "Azure Managed Grafana endpoint (SLO instance)"
+  value       = azurerm_dashboard_grafana.slo.endpoint
+}
+
+output "slo_grafana_name" {
+  description = "Azure Managed Grafana name (SLO instance)"
+  value       = azurerm_dashboard_grafana.slo.name
+}
+
+output "slo_grafana_id" {
+  description = "Azure Managed Grafana resource id (SLO instance)"
+  value       = azurerm_dashboard_grafana.slo.id
+}
+
+output "kpi_grafana_endpoint" {
+  description = "Azure Managed Grafana endpoint (KPI instance)"
+  value       = azurerm_dashboard_grafana.kpi.endpoint
+}
+
+output "kpi_grafana_name" {
+  description = "Azure Managed Grafana name (KPI instance)"
+  value       = azurerm_dashboard_grafana.kpi.name
+}
+
+output "kpi_grafana_id" {
+  description = "Azure Managed Grafana resource id (KPI instance)"
+  value       = azurerm_dashboard_grafana.kpi.id
+}
+
+output "prometheus_query_endpoint" {
+  description = "Prometheus-compatible query endpoint (Azure Monitor Workspace / Managed Prometheus)"
+  value       = azurerm_monitor_workspace.slo.query_endpoint
+}
+
 # Get ingress IP from the nginx service
 data "kubernetes_service" "nginx_ingress" {
   count = var.use_aks_kubeconfig ? 1 : 0
@@ -63,6 +108,19 @@ output "api_url" {
 output "legacy_api_url" {
   description = "URL for the legacy API"
   value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/legacy"
+}
+
+output "endpoints" {
+  description = "Primary endpoints for the Azure deployment"
+  value = {
+    website     = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/"
+    api         = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/api/v1"
+    legacy_api  = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/legacy"
+    grafana_kpi = azurerm_dashboard_grafana.kpi.endpoint
+    grafana_slo = azurerm_dashboard_grafana.slo.endpoint
+    alerting    = azurerm_dashboard_grafana.kpi.endpoint
+    prometheus  = azurerm_monitor_workspace.slo.query_endpoint
+  }
 }
 
 # Instructions for connecting to the cluster

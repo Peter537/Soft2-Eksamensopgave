@@ -17,7 +17,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
@@ -47,9 +47,9 @@ provider "azurerm" {
 }
 
 locals {
-  kube_host = var.use_aks_kubeconfig ? azurerm_kubernetes_cluster.main.kube_config[0].host : "https://localhost"
-  kube_client_certificate = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate) : ""
-  kube_client_key = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key) : ""
+  kube_host                   = var.use_aks_kubeconfig ? azurerm_kubernetes_cluster.main.kube_config[0].host : "https://localhost"
+  kube_client_certificate     = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_certificate) : ""
+  kube_client_key             = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].client_key) : ""
   kube_cluster_ca_certificate = var.use_aks_kubeconfig ? base64decode(azurerm_kubernetes_cluster.main.kube_config[0].cluster_ca_certificate) : ""
 }
 
