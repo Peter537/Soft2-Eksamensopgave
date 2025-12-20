@@ -1,0 +1,44 @@
+# ===========================================
+# Example Terraform Variables File (Local)
+# ===========================================
+# Copy this file to terraform.tfvars if you need to customize
+
+# Kubernetes configuration
+# kubeconfig_path    = "~/.kube/config"
+# kubeconfig_context = "docker-desktop"  # or "minikube"
+
+# Image configuration (for local images built with build-images.ps1)
+image_registry = "mtogo"
+image_tag      = "latest"
+
+# Environment (dev, staging, prod)
+environment = "dev"
+
+# Database credentials
+postgres_admin_username = "mtogo"
+postgres_admin_password = "CHANGE_ME_POSTGRES_PASSWORD"
+
+# Install NGINX ingress controller
+install_ingress = true
+
+# Install Prometheus + Alertmanager + two Grafana instances (KPI+SLO)
+install_monitoring = true
+
+# Discord webhook URL for alert notifications (optional)
+# Example: "https://discord.com/api/webhooks/<id>/<token>"
+discord_webhook_url = ""
+
+# Grafana (local Kubernetes) admin credentials
+# Use different credentials for the two Grafana instances:
+# - KPI Grafana: http://localhost:3000
+# - SLO Grafana: http://localhost:3001
+grafana_kpi_admin_username = "kpi_admin"
+grafana_kpi_admin_password = "CHANGE_ME_KPI"
+
+grafana_slo_admin_username = "slo_admin"
+grafana_slo_admin_password = "CHANGE_ME_SLO"
+
+# ManagementService seeded admin credentials
+management_username = "admin"
+management_password = "CHANGE_ME_MANAGEMENT_PASSWORD"
+management_name     = "Management Admin"

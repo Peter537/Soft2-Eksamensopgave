@@ -114,3 +114,4 @@ monitoring:
   - changed-files:
       - any-glob-to-any-file:
           - monitoring/**
+          - monitoring-infrastructure/**

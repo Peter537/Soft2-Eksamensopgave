@@ -342,6 +342,8 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 **/__pycache__/
 *.pyc
+# Python virtual environment
+venv311/
 
 # Cake - Uncomment if you are using it
 #tools/**
@@ -416,3 +418,36 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Terraform generated schema dumps (local tooling)
+terraform/**/_schema*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Terraform variable files (contain sensitive data)
+terraform.tfvars
+*.auto.tfvars
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration
+.terraformrc
+terraform.rc
+
+# Terraform directories
+.terraform/
+.terraform.lock.hcl
+
+# Plan files
+*.tfplan
+tfplan

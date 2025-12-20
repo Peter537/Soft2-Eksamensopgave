@@ -1,9 +1,11 @@
 using MToGo.OrderService.Entities;
+using MToGo.OrderService.Metrics;
 using MToGo.OrderService.Models;
 using MToGo.OrderService.Repositories;
 using MToGo.Shared.Kafka;
 using MToGo.Shared.Kafka.Events;
 using MToGo.Shared.Logging;
+using System.Diagnostics;
 
 namespace MToGo.OrderService.Services
 {
@@ -98,63 +100,75 @@ namespace MToGo.OrderService.Services
         /// </summary>
         public async Task<OrderCreateResponse> CreateOrderAsync(OrderCreateRequest request)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogInformation("Creating order for CustomerId: {CustomerId}, PartnerId: {PartnerId}", request.CustomerId, request.PartnerId);
 
-            // Calculate order total
-            decimal orderTotal = request.Items.Sum(item => item.Quantity * item.UnitPrice);
-            _logger.LogDebug("Calculated order total: {OrderTotal} DKK for {ItemCount} items", orderTotal, request.Items.Count);
-
-            // Calculate service fee: 6% for <=100 DKK, 3% for >=1000 DKK, sliding in between
-            decimal serviceFee = CalculateServiceFee(orderTotal);
-
-            // Create order entity
-            var order = new Order
+            try
             {
-                CustomerId = request.CustomerId,
-                PartnerId = request.PartnerId,
-                DeliveryAddress = request.DeliveryAddress,
-                DeliveryFee = request.DeliveryFee,
-                ServiceFee = serviceFee,
-                TotalAmount = orderTotal + serviceFee + request.DeliveryFee,
-                Distance = request.Distance,
-                Items = request.Items.Select(i => new OrderItem
+                // Calculate order total
+                decimal orderTotal = request.Items.Sum(item => item.Quantity * item.UnitPrice);
+                _logger.LogDebug("Calculated order total: {OrderTotal} DKK for {ItemCount} items", orderTotal, request.Items.Count);
+
+                // Calculate service fee: 6% for <=100 DKK, 3% for >=1000 DKK, sliding in between
+                decimal serviceFee = CalculateServiceFee(orderTotal);
+
+                // Create order entity
+                var order = new Order
                 {
-                    FoodItemId = i.FoodItemId,
-                    Name = i.Name,
-                    Quantity = i.Quantity,
-                    UnitPrice = i.UnitPrice
-                }).ToList()
-            };
+                    CustomerId = request.CustomerId,
+                    PartnerId = request.PartnerId,
+                    DeliveryAddress = request.DeliveryAddress,
+                    DeliveryFee = request.DeliveryFee,
+                    ServiceFee = serviceFee,
+                    TotalAmount = orderTotal + serviceFee + request.DeliveryFee,
+                    Distance = request.Distance,
+                    Items = request.Items.Select(i => new OrderItem
+                    {
+                        FoodItemId = i.FoodItemId,
+                        Name = i.Name,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice
+                    }).ToList()
+                };
 
-            var createdOrder = await _orderRepository.CreateOrderAsync(order);
+                var createdOrder = await _orderRepository.CreateOrderAsync(order);
 
-            _logger.LogAuditInformation(
-                action: "OrderCreated",
-                resource: "Order",
-                resourceId: createdOrder.Id.ToString(),
-                userId: createdOrder.CustomerId,
-                userRole: "Customer",
-                message: "Order created: OrderId={OrderId}, CustomerId={CustomerId}, PartnerId={PartnerId}, TotalAmount={TotalAmount} DKK",
-                args: new object[] { createdOrder.Id, createdOrder.CustomerId, createdOrder.PartnerId, createdOrder.TotalAmount });
+                _logger.LogAuditInformation(
+                    action: "OrderCreated",
+                    resource: "Order",
+                    resourceId: createdOrder.Id.ToString(),
+                    userId: createdOrder.CustomerId,
+                    userRole: "Customer",
+                    message: "Order created: OrderId={OrderId}, CustomerId={CustomerId}, PartnerId={PartnerId}, TotalAmount={TotalAmount} DKK",
+                    args: new object[] { createdOrder.Id, createdOrder.CustomerId, createdOrder.PartnerId, createdOrder.TotalAmount });
 
-            // Publish OrderCreatedEvent
-            var orderEvent = new OrderCreatedEvent
+                // Publish OrderCreatedEvent
+                var orderEvent = new OrderCreatedEvent
+                {
+                    OrderId = createdOrder.Id,
+                    PartnerId = request.PartnerId,
+                    OrderCreatedTime = createdOrder.CreatedAt.ToString("O"),
+                    Distance = createdOrder.Distance,
+                    Items = request.Items.Select(i => new OrderCreatedEvent.OrderCreatedItem
+                    {
+                        Name = i.Name,
+                        Quantity = i.Quantity
+                    }).ToList()
+                };
+
+                await _kafkaProducer.PublishAsync(KafkaTopics.OrderCreated, createdOrder.Id.ToString(), orderEvent);
+                _logger.LogDebug("Published OrderCreatedEvent to Kafka for OrderId: {OrderId}", createdOrder.Id);
+
+                stopwatch.Stop();
+                OrderSloMetrics.RecordCreateOrderSuccess(stopwatch.Elapsed.TotalSeconds);
+
+                return new OrderCreateResponse { Id = createdOrder.Id };
+            }
+            catch
             {
-                OrderId = createdOrder.Id,
-                PartnerId = request.PartnerId,
-                OrderCreatedTime = createdOrder.CreatedAt.ToString("O"),
-                Distance = createdOrder.Distance,
-                Items = request.Items.Select(i => new OrderCreatedEvent.OrderCreatedItem
-                {
-                    Name = i.Name,
-                    Quantity = i.Quantity
-                }).ToList()
-            };
-
-            await _kafkaProducer.PublishAsync(KafkaTopics.OrderCreated, createdOrder.Id.ToString(), orderEvent);
-            _logger.LogDebug("Published OrderCreatedEvent to Kafka for OrderId: {OrderId}", createdOrder.Id);
-
-            return new OrderCreateResponse { Id = createdOrder.Id };
+                OrderSloMetrics.RecordCreateOrderError();
+                throw;
+            }
         }
 
         /// <summary>

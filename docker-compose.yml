@@ -18,6 +18,7 @@
 #   - Legacy API:  http://localhost:8082
 #   - Prometheus:  http://localhost:9090
 #   - Grafana:     http://localhost:3000
+#   - Grafana (SLO): http://localhost:3001
 #   - Alertmanager: http://localhost:9093
 
 services:
@@ -436,6 +437,37 @@ services:
     networks:
       - mtogo-network
 
+  grafana-slo:
+    image: grafana/grafana:12.1
+    container_name: mtogo-grafana-slo
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring-infrastructure/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring-infrastructure/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring-infrastructure/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_slo_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mtogo-network
+
 # ===========================================
 # Networks and Volumes
 # ===========================================
@@ -452,6 +484,8 @@ volumes:
   alertmanager_data:
     driver: local
   grafana_data:
+    driver: local
+  grafana_slo_data:
     driver: local
   log_collector_data:
     driver: local

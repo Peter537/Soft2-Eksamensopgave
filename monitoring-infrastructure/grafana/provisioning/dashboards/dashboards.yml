@@ -1,0 +1,15 @@
+# Grafana Dashboard Provisioning (SLO)
+
+apiVersion: 1
+
+providers:
+  - name: "MToGo SLO Dashboards"
+    orgId: 1
+    folder: "MToGo - SLO"
+    folderUid: mtogo-slo
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

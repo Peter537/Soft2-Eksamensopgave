@@ -1,0 +1,318 @@
+# ===========================================
+# Azure Infrastructure Deploy Workflow
+# ===========================================
+# This workflow deploys the MToGo platform to Azure Kubernetes Service.
+# It can be triggered manually or after successful CI builds on main.
+#
+# Prerequisites:
+#   1. Azure Service Principal with Contributor access
+#   2. GitHub secrets configured (see documentation)
+
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        default: "prod"
+        type: choice
+        options:
+          - dev
+          - prod
+          - staging
+      image_tag:
+        description: "Docker image tag to deploy (leave empty for latest main)"
+        required: false
+        default: ""
+      node_count:
+        description: "Number of AKS nodes"
+        required: false
+        default: "2"
+      action:
+        description: "Terraform action"
+        required: true
+        default: "apply"
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TERRAFORM_VERSION: "1.6.0"
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  # ===========================================
+  # Determine Image Tag
+  # ===========================================
+  prepare:
+    name: Prepare deployment
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.get_tag.outputs.tag }}
+      environment: ${{ github.event.inputs.environment || 'prod' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine image tag
+        id: get_tag
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display deployment info
+        run: |
+          echo "============================================"
+          echo "Deployment Information"
+          echo "============================================"
+          echo "Environment: ${{ github.event.inputs.environment || 'prod' }}"
+          echo "Image Tag: ${{ steps.get_tag.outputs.tag }}"
+          echo "Action: ${{ github.event.inputs.action || 'apply' }}"
+          echo "Node Count: ${{ github.event.inputs.node_count || '2' }}"
+          echo "============================================"
+
+  # ===========================================
+  # Terraform Plan/Apply
+  # ===========================================
+  terraform:
+    name: Terraform ${{ github.event.inputs.action || 'apply' }}
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prepare.outputs.environment }}
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    outputs:
+      resource_group_name: ${{ steps.tf_outputs.outputs.resource_group_name }}
+      aks_cluster_name: ${{ steps.tf_outputs.outputs.aks_cluster_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure Terraform remote state backend (Azure Storage)
+        run: |
+          cat > backend.tf <<'EOF'
+          terraform {
+            backend "azurerm" {}
+          }
+          EOF
+
+      - name: Terraform Init
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
+            -backend-config="key=mtogo.${{ needs.prepare.outputs.environment }}.tfstate"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: ${{ needs.prepare.outputs.environment }}
+          TF_VAR_image_tag: ${{ needs.prepare.outputs.image_tag }}
+          TF_VAR_node_count: ${{ github.event.inputs.node_count || '2' }}
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+          TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: terraform plan -out=tfplan -input=false -no-color
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply'
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: ${{ needs.prepare.outputs.environment }}
+          TF_VAR_image_tag: ${{ needs.prepare.outputs.image_tag }}
+          TF_VAR_node_count: ${{ github.event.inputs.node_count || '2' }}
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+          TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "============================================"
+            echo "Terraform apply (attempt $attempt/$max_attempts)"
+            echo "============================================"
+
+            set +e
+            output=$(terraform apply -auto-approve -input=false -no-color 2>&1)
+            exit_code=$?
+            set -e
+
+            echo "$output"
+
+            if [ $exit_code -eq 0 ]; then
+              echo "Apply succeeded."
+              break
+            fi
+
+            # Auto-import resources that already exist, then retry.
+            resource_id=$(echo "$output" | sed -n 's/.*A resource with the ID "\([^"]*\)" already exists.*/\1/p' | head -n 1)
+            resource_addr=$(echo "$output" | sed -n 's/.*with \([^,]*\),.*/\1/p' | head -n 1)
+
+            if [ -n "$resource_id" ] && [ -n "$resource_addr" ]; then
+              echo "Detected existing resource; importing into state:"
+              echo "  Address: $resource_addr"
+              echo "  ID:      $resource_id"
+              terraform import -input=false -no-color "$resource_addr" "$resource_id"
+              attempt=$((attempt+1))
+              continue
+            fi
+
+            echo "Terraform apply failed and no importable resource was detected."
+            exit $exit_code
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Terraform apply failed after $max_attempts attempts."
+            exit 1
+          fi
+
+      - name: Get Terraform Outputs
+        if: github.event.inputs.action == 'apply'
+        id: tf_outputs
+        run: |
+          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+
+          echo "## Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group | $(terraform output -raw resource_group_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AKS Cluster | $(terraform output -raw aks_cluster_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| PostgreSQL FQDN | $(terraform output -raw postgres_fqdn) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Website URL | $(terraform output -raw website_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "| API URL | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          terraform output -raw connect_instructions >> $GITHUB_STEP_SUMMARY
+
+      - name: Provision Azure Managed Grafana (dashboards + alerting)
+        if: github.event.inputs.action == 'apply'
+        shell: pwsh
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          az extension add --name amg --upgrade --yes | Out-Null
+          $rg = terraform output -raw resource_group_name
+          $kpi = terraform output -raw kpi_grafana_name
+          $slo = terraform output -raw slo_grafana_name
+          $prom = terraform output -raw prometheus_query_endpoint
+          ./provision_grafana.ps1 -ResourceGroupName $rg -KpiGrafanaName $kpi -SloGrafanaName $slo -PrometheusQueryEndpoint $prom
+
+  # ===========================================
+  # Post-Deployment Verification
+  # ===========================================
+  verify:
+    name: Verify deployment
+    needs: [prepare, terraform]
+    if: github.event.inputs.action == 'apply'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ needs.terraform.outputs.resource_group_name }} \
+            --name ${{ needs.terraform.outputs.aks_cluster_name }} \
+            --overwrite-existing
+
+      - name: Wait for deployments
+        run: |
+          echo "Waiting for deployments to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment --all -n mtogo || true
+
+      - name: Check pod status
+        run: |
+          echo "============================================"
+          echo "Pod Status"
+          echo "============================================"
+          kubectl get pods -n mtogo -o wide
+
+          echo ""
+          echo "============================================"
+          echo "Services"
+          echo "============================================"
+          kubectl get svc -n mtogo
+
+      - name: Display access URLs
+        run: |
+          INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "pending")
+
+          echo "============================================"
+          echo "Access URLs"
+          echo "============================================"
+          echo "Website: http://${INGRESS_IP}/"
+          echo "API Gateway: http://${INGRESS_IP}/api"
+          echo "Legacy API: http://${INGRESS_IP}/legacy"
+          echo "============================================"

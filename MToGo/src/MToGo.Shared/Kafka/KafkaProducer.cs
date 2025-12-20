@@ -15,8 +15,10 @@ namespace MToGo.Shared.Kafka
         public string BootstrapServers { get; set; } = string.Empty;
         public Acks? Acks { get; set; }
         public bool EnableIdempotence { get; set; } = true;
-        public int? MessageTimeoutMs { get; set; }
-        public int? RequestTimeoutMs { get; set; }
+        // Defaults are chosen to fail fast when Kafka is down, to avoid long end-user timeouts.
+        // They can be overridden via configuration (e.g. Kafka__MessageTimeoutMs).
+        public int? MessageTimeoutMs { get; set; } = 5000;
+        public int? RequestTimeoutMs { get; set; } = 5000;
     }
 
     public class KafkaProducer : IDisposable, IAsyncDisposable, IKafkaProducer
@@ -66,6 +68,11 @@ namespace MToGo.Shared.Kafka
             catch (ProduceException<string, string> ex)
             {
                 _logger.LogError(ex, "Failed to publish to {Topic}: {Reason}", topic, ex.Error.Reason);
+                throw;
+            }
+            catch (KafkaException ex)
+            {
+                _logger.LogError(ex, "Kafka error while publishing to {Topic}: {Reason}", topic, ex.Error.Reason);
                 throw;
             }
         }

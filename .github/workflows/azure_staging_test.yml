@@ -1,0 +1,387 @@
+# ===========================================
+# Staging Environment Deploy & Test Workflow
+# ===========================================
+# Deploys a staging environment (Azure/AKS) and runs test suites,
+# then always destroys the staging environment.
+
+name: Deploy & Test Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TERRAFORM_VERSION: "1.6.0"
+  TF_IN_AUTOMATION: "true"
+  DOTNET_VERSION: "8.0.x"
+
+jobs:
+  # ===========================================
+  # Deploy staging environment
+  # ===========================================
+  deploy_staging:
+    name: Deploy staging (Terraform apply)
+    runs-on: ubuntu-latest
+
+    environment: staging
+
+    outputs:
+      resource_group_name: ${{ steps.tf_outputs.outputs.resource_group_name }}
+      aks_cluster_name: ${{ steps.tf_outputs.outputs.aks_cluster_name }}
+      website_url: ${{ steps.tf_outputs.outputs.website_url }}
+      api_url: ${{ steps.tf_outputs.outputs.api_url }}
+      ingress_ip: ${{ steps.tf_outputs.outputs.ingress_ip }}
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure Terraform remote state backend (Azure Storage)
+        run: |
+          cat > backend.tf <<'EOF'
+          terraform {
+            backend "azurerm" {}
+          }
+          EOF
+
+      - name: Terraform Init
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
+            -backend-config="key=mtogo.staging.tfstate"
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Apply (staging, GHCR latest)
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: "staging"
+          TF_VAR_image_tag: "latest"
+          TF_VAR_node_count: "2"
+          TF_VAR_node_count_max: "3"
+          TF_VAR_enable_auto_scaling: "false"
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+          TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          max_attempts=10
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo "============================================"
+            echo "Terraform apply (attempt $attempt/$max_attempts)"
+            echo "============================================"
+
+            set +e
+            output=$(terraform apply -auto-approve -input=false -no-color 2>&1)
+            exit_code=$?
+            set -e
+
+            echo "$output"
+
+            if [ $exit_code -eq 0 ]; then
+              echo "Apply succeeded."
+              break
+            fi
+
+            resource_id=$(echo "$output" | sed -n 's/.*A resource with the ID "\([^"]*\)" already exists.*/\1/p' | head -n 1)
+            resource_addr=$(echo "$output" | sed -n 's/.*with \([^,]*\),.*/\1/p' | head -n 1)
+
+            if [ -n "$resource_id" ] && [ -n "$resource_addr" ]; then
+              echo "Detected existing resource; importing into state:"
+              echo "  Address: $resource_addr"
+              echo "  ID:      $resource_id"
+              terraform import -input=false -no-color "$resource_addr" "$resource_id"
+              attempt=$((attempt+1))
+              continue
+            fi
+
+            echo "Terraform apply failed and no importable resource was detected."
+            exit $exit_code
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Terraform apply failed after $max_attempts attempts."
+            exit 1
+          fi
+
+      - name: Provision Azure Managed Grafana (dashboards + alerting)
+        shell: pwsh
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          az extension add --name amg --upgrade --yes | Out-Null
+          $rg = terraform output -raw resource_group_name
+          $kpi = terraform output -raw kpi_grafana_name
+          $slo = terraform output -raw slo_grafana_name
+          $prom = terraform output -raw prometheus_query_endpoint
+          ./provision_grafana.ps1 -ResourceGroupName $rg -KpiGrafanaName $kpi -SloGrafanaName $slo -PrometheusQueryEndpoint $prom
+
+      - name: Get Terraform Outputs
+        id: tf_outputs
+        run: |
+          echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "website_url=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
+          echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
+          echo "ingress_ip=$(terraform output -raw ingress_ip)" >> $GITHUB_OUTPUT
+
+          echo "## Staging Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Resource Group | $(terraform output -raw resource_group_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| AKS Cluster | $(terraform output -raw aks_cluster_name) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Website URL | $(terraform output -raw website_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "| API URL | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================
+  # Wait for services to be ready
+  # ===========================================
+  wait_for_ready:
+    name: Wait for AKS workloads
+    needs: deploy_staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ needs.deploy_staging.outputs.resource_group_name }} \
+            --name ${{ needs.deploy_staging.outputs.aks_cluster_name }} \
+            --overwrite-existing
+
+      - name: Wait for all deployments
+        run: |
+          echo "Waiting for deployments to be ready..."
+          kubectl wait --for=condition=available --timeout=900s deployment --all -n mtogo
+
+          echo ""
+          echo "All deployments ready!"
+          kubectl get pods -n mtogo
+
+      - name: Wait for ingress IP
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Waiting for ingress load balancer IP..."
+          for i in {1..60}; do
+            ip=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            if [ -n "${ip:-}" ]; then
+              echo "Ingress IP: $ip"
+              exit 0
+            fi
+            echo "Still pending... ($i/60)"
+            sleep 10
+          done
+
+          echo "Ingress IP still pending after timeout."
+          kubectl get svc -n ingress-nginx
+          exit 1
+
+  # ===========================================
+  # Test suites
+  # ===========================================
+  run_tests:
+    name: Run tests (Integration + E2E + Performance)
+    needs: [deploy_staging, wait_for_ready]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group ${{ needs.deploy_staging.outputs.resource_group_name }} \
+            --name ${{ needs.deploy_staging.outputs.aks_cluster_name }} \
+            --overwrite-existing
+
+      - name: Port-forward gateway to localhost:8080
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Detecting gateway service port..."
+          svc_port=$(kubectl -n mtogo get svc gateway -o jsonpath='{.spec.ports[0].port}')
+          echo "Gateway service port: $svc_port"
+
+          echo "Starting port-forward (localhost:8080 -> svc/gateway:$svc_port)..."
+          kubectl -n mtogo port-forward svc/gateway 8080:${svc_port} >/tmp/port-forward.log 2>&1 &
+          echo $! > /tmp/port-forward.pid
+
+          # Give it a moment to start
+          sleep 5
+
+          echo "Checking gateway health endpoint via port-forward..."
+          curl -fsS --max-time 10 http://localhost:8080/health
+
+      - name: Run Integration tests
+        run: |
+          dotnet test MToGo/tests/MToGo.Integration.Tests/MToGo.Integration.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=integration.trx"
+
+      - name: Run E2E tests
+        run: |
+          dotnet test MToGo/tests/MToGo.E2E.Tests/MToGo.E2E.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=e2e.trx"
+
+      - name: Run Performance tests (against staging via port-forward)
+        env:
+          RUN_PERFORMANCE_TESTS: "true"
+        run: |
+          dotnet test MToGo/tests/MToGo.Performance.Tests/MToGo.Performance.Tests.csproj \
+            --configuration Release \
+            --filter "Category=Performance" \
+            --logger "trx;LogFileName=performance.trx"
+
+      - name: Stop port-forward
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/port-forward.pid ]; then
+            kill "$(cat /tmp/port-forward.pid)" || true
+          fi
+          echo "Last port-forward logs:"
+          tail -n 200 /tmp/port-forward.log || true
+  # ===========================================
+  # Cleanup (always destroy staging)
+  # ===========================================
+  cleanup:
+    name: Destroy staging (Terraform destroy)
+    needs: [deploy_staging, run_tests]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+
+    environment: staging
+
+    defaults:
+      run:
+        working-directory: terraform/azure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          cat > backend.tf <<'EOF'
+          terraform {
+            backend "azurerm" {}
+          }
+          EOF
+
+          terraform init -input=false \
+            -backend-config="resource_group_name=${{ secrets.TFSTATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ secrets.TFSTATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
+            -backend-config="key=mtogo.staging.tfstate"
+
+      - name: Terraform Destroy (staging)
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_environment: "staging"
+          TF_VAR_image_tag: "latest"
+          TF_VAR_node_count: "2"
+          TF_VAR_node_count_max: "3"
+          TF_VAR_enable_auto_scaling: "false"
+          TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          TF_VAR_github_repository_owner: ${{ github.repository_owner }}
+          TF_VAR_ghcr_username: ${{ secrets.GHCR_USERNAME }}
+          TF_VAR_ghcr_token: ${{ secrets.GHCR_TOKEN }}
+          TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
+          TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
+        run: |
+          echo "Destroying staging environment..."
+          terraform destroy -auto-approve -input=false -no-color
+
+      - name: Summary
+        run: |
+          echo "## 🧪 Staging run completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Staging environment was destroyed (cleanup always runs)." >> $GITHUB_STEP_SUMMARY
