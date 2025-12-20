@@ -2,6 +2,7 @@ using Confluent.Kafka;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 
 namespace MToGo.OrderService.Middleware
@@ -35,7 +36,8 @@ namespace MToGo.OrderService.Middleware
 
                 var (statusCode, title, detail) = MapException(ex);
 
-                _logger.LogError(ex, "Request failed with {StatusCode}: {Title}. Path={Path}", statusCode, title, context.Request.Path);
+                var safePathForLog = SanitizeForLog(context.Request.Path.Value);
+                _logger.LogError(ex, "Request failed with {StatusCode}: {Title}. Path={Path}", statusCode, title, safePathForLog);
 
                 context.Response.Clear();
                 context.Response.StatusCode = statusCode;
@@ -53,6 +55,33 @@ namespace MToGo.OrderService.Middleware
 
                 await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
             }
+        }
+
+        private static string SanitizeForLog(string? input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input ?? string.Empty;
+            }
+
+            var builder = new StringBuilder(input.Length);
+            foreach (var ch in input)
+            {
+                // Prevent log forging / line breaks in text-based log sinks.
+                if (ch is '\r' or '\n' or '\u2028' or '\u2029')
+                {
+                    continue;
+                }
+
+                if (char.IsControl(ch))
+                {
+                    continue;
+                }
+
+                builder.Append(ch);
+            }
+
+            return builder.ToString();
         }
 
         private static (int statusCode, string title, string detail) MapException(Exception ex)
