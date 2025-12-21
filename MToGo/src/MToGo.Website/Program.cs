@@ -14,6 +14,7 @@ builder.Services.AddLocalization(options => options.ResourcesPath = "Resources")
 // Register services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<CultureService>();
+builder.Services.AddSingleton<IResourceManagerFlyweightFactory, ResourceManagerFlyweightFactory>();
 builder.Services.AddScoped<ILocalizerService, LocalizerService>();
 builder.Services.AddScoped<CartService>();
 
