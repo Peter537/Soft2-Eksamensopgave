@@ -9,15 +9,16 @@ Denne mappe indeholder alle tests for MToGo-platformen.
 | MToGo.AgentBonusService.Tests        | Unit tests for Agent Bonus Service        |
 | MToGo.AgentService.Tests             | Unit tests for Agent Service              |
 | MToGo.CustomerService.Tests          | Unit tests for Customer Service           |
+| MToGo.E2E.Tests                      | End-to-end tests                          |
 | MToGo.FeedbackHubService.Tests       | Unit tests for Feedback Hub Service       |
 | MToGo.ManagementService.Tests        | Unit tests for Management Service         |
 | MToGo.NotificationService.Tests      | Unit tests for Notification Service       |
 | MToGo.OrderService.Tests             | Unit tests for Order Service              |
 | MToGo.PartnerService.Tests           | Unit tests for Partner Service            |
-| MToGo.Shared.Tests                   | Unit tests for Shared library             |
+| MToGo.Performance.Tests              | Performance tests (NBomber)               |
 | MToGo.Website.Tests                  | Unit tests for Website                    |
 | MToGo.WebSocketAgentService.Tests    | Unit tests for WebSocket Agent Service    |
 | MToGo.WebSocketCustomerService.Tests | Unit tests for WebSocket Customer Service |
 | MToGo.WebSocketPartnerService.Tests  | Unit tests for WebSocket Partner Service  |
-| MToGo.IntegrationTests               | Integrationstests på tværs af services    |
+| MToGo.Integration.Tests              | Integrationstests på tværs af services    |
 | MToGo.Testing                        | Delte testværktøjer og hjælpefunktioner   |
