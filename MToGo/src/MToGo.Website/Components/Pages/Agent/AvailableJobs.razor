@@ -128,7 +128,6 @@
     private bool IsActive { get; set; } = true;
     private string StatusMessage { get; set; } = "Loading...";
     private bool isInitialized;
-    private bool isLoading = true;
 
     private DotNetObjectReference<AvailableJobs>? _dotNetRef;
 
@@ -169,7 +168,6 @@
 
     private async Task LoadAvailableJobs()
     {
-        isLoading = true;
         StatusMessage = "Loading available jobs...";
         
         try
@@ -230,7 +228,7 @@
         }
         finally
         {
-            isLoading = false;
+            // No-op
         }
     }
 

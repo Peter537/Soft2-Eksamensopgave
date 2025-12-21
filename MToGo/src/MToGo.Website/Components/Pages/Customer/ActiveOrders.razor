@@ -134,7 +134,6 @@
     private List<CustomerOrderResponse>? orders;
     private string? errorMessage;
     private bool isLoading = true;
-    private bool isInitialized = false;
     
     // WebSocket state
     private bool IsConnected { get; set; }
@@ -156,7 +155,6 @@
         if (firstRender)
         {
             await Auth.InitializeAsync();
-            isInitialized = true;
             
             if (Auth.IsCustomer)
             {

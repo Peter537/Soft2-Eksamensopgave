@@ -81,8 +81,9 @@ public class PublicBrowsingIntegrationTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<PublicPartnerResponse>>();
         result.Should().NotBeNull();
-        result!.Should().HaveCount(1);
-        result[0].Name.Should().Be("Active Partner");
+        var partners = result!;
+        partners.Should().HaveCount(1);
+        partners[0].Name.Should().Be("Active Partner");
     }
 
     [Fact]
@@ -98,9 +99,10 @@ public class PublicBrowsingIntegrationTests : IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var result = await response.Content.ReadFromJsonAsync<List<PublicPartnerResponse>>();
         result.Should().NotBeNull();
-        result!.Should().HaveCount(1);
-        result[0].Name.Should().Be("Pizza Palace");
-        result[0].Address.Should().Be("123 Test Street");
+        var partners = result!;
+        partners.Should().HaveCount(1);
+        partners[0].Name.Should().Be("Pizza Palace");
+        partners[0].Address.Should().Be("123 Test Street");
     }
 
     #endregion

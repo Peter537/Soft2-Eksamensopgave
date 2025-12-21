@@ -11,7 +11,7 @@
 @inject ILocalizerService L
 @implements IAsyncDisposable
 
-<PageTitle>@L.GetString("Pages.Agent.MyDeliveries.PageTitle", Auth.Id)</PageTitle>
+<PageTitle>@L.GetString("Pages.Agent.MyDeliveries.PageTitle", Auth.Id ?? 0)</PageTitle>
 
 <div class="container mt-4">
     @if (!isInitialized)
