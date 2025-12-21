@@ -75,10 +75,10 @@ Hver historie inkluderer størrelse, prioritet, beskrivelse og acceptkriterier (
 
 **Size:** M  
 **Priority:** Low  
-**TS-8:** Set Up SonarQube for Static Code Analysis  
+**TS-8:** Set Up StyleCop for Static Code Analysis  
 **As an** Udvikler  
-**I want** to set up SonarQube for static code analysis so that code quality gates are enforced before merges, reducing technical debt in services.  
-**AC-1:** Configure SonarQube server and scanner.  
+**I want** to set up StyleCop for static code analysis so that code quality gates are enforced before merges, reducing technical debt in services.  
+**AC-1:** Configure StyleCop rules and settings.  
 **AC-2:** Run scans on PRs.  
 **AC-3:** Block merges on quality gate failures.
 
