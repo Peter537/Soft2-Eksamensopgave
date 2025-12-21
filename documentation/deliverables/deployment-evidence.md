@@ -17,19 +17,19 @@ Formål: Vise at UI'et loader og at platformen er tilgængelig for slutbrugere.
 - Miljø: Docker Compose (lokal)
 - URL: http://localhost:8081
 
-![alt text](./img/deployment-evidence/website-local.png)
+![alt text](./resources/deployment-evidence/website-local.png)
 
 - Miljø: Terraform local (lokal Kubernetes)
 - URL: http://localhost/
 - Forventning: Ingress route `/` går til website-service.
 
-![alt text](./img/deployment-evidence/website-terraform-local.png)
+![alt text](./resources/deployment-evidence/website-terraform-local.png)
 
 - Miljø: Azure (AKS)
 - URL: http://ingress-ip/
 - Forventning: Ingress i AKS router `/` til website-service.
 
-![alt text](./img/deployment-evidence/website-azure-aks.png)
+![alt text](./resources/deployment-evidence/website-azure-aks.png)
 
 ### A.2 API Gateway
 
@@ -38,7 +38,7 @@ Formål: Vise at gateway'en kører og kan nås.
 - Miljø: Docker Compose (lokal)
 - URL: http://localhost:8080
 
-![alt text](./img/deployment-evidence/api-gateway-local.png)
+![alt text](./resources/deployment-evidence/api-gateway-local.png)
 
 ## B) Observability (Prometheus/Grafana/Alerting)
 
@@ -50,11 +50,11 @@ Formål: Dokumentere at metrics-scraping fungerer, og at alert rules er loaded.
 - URL: http://localhost:9090
 - Forventning: Targets er "UP", og rules/alerts er loaded.
 
-![alt text](./img/deployment-evidence/prometheus-targets-local.png)
+![alt text](./resources/deployment-evidence/prometheus-targets-local.png)
 
 Kontekst: Dette screenshot viser typisk Prometheus Targets (eller tilsvarende), hvor services fremstår som "UP".
 
-![alt text](./img/deployment-evidence/prometheus-rules-local.png)
+![alt text](./resources/deployment-evidence/prometheus-rules-local.png)
 
 Kontekst: Dette screenshot viser typisk Rules/Alerts (fx `business_kpi` regler), så man kan se at alert rules er indlæst.
 
@@ -66,26 +66,26 @@ Formål: Vise KPI dashboards samt at datasource/alerting er sat op.
 - URL: http://localhost:3000
 - Forventning: KPI dashboard loader, alerts/rules er synlige, og datasource peger på Prometheus.
 
-![alt text](./img/deployment-evidence/kpi-grafana-local.png)
+![alt text](./resources/deployment-evidence/kpi-grafana-local.png)
 
 Kontekst: KPI dashboard (forretnings-KPI’er) er synligt og opdaterer via Prometheus datasource.
 
-![alt text](./img/deployment-evidence/kpi-grafana-alerting-local.png)
+![alt text](./resources/deployment-evidence/kpi-grafana-alerting-local.png)
 
 Kontekst: Alerting/Rules (eller tilsvarende) viser at KPI alert rules er tilgængelige i Grafana.
 
-![alt text](./img/deployment-evidence/kpi-grafana-datasources-local.png)
+![alt text](./resources/deployment-evidence/kpi-grafana-datasources-local.png)
 
 Kontekst: Datasources (fx Prometheus/Alertmanager) er konfigureret korrekt.
 
 - Miljø: Azure (Azure Managed Grafana - KPI)
 - Endpoint: fra Terraform output `kpi_grafana_endpoint`
 
-![alt text](./img/deployment-evidence/kpi-grafana-azure.png)
+![alt text](./resources/deployment-evidence/kpi-grafana-azure.png)
 
 Kontekst: KPI dashboards er provisioneret/synkroniseret til Azure Managed Grafana.
 
-![alt text](./img/deployment-evidence/kpi-grafana-alerting-azure.png)
+![alt text](./resources/deployment-evidence/kpi-grafana-alerting-azure.png)
 
 Kontekst: KPI Grafana alerting/rules eller kontaktpunkt (Discord) er sat op (afhænger af hvad billedet viser).
 
@@ -96,12 +96,12 @@ Formål: Vise SLO/infra dashboards (adskilt fra KPI dashboards).
 - Miljø: Docker Compose (lokal)
 - URL: http://localhost:3001
 
-![alt text](./img/deployment-evidence/slo-grafana-local.png)
+![alt text](./resources/deployment-evidence/slo-grafana-local.png)
 
 - Miljø: Azure (Azure Managed Grafana – SLO)
 - Endpoint: fra Terraform output `slo_grafana_endpoint`
 
-![alt text](./img/deployment-evidence/slo-grafana-azure.png)
+![alt text](./resources/deployment-evidence/slo-grafana-azure.png)
 
 Kontekst: SLO dashboards er provisioneret/synkroniseret separat fra KPI Grafana.
 
@@ -111,7 +111,7 @@ Formål: Dokumentere at alerts kan leveres som notifikationer (Discord) og/eller
 
 - Miljø: Docker Compose (lokal)
 
-![alt text](./img/deployment-evidence/alertmanager-discord-local.png)
+![alt text](./resources/deployment-evidence/alertmanager-discord-local.png)
 
 Kontekst: Discord-notifikation (firing/resolved) som viser at Alertmanager webhook routing virker.
 
@@ -124,7 +124,7 @@ Formål: Vise at `deploy.ps1` har deployet succesfuldt og udskriver endpoints/ou
 - Miljø: Terraform local (lokal Kubernetes)
 - Kommando: `./terraform/deploy.ps1 -Context local -Build`
 
-![alt text](./img/deployment-evidence/terraform-deploy-local.png)
+![alt text](./resources/deployment-evidence/terraform-deploy-local.png)
 
 ### C.2 Kubernetes status (local Kubernetes)
 
@@ -132,19 +132,19 @@ Formål: Vise at workloads er "Running/Ready", og at services/ingress er oprette
 
 - Miljø: Terraform local (lokal Kubernetes)
 
-![alt text](./img/deployment-evidence/kubectl-nodes-local.png)
+![alt text](./resources/deployment-evidence/kubectl-nodes-local.png)
 
 Kontekst: `kubectl get nodes` (viser at cluster er tilgængelig).
 
-![alt text](./img/deployment-evidence/kubectl-pods-local.png)
+![alt text](./resources/deployment-evidence/kubectl-pods-local.png)
 
 Kontekst: `kubectl get pods -n mtogo` (viser services i gang).
 
-![alt text](./img/deployment-evidence/kubectl-svc-local.png)
+![alt text](./resources/deployment-evidence/kubectl-svc-local.png)
 
 Kontekst: `kubectl get svc -n mtogo` (viser services og porte).
 
-![alt text](./img/deployment-evidence/kubectl-ingress-local.png)
+![alt text](./resources/deployment-evidence/kubectl-ingress-local.png)
 
 Kontekst: `kubectl get ingress -n mtogo`.
 
@@ -154,11 +154,11 @@ Formål: Vise at monitoring-komponenter er deployet og kan tilgås via localhost
 
 - Miljø: Terraform local (lokal Kubernetes)
 
-![alt text](./img/deployment-evidence/monitoring-endpoints-local.png)
+![alt text](./resources/deployment-evidence/monitoring-endpoints-local.png)
 
 Kontekst: Grafana/Prometheus/Alertmanager endpoints er tilgængelige.
 
-![alt text](./img/deployment-evidence/monitoring-pods-local.png)
+![alt text](./resources/deployment-evidence/monitoring-pods-local.png)
 
 Kontekst: Ekstra bevis for at monitoring kører.
 
@@ -169,7 +169,7 @@ Formål: Vise at Azure-deploy via `deploy.ps1` kører, og at outputs (Grafana en
 - Miljø: Azure
 - Kommando: `./terraform/deploy.ps1 -Context azure`
 
-![alt text](./img/deployment-evidence/terraform-deploy-azure.png)
+![alt text](./resources/deployment-evidence/terraform-deploy-azure.png)
 
 ### C.5 Azure Portal (resource group)
 
@@ -178,7 +178,7 @@ Formål: Vise at Azure-ressourcerne faktisk er provisioneret (AKS, Postgres, Gra
 - Miljø: Azure
 - Resource Group: `rg-mtogo-<env>`
 
-![alt text](./img/deployment-evidence/azure-portal-resource-group.png)
+![alt text](./resources/deployment-evidence/azure-portal-resource-group.png)
 
 ### C.6 GitHub Actions
 

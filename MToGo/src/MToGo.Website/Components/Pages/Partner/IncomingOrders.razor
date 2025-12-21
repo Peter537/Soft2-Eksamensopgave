@@ -176,7 +176,6 @@
     private bool IsConnected { get; set; }
     private string StatusMessage { get; set; } = "Loading...";
     private bool isInitialized;
-    private bool isLoading = true;
 
     private DotNetObjectReference<IncomingOrders>? _dotNetRef;
 
@@ -217,7 +216,6 @@
 
     private async Task LoadActiveOrders()
     {
-        isLoading = true;
         StatusMessage = "Loading active orders...";
         
         try
@@ -290,7 +288,7 @@
         }
         finally
         {
-            isLoading = false;
+            // No-op
         }
     }
 

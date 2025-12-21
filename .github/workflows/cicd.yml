@@ -114,6 +114,26 @@ jobs:
             legacy:
               - 'LegacyMToGo/**'
 
+  stylecop_analysis:
+    name: Static code analysis (StyleCop)
+    needs: detect_changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore MToGo/MToGo.sln
+
+      - name: Build with analyzers (fail on errors only)
+        run: dotnet build MToGo/MToGo.sln -c Release --no-restore /p:RunAnalyzersDuringBuild=true /p:TreatWarningsAsErrors=false /p:WarningsAsErrors=
+
   logcollector_ci:
     name: LogCollector - build & docker
     needs: detect_changes
@@ -1661,6 +1681,7 @@ jobs:
     name: Save build outputs
     needs:
       - detect_changes
+      - stylecop_analysis
       - agentbonus_ci
       - agentservice_ci
       - customerservice_ci
@@ -1680,6 +1701,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Ensure CI jobs succeeded
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: |
+          echo "One or more CI jobs failed or were cancelled. Failing 'Save build outputs' to block downstream workflows (e.g., Security Gates)."
+          exit 1
+
       - name: Create build outputs file
         run: |
           cat << EOF > build-outputs.json

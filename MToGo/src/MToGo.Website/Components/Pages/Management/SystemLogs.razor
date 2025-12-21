@@ -304,15 +304,17 @@
         wrapText = !wrapText;
     }
 
-    private async Task DownloadFile()
+    private Task DownloadFile()
     {
         if (string.IsNullOrEmpty(selectedFile) || string.IsNullOrEmpty(fileContent))
-            return;
+            return Task.CompletedTask;
 
         // In a real implementation, you would use JS interop to download the file
         // For now, we'll just trigger a navigation to the download endpoint
         var url = $"/api/v1/logs/system/files/{selectedFile}";
         Navigation.NavigateTo(url, forceLoad: true);
+
+        return Task.CompletedTask;
     }
 
     private string FormatFileSize(long bytes)
