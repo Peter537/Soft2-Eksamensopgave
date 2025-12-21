@@ -142,12 +142,25 @@ jobs:
     needs: detect_changed_services
     if: ${{ needs.detect_changed_services.outputs.agentbonus == 'true' || needs.detect_changed_services.outputs.agentservice == 'true' || needs.detect_changed_services.outputs.customerservice == 'true' || needs.detect_changed_services.outputs.feedbackhub == 'true' || needs.detect_changed_services.outputs.gateway == 'true' || needs.detect_changed_services.outputs.notification == 'true' || needs.detect_changed_services.outputs.order == 'true' || needs.detect_changed_services.outputs.partner == 'true' || needs.detect_changed_services.outputs.logcollector == 'true' || needs.detect_changed_services.outputs.website == 'true' || needs.detect_changed_services.outputs.websocketagent == 'true' || needs.detect_changed_services.outputs.websocketcustomer == 'true' || needs.detect_changed_services.outputs.websocketpartner == 'true' || needs.detect_changed_services.outputs.management == 'true' || needs.detect_changed_services.outputs.legacy == 'true' || needs.detect_changed_services.outputs.shared == 'true' }}
     runs-on: ubuntu-latest
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+      DOTNET_NOLOGO: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      NUGET_XMLDOC_MODE: skip
 
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ env.IMAGE_TAG }}
-          fetch-depth: 0
+          fetch-depth: 1
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.props', '**/*.targets', 'global.json', 'NuGet.config') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -159,97 +172,131 @@ jobs:
         with:
           languages: csharp
           build-mode: manual
+          dependency-caching: false
 
-      - name: Build for CodeQL
+      - name: Restore dependencies (solution + legacy when needed)
         run: |
-          if [[ "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building AgentBonus service for CodeQL"
-            dotnet restore MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj
-            dotnet build MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj -c Release --no-restore
+          set -euo pipefail
+
+          needs_mtogo=false
+          needs_legacy=false
+
+          # Anything in the MToGo solution OR shared => restore/build the solution
+          if [[ "${{ needs.detect_changed_services.outputs.shared }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.customerservice }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.feedbackhub }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.gateway }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.notification }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.order }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.partner }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.logcollector }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.website }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.websocketagent }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.websocketcustomer }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.websocketpartner }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.management }}" == "true" ]]; then
+            needs_mtogo=true
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building AgentService for CodeQL"
-            dotnet restore MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj
-            dotnet build MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj -c Release --no-restore
+          # Legacy is separate, but you also treat shared as affecting it
+          if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" \
+            || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            needs_legacy=true
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.customerservice }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building CustomerService for CodeQL"
-            dotnet restore MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj
-            dotnet build MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj -c Release --no-restore
+          to_restore=()
+          if [[ "$needs_mtogo" == "true" ]]; then
+            to_restore+=( "MToGo/MToGo.sln" )
+          fi
+          if [[ "$needs_legacy" == "true" ]]; then
+            to_restore+=( "LegacyMToGo/LegacyMToGo.csproj" )
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.feedbackhub }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building FeedbackHub for CodeQL"
-            dotnet restore MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj
-            dotnet build MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj -c Release --no-restore
+          echo "Restoring: ${to_restore[*]}"
+          dotnet restore "${to_restore[@]}" --verbosity minimal
+
+      - name: Build for CodeQL (compile only what matters)
+        run: |
+          set -euo pipefail
+
+          build_proj() {
+            dotnet build "$1" -c Release --no-restore --verbosity minimal -- /m
+          }
+
+          # If shared changed, you're basically doing a repo-wide compile anyway:
+          if [[ "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Shared changed -> building full MToGo solution once"
+            dotnet build MToGo/MToGo.sln -c Release --no-restore --verbosity minimal -- /m
+
+            if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+              echo "Building LegacyMToGo"
+              build_proj LegacyMToGo/LegacyMToGo.csproj
+            fi
+
+            exit 0
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.gateway }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building Gateway for CodeQL"
-            dotnet restore MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj
-            dotnet build MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj -c Release --no-restore
+          # Otherwise build only changed services (fast path)
+          if [[ "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.notification }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building Notification for CodeQL"
-            dotnet restore MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj
-            dotnet build MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.order }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building Order for CodeQL"
-            dotnet restore MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj
-            dotnet build MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.customerservice }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.partner }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building Partner for CodeQL"
-            dotnet restore MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj
-            dotnet build MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.feedbackhub }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.logcollector }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building LogCollector for CodeQL"
-            dotnet restore MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj
-            dotnet build MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.gateway }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.website }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building Website for CodeQL"
-            dotnet restore MToGo/src/MToGo.Website/MToGo.Website.csproj
-            dotnet build MToGo/src/MToGo.Website/MToGo.Website.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.notification }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.websocketagent }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building WebSocketAgent for CodeQL"
-            dotnet restore MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj
-            dotnet build MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.order }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.websocketcustomer }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building WebSocketCustomer for CodeQL"
-            dotnet restore MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj
-            dotnet build MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.partner }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.websocketpartner }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building WebSocketPartner for CodeQL"
-            dotnet restore MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj
-            dotnet build MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.logcollector }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.management }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building Management for CodeQL"
-            dotnet restore MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj
-            dotnet build MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.website }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.Website/MToGo.Website.csproj
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            echo "Building LegacyMToGo for CodeQL"
-            dotnet restore LegacyMToGo/LegacyMToGo.csproj
-            dotnet build LegacyMToGo/LegacyMToGo.csproj -c Release --no-restore
+          if [[ "${{ needs.detect_changed_services.outputs.websocketagent }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.websocketcustomer }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.websocketpartner }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.management }}" == "true" ]]; then
+            build_proj MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj
+          fi
+
+          if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" ]]; then
+            build_proj LegacyMToGo/LegacyMToGo.csproj
           fi
 
       - name: Perform CodeQL Analysis
