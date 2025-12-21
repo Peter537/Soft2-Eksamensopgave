@@ -64,10 +64,10 @@ Hver historie inkluderer størrelse, prioritet, beskrivelse og acceptkriterier (
 
 **Size:** L  
 **Priority:** Medium  
-**TS-6:** Set Up Performance Tests with JMeter  
+**TS-6:** Set Up Performance Tests with NBomber  
 **As a** DevOps  
-**I want** to set up performance tests using JMeter so that load scenarios validate SLOs under stress.  
-**AC-1:** Write JMeter scripts for key user flows.  
+**I want** to set up performance tests using NBomber so that load scenarios validate SLOs under stress.  
+**AC-1:** Write NBomber scripts for key user flows.  
 **AC-2:** Integrate into workflow for automated runs.  
 **AC-3:** Validate correct performance-tool in documentation.
 

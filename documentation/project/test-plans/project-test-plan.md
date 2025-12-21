@@ -77,7 +77,7 @@ Disse gælder alle services medmindre andet er angivet i individuelle testplaner
 | **Integration Tests**              | Test af flere services sammen i reelt miljø  | Level 4            |
 | **Mutation Testing (Stryker.NET)** | Test af test-kvalitet for kritisk logik      | OrderService       | Level 2+ |
 | **E2E Tests**                      | Fulde brugerflows gennem hele systemet       | Alle (via Website) | Level 5  |
-| **Performance Tests (JMeter)**     | Load og stress testing                       | Alle               | Level 5  |
+| **Performance Tests (NBomber)**    | Load og stress testing                       | Alle               | Level 5  |
 
 ### Regressionstests
 
@@ -283,7 +283,7 @@ Denne sektion definerer rækkefølgen af serviceudvikling og tilhørende testakt
 
 | Værktøj | Formål              | Anvendelse           |
 | ------- | ------------------- | -------------------- |
-| JMeter  | Performance testing | Load tests (Level 5) |
+| NBomber | Performance testing | Load tests (Level 5) |
 
 ### Infrastructure
 
