@@ -181,7 +181,6 @@ jobs:
           needs_mtogo=false
           needs_legacy=false
 
-          # Anything in the MToGo solution OR shared => restore/build the solution
           if [[ "${{ needs.detect_changed_services.outputs.shared }}" == "true" \
             || "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" \
             || "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" \
@@ -200,22 +199,23 @@ jobs:
             needs_mtogo=true
           fi
 
-          # Legacy is separate, but you also treat shared as affecting it
           if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" \
             || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
             needs_legacy=true
           fi
 
-          to_restore=()
+          targets=()
           if [[ "$needs_mtogo" == "true" ]]; then
-            to_restore+=( "MToGo/MToGo.sln" )
+            targets+=( "MToGo/MToGo.sln" )
           fi
           if [[ "$needs_legacy" == "true" ]]; then
-            to_restore+=( "LegacyMToGo/LegacyMToGo.csproj" )
+            targets+=( "LegacyMToGo/LegacyMToGo.csproj" )
           fi
 
-          echo "Restoring: ${to_restore[*]}"
-          dotnet restore "${to_restore[@]}" --verbosity minimal
+          for t in "${targets[@]}"; do
+            echo "Restoring: $t"
+            dotnet restore "$t" --verbosity minimal
+          done
 
       - name: Build for CodeQL (compile only what matters)
         run: |
