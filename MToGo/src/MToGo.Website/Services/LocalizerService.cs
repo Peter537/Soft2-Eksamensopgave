@@ -13,11 +13,12 @@ public interface ILocalizerService
 public class LocalizerService : ILocalizerService
 {
     private readonly CultureService _cultureService;
-    private readonly Dictionary<string, ResourceManager> _resourceManagers = new();
+    private readonly IResourceManagerFlyweightFactory _resourceManagerFactory;
 
-    public LocalizerService(CultureService cultureService)
+    public LocalizerService(CultureService cultureService, IResourceManagerFlyweightFactory resourceManagerFactory)
     {
         _cultureService = cultureService;
+        _resourceManagerFactory = resourceManagerFactory;
     }
 
     public string this[string key] => GetString(key);
@@ -41,8 +42,8 @@ public class LocalizerService : ILocalizerService
 
         try
         {
-            var resourceManager = GetOrCreateResourceManager(category, resourcePath);
-            var culture = new CultureInfo(_cultureService.CurrentCulture);
+            var resourceManager = _resourceManagerFactory.Get(category, resourcePath);
+            var culture = CultureInfo.GetCultureInfo(_cultureService.CurrentCulture);
             var value = resourceManager.GetString(resourceKey, culture);
             return value ?? key;
         }
@@ -63,19 +64,5 @@ public class LocalizerService : ILocalizerService
         {
             return format;
         }
-    }
-
-    private ResourceManager GetOrCreateResourceManager(string category, string pageName)
-    {
-        var cacheKey = $"{category}.{pageName}";
-        
-        if (_resourceManagers.TryGetValue(cacheKey, out var cached))
-            return cached;
-
-        // Resource base name format: MToGo.Website.Resources.Pages.Home
-        var baseName = $"MToGo.Website.Resources.{category}.{pageName}";
-        var resourceManager = new ResourceManager(baseName, typeof(LocalizerService).Assembly);
-        _resourceManagers[cacheKey] = resourceManager;
-        return resourceManager;
     }
 }
