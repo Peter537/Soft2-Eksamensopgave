@@ -26,3 +26,12 @@ Herefter rettede vi de rapporterede problemer i kodebasen. Det endelige output e
 - [resources/static-code-analysis/static-analysis-report-fixed.txt](resources/static-code-analysis/static-analysis-report-fixed.txt)
 
 Efter rettelser rapporterer analyzeren `0 Warning(s)` og `0 Error(s)`.
+
+## CI/CD kvalitetssikring
+
+For at sikre at statisk analyse også håndhæves i vores CI/CD, har vi tilføjet et separat job i pipeline-filen [cicd.yml](../../.github/workflows/cicd.yml), som kører build med analyzere aktiveret.
+
+- Hvis analyzere rapporterer **errors**, fejler jobbet og dermed workflowet.
+- Hvis der kun er **warnings**, fortsætter pipeline (warnings behandles ikke som errors).
+
+Derudover er job'et **Save build outputs** sat til at afhænge af StyleCop/analysis-jobbet, så vores security-workflow (se [security.yml](../../.github/workflows/security.yml)) ikke går videre, før den statiske analyse er kørt og bestået.
