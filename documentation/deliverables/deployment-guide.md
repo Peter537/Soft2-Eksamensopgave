@@ -214,6 +214,8 @@ Vigtigt for Azure:
 - Azure Storage Account + container til Terraform remote state
 - GHCR (GitHub Container Registry) images, som AKS kan trække
 
+> Denne sektion viser også en **fuld, konkret kommando-liste** (PowerShell) til at oprette alt det ovenstående og udlede de værdier, der skal sættes som GitHub Secrets.
+
 #### 4.2.1 Service Principal (OIDC) - hvad workflowet forventer
 
 Workflows bruger `azure/login@v2` med OIDC:
@@ -223,6 +225,17 @@ Workflows bruger `azure/login@v2` med OIDC:
 - `AZURE_SUBSCRIPTION_ID`
 
 Service principal skal mindst have **Contributor** på subscription eller på den resource group, hvor der deployes.
+
+**Vigtigt (RBAC for Terraform):**
+
+Terraform-konfigurationen i `terraform/azure` opretter også Azure RBAC role assignments (fx `azurerm_role_assignment.*`). Det kræver rettigheden `Microsoft.Authorization/roleAssignments/write`, som **Contributor ikke giver**.
+
+Derfor skal service principal også have én af disse:
+
+- **User Access Administrator** (anbefalet) på relevant scope, eller
+- **Owner** på relevant scope.
+
+For en enkel “det virker”-opsætning til eksamens/demo: giv **Contributor + User Access Administrator** på subscription-scope.
 
 #### 4.2.2 Terraform remote state backend
 
@@ -237,6 +250,153 @@ State key er miljø-afhængigt:
 - `mtogo.dev.tfstate`
 - `mtogo.staging.tfstate`
 - `mtogo.prod.tfstate`
+
+#### 4.2.3 Kommandoer (PowerShell) til at oprette OIDC + tfstate + udlede GitHub Secrets
+
+Kør nedenstående i **PowerShell** (Windows PowerShell 5.1 eller PowerShell 7+) fra en maskine med Azure CLI installeret.
+
+> Forudsætning: du skal være logget ind i Azure CLI med en bruger, der kan oprette app/SP og tildele roller (typisk Owner eller User Access Administrator på subscription).
+
+**1) Log ind og vælg subscription**
+
+```powershell
+az login
+
+# (valgfrit) hvis du har flere subscriptions
+az account list -o table
+az account set --subscription "<SUBSCRIPTION_ID>"
+
+# Print de værdier, du skal bruge som GitHub Secrets
+az account show --query "{tenantId:tenantId, subscriptionId:id, user:user.name}" -o json
+```
+
+**2) Opret Entra App + Service Principal (OIDC)**
+
+`AZURE_CLIENT_ID` er App (client) ID = `appId`.
+
+```powershell
+# Opret app
+$app = az ad app create --display-name "mtogo-github-oidc" -o json | ConvertFrom-Json
+$appId = $app.appId
+
+# Opret service principal for app'en
+az ad sp create --id $appId -o none
+
+# Find Service Principal objectId (bruges til role assignments)
+$spObjectId = az ad sp show --id $appId --query id -o tsv
+
+Write-Host "AZURE_CLIENT_ID (appId) = $appId"
+Write-Host "Service principal objectId = $spObjectId"
+```
+
+**3) Giv nødvendige Azure roller (RBAC)**
+
+```powershell
+$subId = (az account show --query id -o tsv)
+
+# Terraform skal kunne provisionere ressourcer
+az role assignment create \
+  --assignee-object-id $spObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --role "Contributor" \
+  --scope "/subscriptions/$subId" -o none
+
+# Terraform opretter også role assignments (azurerm_role_assignment.*)
+az role assignment create \
+  --assignee-object-id $spObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --role "User Access Administrator" \
+  --scope "/subscriptions/$subId" -o none
+```
+
+**4) Opret Terraform remote state backend (RG + Storage Account + Container)**
+
+Storage account-navn skal være globalt unikt og kun indeholde små bogstaver/tal.
+
+```powershell
+$location = "northeurope"
+$tfstateRg = "rg-mtogo-tfstate"
+$tfstateContainer = "tfstate"
+
+az group create -n $tfstateRg -l $location -o none
+
+# Lav et unikt storage account navn
+$suffix = ([Guid]::NewGuid().ToString('N').Substring(0,8))
+$tfstateSa = ("mtogotfstate" + $suffix).ToLower()
+
+az storage account create \
+  -g $tfstateRg \
+  -n $tfstateSa \
+  -l $location \
+  --sku Standard_LRS \
+  --kind StorageV2 \
+  --min-tls-version TLS1_2 -o none
+
+az storage container create \
+  --account-name $tfstateSa \
+  -n $tfstateContainer \
+  --auth-mode login -o none
+
+Write-Host "TFSTATE_RESOURCE_GROUP  = $tfstateRg"
+Write-Host "TFSTATE_STORAGE_ACCOUNT = $tfstateSa"
+Write-Host "TFSTATE_CONTAINER       = $tfstateContainer"
+```
+
+**5) Giv SP adgang til at læse/skrive Terraform state i storage account**
+
+```powershell
+$tfstateSaId = az storage account show -g $tfstateRg -n $tfstateSa --query id -o tsv
+
+az role assignment create \
+  --assignee-object-id $spObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --role "Storage Blob Data Contributor" \
+  --scope $tfstateSaId -o none
+```
+
+**6) Opret federated credentials til GitHub OIDC (dev/staging/prod environments)**
+
+Workflows kører med `environment: dev|staging|prod`. Derfor skal subjects matche:
+
+`repo:<OWNER>/<REPO>:environment:<ENV>`
+
+```powershell
+$owner = "<GITHUB_OWNER>"          # fx "Peter537"
+$repo  = "<GITHUB_REPO>"           # fx "Soft2-Eksamensopgave"
+
+$issuer = "https://token.actions.githubusercontent.com"
+$aud = "api://AzureADTokenExchange"
+
+foreach ($e in @("dev","staging","prod")) {
+  $name = "github-oidc-environment-$e"
+  $subject = "repo:$owner/${repo}:environment:$e"
+
+  $payload = @{
+    name = $name
+    issuer = $issuer
+    subject = $subject
+    audiences = @($aud)
+    description = "GitHub Actions OIDC for $owner/${repo} environment $e"
+  } | ConvertTo-Json -Depth 10
+
+  $tmp = Join-Path $env:TEMP "$name.json"
+  $payload | Out-File -FilePath $tmp -Encoding utf8
+  az ad app federated-credential create --id $appId --parameters $tmp -o none
+}
+
+az ad app federated-credential list --id $appId --query "[].{name:name,subject:subject}" -o table
+```
+
+**7) Hvad skal jeg skrive i GitHub Secrets? (fra ovenstående output)**
+
+- `AZURE_CLIENT_ID` = `$appId`
+- `AZURE_TENANT_ID` = output fra `az account show` (`tenantId`)
+- `AZURE_SUBSCRIPTION_ID` = output fra `az account show` (`subscriptionId`)
+- `TFSTATE_RESOURCE_GROUP` = `$tfstateRg`
+- `TFSTATE_STORAGE_ACCOUNT` = `$tfstateSa`
+- `TFSTATE_CONTAINER` = `$tfstateContainer`
+
+Resten af secrets (GHCR/Discord/Management/Postgres password) oprettes separat som beskrevet i afsnit 4.3.
 
 ### 4.3 Krævede GitHub Secrets
 
