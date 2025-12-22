@@ -76,7 +76,7 @@ locals {
       use_db       = false
       use_kafka    = false
       extra_config = null
-      extra_env    = { GatewayUrl = "http://gateway:8080" }
+      extra_env    = { GatewayUrl = "http://gateway:8080", GrafanaUrl = var.grafana_url }
     }
     order-service = {
       image        = "mtogo-order"

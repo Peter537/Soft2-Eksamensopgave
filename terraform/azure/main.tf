@@ -111,5 +111,8 @@ module "mtogo_app" {
   management_password = var.management_password
   management_name     = var.management_name
 
+  # Website Management dashboard link target
+  grafana_url = azurerm_dashboard_grafana.kpi.endpoint
+
   depends_on = [azurerm_kubernetes_cluster.main]
 }

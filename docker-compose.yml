@@ -126,6 +126,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       GatewayUrl: http://gateway:8080
       GatewayPublicUrl: http://localhost:8080
+      GrafanaUrl: http://localhost:3000
     depends_on:
       - gateway
     networks:

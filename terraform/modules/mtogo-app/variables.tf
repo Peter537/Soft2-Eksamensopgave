@@ -131,3 +131,9 @@ variable "management_name" {
   type        = string
   default     = "Management Admin"
 }
+
+variable "grafana_url" {
+  description = "Public Grafana URL to show in the Website management dashboard"
+  type        = string
+  default     = ""
+}

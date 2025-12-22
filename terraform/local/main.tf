@@ -80,4 +80,7 @@ module "mtogo_app" {
   management_username = var.management_username
   management_password = var.management_password
   management_name     = var.management_name
+
+  # Website Management dashboard link target (local monitoring)
+  grafana_url = "http://localhost:3000"
 }
