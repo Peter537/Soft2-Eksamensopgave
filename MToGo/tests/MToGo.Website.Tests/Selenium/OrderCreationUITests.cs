@@ -375,7 +375,7 @@ namespace MToGo.Website.Tests.Selenium
                 {
                     return null;
                 }
-            }) ?? throw new WebDriverTimeoutException("Login button was not found or not clickable within the timeout.");
+            });
 
             loginButton.Click();
         }
@@ -412,7 +412,7 @@ namespace MToGo.Website.Tests.Selenium
                     element.Clear();
                     element.SendKeys(value);
 
-                    var currentValue = element.GetDomProperty("value") ?? string.Empty;
+                    var currentValue = element.GetAttribute("value") ?? string.Empty;
                     return string.Equals(currentValue, value, StringComparison.Ordinal);
                 }
                 catch (StaleElementReferenceException)
