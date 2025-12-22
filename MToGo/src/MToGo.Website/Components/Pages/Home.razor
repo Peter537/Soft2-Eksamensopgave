@@ -1,4 +1,6 @@
 ﻿@page "/"
+@inject HttpClient Http
+@inject AuthService Auth
 @inject ILocalizerService L
 @inject CultureService CultureService
 @implements IDisposable
@@ -6,14 +8,87 @@
 
 <PageTitle>@L["Pages.Home.PageTitle"]</PageTitle>
 
-<h1>@L["Pages.Home.Greeting"]</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <h1>@L["Pages.Home.PageHeader"]</h1>
 
-@L["Pages.Home.Welcome"]
+            @L["Pages.Home.Welcome"]
+
+            <p>@L["Pages.Home.TeaserMessage"]</p>
+
+            @if (isLoading)
+            {
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">@L["Pages.Home.Loading"]</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                @if (partners == null || !partners.Any())
+                {
+                    <div class="alert alert-info">
+                        @L["Pages.Home.NoRestaurants"]
+                    </div>
+                }
+                else
+                {
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        @foreach (var partner in partners)
+                        {
+                            <div class="col">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">@partner.Name</h5>
+                                        <p class="card-text text-muted">
+                                            <i class="bi bi-geo-alt"></i> @partner.Address
+                                        </p>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <a href="/customer/partners/@partner.Id/menu" class="btn btn-primary w-100">
+                                            @L["Pages.Home.ViewMenu"]
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if (Auth.IsLoggedIn)
+                    {
+                        <div class="text-center mt-4">
+                            <a href="/customer/partners" class="btn btn-primary">@L["Pages.Home.SeeAllRestaurants"]</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center mt-4">
+                            <a href="/login" class="btn btn-outline-primary">@L["Pages.Home.LoginToViewAllRestaurants"]</a>
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>
 
 @code {
+    private List<PartnerResponse>? partners;
+    private string? errorMessage;
+    private bool isLoading = true;
+
     protected override void OnInitialized()
     {
         CultureService.OnChange += OnCultureChanged;
+        Auth.OnChange += OnAuthChanged;
     }
 
     private void OnCultureChanged()
@@ -21,8 +96,60 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnAuthChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         CultureService.OnChange -= OnCultureChanged;
+        Auth.OnChange -= OnAuthChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Auth.InitializeAsync();
+            await LoadPartners();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPartners()
+    {
+        isLoading = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = await Http.GetAsync("/api/v1/partners");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var allPartners = await response.Content.ReadFromJsonAsync<List<PartnerResponse>>();
+                partners = allPartners?.Take(6).ToList();
+            }
+            else
+            {
+                errorMessage = L["Pages.Home.LoadFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = L.GetString("Pages.Home.ErrorOccurred", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class PartnerResponse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
     }
 }
