@@ -118,20 +118,65 @@ function Ensure-ServiceAccountAdmin([string]$GrafanaName, [string]$ServiceAccoun
 function New-GrafanaToken([string]$GrafanaName, [string]$ServiceAccountName) {
     $tokenName = 'ci-' + [Guid]::NewGuid().ToString('N')
     $create = Invoke-AzCli -Args @('grafana', 'service-account', 'token', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--token', $tokenName, '--time-to-live', '1h', '-o', 'json')
+    $stdout = ($create.StdOut | Out-String)
+    $stderr = ($create.StdErr | Out-String)
+    $stdoutTrimmed = ($stdout ?? '').Trim()
+
     $obj = $null
-    try { $obj = ($create.StdOut | ConvertFrom-Json) } catch { $obj = $null }
-    if ($null -eq $obj) { Fail 'Failed to parse service account token create response.' }
+    try {
+        if ($stdoutTrimmed) {
+            $obj = ($stdoutTrimmed | ConvertFrom-Json)
+        }
+    } catch {
+        $obj = $null
+    }
+
+    # Azure CLI / amg extension sometimes emits non-JSON progress lines before the JSON payload.
+    if ($null -eq $obj -and $stdoutTrimmed) {
+        $idxObj = $stdoutTrimmed.LastIndexOf('{')
+        if ($idxObj -ge 0) {
+            $candidate = $stdoutTrimmed.Substring($idxObj)
+            try { $obj = ($candidate | ConvertFrom-Json) } catch { $obj = $null }
+        }
+    }
 
     $token = $null
-    foreach ($p in @('key', 'token', 'secret', 'value')) {
-        if ($obj.PSObject.Properties.Name -contains $p) { $token = $obj.$p; break }
-    }
     $tokenId = $null
-    foreach ($p in @('id', 'tokenId', 'uid')) {
-        if ($obj.PSObject.Properties.Name -contains $p) { $tokenId = $obj.$p; break }
+
+    if ($null -ne $obj) {
+        foreach ($p in @('key', 'token', 'secret', 'value')) {
+            if ($obj.PSObject.Properties.Name -contains $p) { $token = $obj.$p; break }
+        }
+        foreach ($p in @('id', 'tokenId', 'uid')) {
+            if ($obj.PSObject.Properties.Name -contains $p) { $tokenId = $obj.$p; break }
+        }
     }
 
-    if (-not $token) { Fail 'Azure CLI did not return a usable service account token secret.' }
+    # Final fallback: extract token directly from raw output (redacts in errors).
+    if (-not $token -and $stdoutTrimmed) {
+        $m = [regex]::Matches($stdoutTrimmed, '"(key|token|secret|value)"\s*:\s*"([^"]+)"')
+        if ($m.Count -gt 0) {
+            $token = $m[$m.Count - 1].Groups[2].Value
+        }
+
+        $mid = [regex]::Matches($stdoutTrimmed, '"(id|tokenId|uid)"\s*:\s*"([^"]+)"')
+        if ($mid.Count -gt 0) {
+            $tokenId = $mid[$mid.Count - 1].Groups[2].Value
+        }
+    }
+
+    if (-not $token) {
+        $safe = $stdoutTrimmed
+        if ($safe) {
+            $safe = [regex]::Replace($safe, '"(key|token|secret|value)"\s*:\s*"[^"]+"', '"$1":"***REDACTED***"')
+        }
+        $details = (@(
+                if ($stderr) { "STDERR: $($stderr.Trim())" }
+                if ($safe) { "STDOUT (redacted): $safe" }
+            ) | Where-Object { $_ -and $_.Trim().Length -gt 0 }) -join "\n"
+        if (-not $details) { $details = 'No output captured from Azure CLI.' }
+        Fail ("Azure CLI did not return a usable service account token secret.\n" + $details)
+    }
 
     return [pscustomobject]@{ Token = $token; TokenId = $tokenId }
 }
