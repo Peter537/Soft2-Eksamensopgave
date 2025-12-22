@@ -253,6 +253,17 @@ jobs:
           echo "slo_grafana_endpoint: $(terraform output -raw slo_grafana_endpoint)" >> $GITHUB_STEP_SUMMARY
           echo "prometheus_query_endpoint: $(terraform output -raw prometheus_query_endpoint)" >> $GITHUB_STEP_SUMMARY
 
+      # NOTE: GitHub OIDC assertions are short-lived. If Terraform apply runs for a long
+      # time, Azure CLI may later try to acquire fresh tokens using an expired assertion.
+      # Re-login right before Azure CLI steps.
+      - name: Azure Login (OIDC refresh for Azure CLI)
+        if: github.event.inputs.action == 'apply'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Grant Grafana Admin to deploy identity
         if: github.event.inputs.action == 'apply'
         shell: bash

@@ -141,6 +141,16 @@ jobs:
             exit 1
           fi
 
+      # NOTE: GitHub OIDC assertions are short-lived. If Terraform apply runs for a long
+      # time, Azure CLI may later try to acquire fresh tokens using an expired assertion.
+      # Re-login right before Azure CLI steps.
+      - name: Azure Login (OIDC refresh for Azure CLI)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Grant Grafana Admin to deploy identity
         shell: bash
         env:
