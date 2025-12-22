@@ -4,7 +4,7 @@
 # Deploys a staging environment (Azure/AKS) and runs test suites,
 # then always destroys the staging environment.
 
-name: Deploy & Test Staging
+name: Azure Deploy, Test and Destroy in staging
 
 on:
   workflow_dispatch:

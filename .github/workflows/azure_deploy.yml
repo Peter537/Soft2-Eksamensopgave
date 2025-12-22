@@ -8,7 +8,7 @@
 #   1. Azure Service Principal with Contributor access
 #   2. GitHub secrets configured (see documentation)
 
-name: Deploy to Azure
+name: Azure Deploy
 
 on:
   workflow_dispatch:

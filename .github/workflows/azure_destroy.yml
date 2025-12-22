@@ -6,7 +6,7 @@
 #
 # Requires manual confirmation via input.
 
-name: Destroy Azure Infrastructure
+name: Azure Destroy
 
 on:
   workflow_dispatch:
