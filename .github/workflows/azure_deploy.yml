@@ -296,6 +296,7 @@ jobs:
     needs: [prepare, terraform]
     if: github.event.inputs.action == 'apply'
     runs-on: ubuntu-latest
+    environment: ${{ needs.prepare.outputs.environment }}
 
     steps:
       - name: Checkout
