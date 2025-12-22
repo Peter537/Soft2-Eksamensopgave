@@ -237,6 +237,8 @@ resource "kubernetes_deployment" "services" {
   spec {
     replicas = 1
 
+    progress_deadline_seconds = 1800
+
     selector {
       match_labels = {
         app = each.key
