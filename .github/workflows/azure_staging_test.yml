@@ -141,6 +141,19 @@ jobs:
             exit 1
           fi
 
+      - name: Grant Grafana Admin to deploy identity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kpi_id=$(terraform output -raw kpi_grafana_id)
+          slo_id=$(terraform output -raw slo_grafana_id)
+
+          az role assignment create --assignee "${{ secrets.AZURE_CLIENT_ID }}" --role "Grafana Admin" --scope "$kpi_id" --only-show-errors || true
+          az role assignment create --assignee "${{ secrets.AZURE_CLIENT_ID }}" --role "Grafana Admin" --scope "$slo_id" --only-show-errors || true
+
+          sleep 20
+
       - name: Provision Azure Managed Grafana (dashboards + alerting)
         shell: pwsh
         env:

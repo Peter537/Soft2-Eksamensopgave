@@ -249,6 +249,23 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           terraform output -raw connect_instructions >> $GITHUB_STEP_SUMMARY
 
+      - name: Grant Grafana Admin to deploy identity
+        if: github.event.inputs.action == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kpi_id=$(terraform output -raw kpi_grafana_id)
+          slo_id=$(terraform output -raw slo_grafana_id)
+
+          # Required for `az grafana data-source ...` calls (otherwise 401 Unauthorized).
+          # `--assignee` accepts the application (client) ID.
+          az role assignment create --assignee "${{ secrets.AZURE_CLIENT_ID }}" --role "Grafana Admin" --scope "$kpi_id" --only-show-errors || true
+          az role assignment create --assignee "${{ secrets.AZURE_CLIENT_ID }}" --role "Grafana Admin" --scope "$slo_id" --only-show-errors || true
+
+          # Give RBAC a moment to propagate.
+          sleep 20
+
       - name: Provision Azure Managed Grafana (dashboards + alerting)
         if: github.event.inputs.action == 'apply'
         shell: pwsh
