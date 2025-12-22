@@ -1,4 +1,6 @@
 using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authentication;
+using MToGo.Shared.Security.Authorization;
 using MToGo.WebSocketCustomerService.BackgroundServices;
 using MToGo.WebSocketCustomerService.Handlers;
 using MToGo.WebSocketCustomerService.Services;
@@ -38,18 +40,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Enable WebSockets before authentication so JWT bearer can detect WS upgrade requests
+// and read the token from the query string (access_token).
+app.UseWebSockets();
+
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseWebSockets();
 
 // Map WebSocket endpoint for customers
 // Gateway routes /api/v1/ws/customers/{id} -> /{id} after PathRemovePrefix
 app.Map("/{id:int}", async (HttpContext context, int id) =>
 {
+    var idClaim = context.User.FindFirst(JwtClaims.Id)?.Value;
+    if (!int.TryParse(idClaim, out var authenticatedCustomerId) || authenticatedCustomerId != id)
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return;
+    }
+
     var handler = context.RequestServices.GetRequiredService<CustomerWebSocketHandler>();
     await handler.HandleConnectionAsync(context, id);
-});
+}).RequireAuthorization(AuthorizationPolicies.CustomerOnly);
 
 app.MapControllers();
 

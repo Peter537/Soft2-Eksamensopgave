@@ -34,12 +34,6 @@ public static class CorsServiceExtensions
             {
                 ConfigureCorsPolicy(builder, corsSettings);
             });
-
-            // WebSocket-specific policy (same origins, but ensures credentials are allowed)
-            options.AddPolicy(CorsPolicies.WebSocketPolicy, builder =>
-            {
-                ConfigureCorsPolicy(builder, corsSettings, isWebSocket: true);
-            });
         });
 
         return services;
@@ -75,17 +69,12 @@ public static class CorsServiceExtensions
             {
                 ConfigureCorsPolicy(builder, devSettings);
             });
-
-            options.AddPolicy(CorsPolicies.WebSocketPolicy, builder =>
-            {
-                ConfigureCorsPolicy(builder, devSettings, isWebSocket: true);
-            });
         });
 
         return services;
     }
 
-    private static void ConfigureCorsPolicy(CorsPolicyBuilder builder, CorsSettings settings, bool isWebSocket = false)
+    private static void ConfigureCorsPolicy(CorsPolicyBuilder builder, CorsSettings settings)
     {
         // Configure origins
         if (settings.AllowedOrigins.Length > 0)

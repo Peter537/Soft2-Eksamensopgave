@@ -514,6 +514,11 @@
             var gatewayUrl = Configuration["GatewayPublicUrl"] ?? Configuration["GatewayUrl"] ?? "http://localhost:5000";
             var wsUrl = gatewayUrl.Replace("http://", "ws://").Replace("https://", "wss://");
             wsUrl = $"{wsUrl}/api/v1/ws/customers/{Auth.Id}";
+
+            if (!string.IsNullOrEmpty(Auth.Token))
+            {
+                wsUrl = $"{wsUrl}?access_token={Uri.EscapeDataString(Auth.Token)}";
+            }
             
             // Connect returns a listener ID for cleanup
             _listenerId = await JS.InvokeAsync<int>("customerWebSocket.connect", wsUrl, _dotNetRef);

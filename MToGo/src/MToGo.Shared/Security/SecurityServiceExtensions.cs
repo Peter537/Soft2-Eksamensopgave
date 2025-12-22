@@ -127,8 +127,15 @@ public static class SecurityServiceExtensions
                 var accessToken = context.Request.Query["access_token"];
                 var path = context.HttpContext.Request.Path;
 
+                // Behind reverse proxies, IsWebSocketRequest can be unreliable depending on middleware order.
+                // The Upgrade header is a reliable indicator of a WebSocket handshake.
+                var upgradeHeader = context.Request.Headers.Upgrade.ToString();
+                var isWebSocketHandshake =
+                    context.HttpContext.WebSockets.IsWebSocketRequest ||
+                    string.Equals(upgradeHeader, "websocket", StringComparison.OrdinalIgnoreCase);
+
                 // Apply token from query string for WebSocket paths
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/v1/ws"))
+                if (!string.IsNullOrEmpty(accessToken) && (isWebSocketHandshake || path.StartsWithSegments("/api/v1/ws")))
                 {
                     context.Token = accessToken;
                 }

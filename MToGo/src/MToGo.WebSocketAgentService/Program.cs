@@ -1,4 +1,6 @@
 using MToGo.Shared.Security;
+using MToGo.Shared.Security.Authentication;
+using MToGo.Shared.Security.Authorization;
 using MToGo.WebSocketAgentService.BackgroundServices;
 using MToGo.WebSocketAgentService.Handlers;
 using MToGo.WebSocketAgentService.Services;
@@ -54,14 +56,21 @@ var wsHandler = app.Services.GetRequiredService<AgentWebSocketHandler>();
 app.Map("/", async context =>
 {
     await wsHandler.HandleBroadcastConnectionAsync(context);
-});
+}).RequireAuthorization(AuthorizationPolicies.AgentOnly);
 
 // Personal room - specific agent gets order updates
 // Gateway: /api/v1/ws/agents/{id} -> /{id} (after PathRemovePrefix)
 app.Map("/{agentId:int}", async (HttpContext context, int agentId) =>
 {
+    var idClaim = context.User.FindFirst(JwtClaims.Id)?.Value;
+    if (!int.TryParse(idClaim, out var authenticatedAgentId) || authenticatedAgentId != agentId)
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        return;
+    }
+
     await wsHandler.HandleAgentConnectionAsync(context, agentId);
-});
+}).RequireAuthorization(AuthorizationPolicies.AgentOnly);
 
 app.Run();
 
