@@ -40,21 +40,21 @@ function Ensure-Command([string]$Name) {
 function Invoke-AzCli([string[]]$AzArgs, [switch]$AllowFailure) {
     Ensure-Command -Name 'az'
 
-        # NOTE: Don't name this parameter "Args" because PowerShell has an automatic $args variable.
-        if (-not $AzArgs -or $AzArgs.Count -eq 0) {
+    # NOTE: Don't name this parameter "Args" because PowerShell has an automatic $args variable.
+    if (-not $AzArgs -or $AzArgs.Count -eq 0) {
         Fail 'Invoke-AzCli was called with no arguments.'
     }
 
     # Reduce noisy output that breaks JSON parsing.
-        if (-not ($AzArgs -contains '--only-show-errors')) {
-            $AzArgs = @($AzArgs + @('--only-show-errors'))
+    if (-not ($AzArgs -contains '--only-show-errors')) {
+        $AzArgs = @($AzArgs + @('--only-show-errors'))
     }
 
-        $cmdForLog = 'az ' + ($AzArgs -join ' ')
+    $cmdForLog = 'az ' + ($AzArgs -join ' ')
     Write-Host "Running: $cmdForLog" -ForegroundColor DarkGray
 
     # Use PowerShell invocation to avoid ArgumentList/Process quirks on hosted runners.
-        $out = & az @AzArgs 2>&1
+    $out = & az @AzArgs 2>&1
     $exitCode = $LASTEXITCODE
     $text = ($out | Out-String)
 
