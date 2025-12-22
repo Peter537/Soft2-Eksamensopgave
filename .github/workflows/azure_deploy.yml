@@ -29,7 +29,7 @@ on:
       node_count:
         description: "Number of AKS nodes"
         required: false
-        default: "2"
+        default: "1"
       action:
         description: "Terraform action"
         required: true
