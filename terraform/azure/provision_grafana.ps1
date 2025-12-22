@@ -37,23 +37,24 @@ function Ensure-Command([string]$Name) {
     }
 }
 
-function Invoke-AzCli([string[]]$Args, [switch]$AllowFailure) {
+function Invoke-AzCli([string[]]$AzArgs, [switch]$AllowFailure) {
     Ensure-Command -Name 'az'
 
-    if (-not $Args -or $Args.Count -eq 0) {
+        # NOTE: Don't name this parameter "Args" because PowerShell has an automatic $args variable.
+        if (-not $AzArgs -or $AzArgs.Count -eq 0) {
         Fail 'Invoke-AzCli was called with no arguments.'
     }
 
     # Reduce noisy output that breaks JSON parsing.
-    if (-not ($Args -contains '--only-show-errors')) {
-        $Args = @($Args + @('--only-show-errors'))
+        if (-not ($AzArgs -contains '--only-show-errors')) {
+            $AzArgs = @($AzArgs + @('--only-show-errors'))
     }
 
-    $cmdForLog = 'az ' + ($Args -join ' ')
+        $cmdForLog = 'az ' + ($AzArgs -join ' ')
     Write-Host "Running: $cmdForLog" -ForegroundColor DarkGray
 
     # Use PowerShell invocation to avoid ArgumentList/Process quirks on hosted runners.
-    $out = & az @Args 2>&1
+        $out = & az @AzArgs 2>&1
     $exitCode = $LASTEXITCODE
     $text = ($out | Out-String)
 
@@ -71,13 +72,13 @@ function Invoke-AzCli([string[]]$Args, [switch]$AllowFailure) {
 }
 
 function Ensure-AzExtension([string]$Name) {
-    $ext = Invoke-AzCli -Args @('extension', 'show', '--name', $Name, '-o', 'json') -AllowFailure
+    $ext = Invoke-AzCli -AzArgs @('extension', 'show', '--name', $Name, '-o', 'json') -AllowFailure
     if ($ext.ExitCode -ne 0) {
-        Invoke-AzCli -Args @('extension', 'add', '--name', $Name, '--upgrade', '--yes', '-o', 'none') | Out-Null
+        Invoke-AzCli -AzArgs @('extension', 'add', '--name', $Name, '--upgrade', '--yes', '-o', 'none') | Out-Null
         return
     }
 
-    Invoke-AzCli -Args @('extension', 'update', '--name', $Name, '-o', 'none') -AllowFailure | Out-Null
+    Invoke-AzCli -AzArgs @('extension', 'update', '--name', $Name, '-o', 'none') -AllowFailure | Out-Null
 }
 
 function Write-Utf8NoBom([string]$Path, [string]$Value) {
@@ -86,26 +87,26 @@ function Write-Utf8NoBom([string]$Path, [string]$Value) {
 }
 
 function Get-GrafanaEndpoint([string]$GrafanaName) {
-    $r = Invoke-AzCli -Args @('grafana', 'show', '-g', $ResourceGroupName, '-n', $GrafanaName, '--query', 'properties.endpoint', '-o', 'tsv')
+    $r = Invoke-AzCli -AzArgs @('grafana', 'show', '-g', $ResourceGroupName, '-n', $GrafanaName, '--query', 'properties.endpoint', '-o', 'tsv')
     $ep = ($r.StdOut | Out-String).Trim()
     if (-not $ep) { Fail "Failed to determine Grafana endpoint for '${GrafanaName}'." }
     return $ep.TrimEnd('/')
 }
 
 function Ensure-ServiceAccountAdmin([string]$GrafanaName, [string]$ServiceAccountName) {
-    $list = Invoke-AzCli -Args @('grafana', 'service-account', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json')
+    $list = Invoke-AzCli -AzArgs @('grafana', 'service-account', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json')
     $sas = @()
     try { $sas = ($list.StdOut | ConvertFrom-Json) } catch { $sas = @() }
 
     $match = $sas | Where-Object { $_.name -eq $ServiceAccountName } | Select-Object -First 1
     if (-not $match) {
-        Invoke-AzCli -Args @('grafana', 'service-account', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--role', 'Admin', '-o', 'none') | Out-Null
+        Invoke-AzCli -AzArgs @('grafana', 'service-account', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--role', 'Admin', '-o', 'none') | Out-Null
     }
 }
 
 function New-GrafanaToken([string]$GrafanaName, [string]$ServiceAccountName) {
     $tokenName = 'ci-' + [Guid]::NewGuid().ToString('N')
-    $create = Invoke-AzCli -Args @('grafana', 'service-account', 'token', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--token', $tokenName, '--time-to-live', '1h', '-o', 'json')
+    $create = Invoke-AzCli -AzArgs @('grafana', 'service-account', 'token', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--token', $tokenName, '--time-to-live', '1h', '-o', 'json')
     $stdout = ($create.StdOut | Out-String)
     $stderr = ($create.StdErr | Out-String)
     $stdoutTrimmed = ($stdout ?? '').Trim()
@@ -171,11 +172,11 @@ function New-GrafanaToken([string]$GrafanaName, [string]$ServiceAccountName) {
 
 function Remove-GrafanaToken([string]$GrafanaName, [string]$ServiceAccountName, $TokenId) {
     if (-not $TokenId) { return }
-    Invoke-AzCli -Args @('grafana', 'service-account', 'token', 'delete', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--token', [string]$TokenId, '-o', 'none') -AllowFailure | Out-Null
+    Invoke-AzCli -AzArgs @('grafana', 'service-account', 'token', 'delete', '-g', $ResourceGroupName, '-n', $GrafanaName, '--service-account', $ServiceAccountName, '--token', [string]$TokenId, '-o', 'none') -AllowFailure | Out-Null
 }
 
 function Get-OrCreate-PrometheusDatasourceUid([string]$GrafanaName) {
-    $list = Invoke-AzCli -Args @('grafana', 'data-source', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json')
+    $list = Invoke-AzCli -AzArgs @('grafana', 'data-source', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json')
     $dss = @()
     try { $dss = ($list.StdOut | ConvertFrom-Json) } catch { $dss = @() }
 
@@ -199,9 +200,9 @@ function Get-OrCreate-PrometheusDatasourceUid([string]$GrafanaName) {
         $path = Join-Path $tmp ("datasource-${GrafanaName}.json")
         Write-Utf8NoBom -Path $path -Value ($def | ConvertTo-Json -Depth 20)
 
-        Invoke-AzCli -Args @('grafana', 'data-source', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--definition', ('@' + $path), '-o', 'none') | Out-Null
+        Invoke-AzCli -AzArgs @('grafana', 'data-source', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--definition', ('@' + $path), '-o', 'none') | Out-Null
 
-        $list = Invoke-AzCli -Args @('grafana', 'data-source', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json')
+        $list = Invoke-AzCli -AzArgs @('grafana', 'data-source', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json')
         try { $dss = ($list.StdOut | ConvertFrom-Json) } catch { $dss = @() }
         $prom = $dss | Where-Object { $_.type -eq 'prometheus' } | Select-Object -First 1
     }
@@ -244,7 +245,7 @@ function Import-DashboardsStrict {
     }
 
     # First: delete any non-repo folders (this is the only reliable way to remove some provisioned/default dashboards).
-    $foldersResult = Invoke-AzCli -Args @('grafana', 'folder', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json') -AllowFailure
+    $foldersResult = Invoke-AzCli -AzArgs @('grafana', 'folder', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '-o', 'json') -AllowFailure
     if ($foldersResult.ExitCode -eq 0 -and $foldersResult.StdOut) {
         $folders = @()
         try { $folders = ($foldersResult.StdOut | ConvertFrom-Json) } catch { $folders = @() }
@@ -255,7 +256,7 @@ function Import-DashboardsStrict {
             if ($AllowedFolderTitles -contains $title) { continue }
 
             Write-Host "Deleting non-repo folder from ${GrafanaName}: ${title} (${uid})" -ForegroundColor Yellow
-            Invoke-AzCli -Args @('grafana', 'folder', 'delete', '-g', $ResourceGroupName, '-n', $GrafanaName, '--folder', $uid, '-o', 'none') -AllowFailure | Out-Null
+            Invoke-AzCli -AzArgs @('grafana', 'folder', 'delete', '-g', $ResourceGroupName, '-n', $GrafanaName, '--folder', $uid, '-o', 'none') -AllowFailure | Out-Null
         }
     }
 
@@ -276,11 +277,11 @@ function Import-DashboardsStrict {
         Write-Utf8NoBom -Path $wrappedPath -Value ($wrapped | ConvertTo-Json -Depth 100)
 
         Write-Host "Importing dashboard: $($f.Name) -> ${GrafanaName}" -ForegroundColor Cyan
-        Invoke-AzCli -Args @('grafana', 'dashboard', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--definition', ('@' + $wrappedPath), '--overwrite', 'true', '-o', 'none') | Out-Null
+        Invoke-AzCli -AzArgs @('grafana', 'dashboard', 'create', '-g', $ResourceGroupName, '-n', $GrafanaName, '--definition', ('@' + $wrappedPath), '--overwrite', 'true', '-o', 'none') | Out-Null
     }
 
     # Then: delete any remaining non-repo dashboards.
-    $dashList = Invoke-AzCli -Args @('grafana', 'dashboard', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '--query', '[].{uid:uid,title:title}', '-o', 'json')
+    $dashList = Invoke-AzCli -AzArgs @('grafana', 'dashboard', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '--query', '[].{uid:uid,title:title}', '-o', 'json')
     $dashboards = @()
     try { $dashboards = ($dashList.StdOut | ConvertFrom-Json) } catch { $dashboards = @() }
 
@@ -289,11 +290,11 @@ function Import-DashboardsStrict {
         if ($allowedUids.Contains([string]$d.uid)) { continue }
 
         Write-Host "Deleting non-repo dashboard from ${GrafanaName}: $($d.title) ($($d.uid))" -ForegroundColor Yellow
-        Invoke-AzCli -Args @('grafana', 'dashboard', 'delete', '-g', $ResourceGroupName, '-n', $GrafanaName, '--dashboard', [string]$d.uid, '-o', 'none') -AllowFailure | Out-Null
+        Invoke-AzCli -AzArgs @('grafana', 'dashboard', 'delete', '-g', $ResourceGroupName, '-n', $GrafanaName, '--dashboard', [string]$d.uid, '-o', 'none') -AllowFailure | Out-Null
     }
 
     # Assert strictness.
-    $dashList2 = Invoke-AzCli -Args @('grafana', 'dashboard', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '--query', '[].{uid:uid,title:title}', '-o', 'json') -AllowFailure
+    $dashList2 = Invoke-AzCli -AzArgs @('grafana', 'dashboard', 'list', '-g', $ResourceGroupName, '-n', $GrafanaName, '--query', '[].{uid:uid,title:title}', '-o', 'json') -AllowFailure
     $after = @()
     try { $after = ($dashList2.StdOut | ConvertFrom-Json) } catch { $after = @() }
 
@@ -614,8 +615,8 @@ Ensure-Command -Name 'az'
 Ensure-AzExtension -Name 'amg'
 
 Write-Host "Waiting for Azure Managed Grafana instances to be ready..." -ForegroundColor Yellow
-Invoke-AzCli -Args @('grafana', 'wait', '-g', $ResourceGroupName, '-n', $KpiGrafanaName, '--created', '--timeout', '900', '-o', 'none') | Out-Null
-Invoke-AzCli -Args @('grafana', 'wait', '-g', $ResourceGroupName, '-n', $SloGrafanaName, '--created', '--timeout', '900', '-o', 'none') | Out-Null
+    Invoke-AzCli -AzArgs @('grafana', 'wait', '-g', $ResourceGroupName, '-n', $KpiGrafanaName, '--created', '--timeout', '900', '-o', 'none') | Out-Null
+    Invoke-AzCli -AzArgs @('grafana', 'wait', '-g', $ResourceGroupName, '-n', $SloGrafanaName, '--created', '--timeout', '900', '-o', 'none') | Out-Null
 
 $kpiDsUid = Get-OrCreate-PrometheusDatasourceUid -GrafanaName $KpiGrafanaName
 $sloDsUid = Get-OrCreate-PrometheusDatasourceUid -GrafanaName $SloGrafanaName
