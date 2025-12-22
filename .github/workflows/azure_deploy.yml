@@ -237,17 +237,21 @@ jobs:
           echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
           echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
 
-          echo "## Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "website_url=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
+          echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
+          echo "legacy_api_url=$(terraform output -raw legacy_api_url)" >> $GITHUB_OUTPUT
+          echo "kpi_grafana_endpoint=$(terraform output -raw kpi_grafana_endpoint)" >> $GITHUB_OUTPUT
+          echo "slo_grafana_endpoint=$(terraform output -raw slo_grafana_endpoint)" >> $GITHUB_OUTPUT
+          echo "prometheus_query_endpoint=$(terraform output -raw prometheus_query_endpoint)" >> $GITHUB_OUTPUT
+
+          echo "## Access" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource Group | $(terraform output -raw resource_group_name) |" >> $GITHUB_STEP_SUMMARY
-          echo "| AKS Cluster | $(terraform output -raw aks_cluster_name) |" >> $GITHUB_STEP_SUMMARY
-          echo "| PostgreSQL FQDN | $(terraform output -raw postgres_fqdn) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Website URL | $(terraform output -raw website_url) |" >> $GITHUB_STEP_SUMMARY
-          echo "| API URL | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          terraform output -raw connect_instructions >> $GITHUB_STEP_SUMMARY
+          echo "website_url: $(terraform output -raw website_url)" >> $GITHUB_STEP_SUMMARY
+          echo "api_url: $(terraform output -raw api_url)" >> $GITHUB_STEP_SUMMARY
+          echo "legacy_api_url: $(terraform output -raw legacy_api_url)" >> $GITHUB_STEP_SUMMARY
+          echo "kpi_grafana_endpoint: $(terraform output -raw kpi_grafana_endpoint)" >> $GITHUB_STEP_SUMMARY
+          echo "slo_grafana_endpoint: $(terraform output -raw slo_grafana_endpoint)" >> $GITHUB_STEP_SUMMARY
+          echo "prometheus_query_endpoint: $(terraform output -raw prometheus_query_endpoint)" >> $GITHUB_STEP_SUMMARY
 
       - name: Grant Grafana Admin to deploy identity
         if: github.event.inputs.action == 'apply'

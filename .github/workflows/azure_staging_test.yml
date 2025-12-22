@@ -189,14 +189,11 @@ jobs:
           echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
           echo "ingress_ip=$(terraform output -raw ingress_ip)" >> $GITHUB_OUTPUT
 
-          echo "## Staging Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "## Access" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource Group | $(terraform output -raw resource_group_name) |" >> $GITHUB_STEP_SUMMARY
-          echo "| AKS Cluster | $(terraform output -raw aks_cluster_name) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Website URL | $(terraform output -raw website_url) |" >> $GITHUB_STEP_SUMMARY
-          echo "| API URL | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "website_url: $(terraform output -raw website_url)" >> $GITHUB_STEP_SUMMARY
+          echo "api_url: $(terraform output -raw api_url)" >> $GITHUB_STEP_SUMMARY
+          echo "ingress_ip: $(terraform output -raw ingress_ip)" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================
   # Wait for services to be ready
