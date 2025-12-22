@@ -81,6 +81,27 @@ function Ensure-AzExtension([string]$Name) {
     Invoke-AzCli -AzArgs @('extension', 'update', '--name', $Name, '-o', 'none') -AllowFailure | Out-Null
 }
 
+function Prime-AzTokenCache {
+    # With OIDC, the underlying client assertion is very short-lived.
+    # If we acquire tokens for the resource audiences we need early, later
+    # commands (after long waits) can often reuse cached tokens without
+    # needing another client assertion.
+    $resources = @(
+        'https://management.azure.com/',
+        'https://grafana.azure.com/'
+    )
+
+    foreach ($r in $resources) {
+        $res = Invoke-AzCli -AzArgs @('account', 'get-access-token', '--resource', $r, '-o', 'none') -AllowFailure
+        if ($res.ExitCode -eq 0) {
+            Write-Host "Primed Azure CLI token cache for: $r" -ForegroundColor DarkGray
+        }
+        else {
+            Write-Host "Token cache prime failed (non-fatal) for: $r" -ForegroundColor DarkGray
+        }
+    }
+}
+
 function Write-Utf8NoBom([string]$Path, [string]$Value) {
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($Path, $Value, $utf8NoBom)
@@ -613,6 +634,8 @@ function Import-KpiAlertRules([string]$GrafanaName, [string]$PrometheusDatasourc
 
 Ensure-Command -Name 'az'
 Ensure-AzExtension -Name 'amg'
+
+Prime-AzTokenCache
 
 Write-Host "Waiting for Azure Managed Grafana instances to be ready..." -ForegroundColor Yellow
     Invoke-AzCli -AzArgs @('grafana', 'wait', '-g', $ResourceGroupName, '-n', $KpiGrafanaName, '--created', '--timeout', '900', '-o', 'none') | Out-Null
