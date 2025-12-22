@@ -40,45 +40,33 @@ function Ensure-Command([string]$Name) {
 function Invoke-AzCli([string[]]$Args, [switch]$AllowFailure) {
     Ensure-Command -Name 'az'
 
-    $cmd = 'az ' + ($Args | ForEach-Object {
-            if ($_ -match '[\s&()^%=!"'']') {
-                '"' + ($_ -replace '"', '\\"') + '"'
-            }
-            else {
-                $_
-            }
-        } | Out-String).Trim()
-
-    Write-Host "Running: $cmd" -ForegroundColor DarkGray
-
-    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-    $pinfo.FileName = 'az'
-    $pinfo.RedirectStandardError = $true
-    $pinfo.RedirectStandardOutput = $true
-    $pinfo.UseShellExecute = $false
-
-    foreach ($a in $Args) {
-        $null = $pinfo.ArgumentList.Add($a)
+    if (-not $Args -or $Args.Count -eq 0) {
+        Fail 'Invoke-AzCli was called with no arguments.'
     }
 
-    $p = New-Object System.Diagnostics.Process
-    $p.StartInfo = $pinfo
-    $null = $p.Start()
+    # Reduce noisy output that breaks JSON parsing.
+    if (-not ($Args -contains '--only-show-errors')) {
+        $Args = @($Args + @('--only-show-errors'))
+    }
 
-    $stdout = $p.StandardOutput.ReadToEnd()
-    $stderr = $p.StandardError.ReadToEnd()
-    $p.WaitForExit()
+    $cmdForLog = 'az ' + ($Args -join ' ')
+    Write-Host "Running: $cmdForLog" -ForegroundColor DarkGray
 
-    if ($p.ExitCode -ne 0 -and -not $AllowFailure) {
-        $combined = ((@($stderr, $stdout) | Where-Object { $_ -and $_.Trim().Length -gt 0 }) -join "\n").Trim()
-        if (-not $combined) { $combined = "Azure CLI failed with exit code $($p.ExitCode)" }
-        Fail $combined
+    # Use PowerShell invocation to avoid ArgumentList/Process quirks on hosted runners.
+    $out = & az @Args 2>&1
+    $exitCode = $LASTEXITCODE
+    $text = ($out | Out-String)
+
+    if ($exitCode -ne 0 -and -not $AllowFailure) {
+        $msg = ($text ?? '').Trim()
+        if (-not $msg) { $msg = "Azure CLI failed with exit code $exitCode" }
+        Fail $msg
     }
 
     return [pscustomobject]@{
-        ExitCode = $p.ExitCode
-        StdOut   = $stdout
-        StdErr   = $stderr
+        ExitCode = $exitCode
+        StdOut   = $text
+        StdErr   = ''
     }
 }
 
