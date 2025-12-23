@@ -72,6 +72,14 @@ resource "helm_release" "nginx_ingress" {
     value = "LoadBalancer"
   }
 
+  dynamic "set" {
+    for_each = var.ingress_load_balancer_ip != "" ? [1] : []
+    content {
+      name  = "controller.service.loadBalancerIP"
+      value = var.ingress_load_balancer_ip
+    }
+  }
+
   # Avoid transient failures where the validating admission webhook exists but has no endpoints yet,
   # which can block creating our app Ingress during initial cluster boot.
   set {

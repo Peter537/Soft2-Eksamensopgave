@@ -33,9 +33,12 @@ Slet deployment:
 
 Efter et succesfuldt local-deploy skriver scriptet bl.a. disse endpoints ud:
 
-- Website: `http://localhost/`
-- API: `http://localhost/api/v1/`
-- Legacy API: `http://localhost/legacy`
+- Website: `https://localhost/`
+- API: `https://localhost/api/v1/`
+- Legacy API: `https://localhost/legacy`
+
+Bemærk: Terraform deployer en **self-signed** TLS cert til ingress (vi bruger kun IP/localhost og ingen DNS).
+Det giver HTTPS + HSTS, men browseren vil typisk vise en advarsel, indtil certifikatet er gjort “trusted” på din maskine.
 
 ### Azure (AKS)
 

@@ -72,9 +72,11 @@ terraform destroy -auto-approve
 
 Ved ingress (default) routes trafikken typisk sådan:
 
-- Website: `http://localhost/`
-- API: `http://localhost/api/v1/`
-- Legacy API: `http://localhost/legacy`
+- Website: `https://localhost/`
+- API: `https://localhost/api/v1/`
+- Legacy API: `https://localhost/legacy`
+
+Bemærk: HTTPS i local Terraform sker via en **self-signed** cert på ingress. Browseren vil derfor typisk advare, indtil certifikatet er trusted lokalt.
 
 Monitoring installeres også i clusteren (for at matche de andre startup-modes):
 

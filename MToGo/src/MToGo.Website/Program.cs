@@ -1,8 +1,19 @@
 using MToGo.Website.Components;
 using MToGo.Website.Services;
 using MToGo.Website.Services.Payment;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Trust reverse proxy forwarded headers (ingress-nginx) so HTTPS termination at the edge
+// is correctly reflected as Request.Scheme=https inside the app.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.RequireHeaderSymmetry = false;
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -37,6 +48,8 @@ builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().Cre
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseForwardedHeaders();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -44,7 +57,14 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Default: enable HTTPS redirection. Ingress terminates TLS, but the app still should redirect
+// when it receives a plain HTTP request (e.g., first-time visitors / clients without HSTS).
+// Docker Compose explicitly disables this via HttpsSettings__EnableHttpsRedirection=false.
+var enableHttpsRedirection = builder.Configuration.GetValue("HttpsSettings:EnableHttpsRedirection", true);
+if (enableHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 app.UseAntiforgery();
 

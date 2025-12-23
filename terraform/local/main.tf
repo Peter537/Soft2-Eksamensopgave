@@ -18,8 +18,8 @@
 #   terraform apply
 #
 # Access (Docker Desktop + ingress-nginx):
-#   Open http://localhost/
-#   API is available under http://localhost/api/v1/
+#   Open https://localhost/
+#   API is available under https://localhost/api/v1/
 
 terraform {
   required_version = ">= 1.0.0"
@@ -32,6 +32,10 @@ terraform {
     helm = {
       source  = "hashicorp/helm"
       version = "~> 2.0"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
     }
   }
 }
@@ -76,6 +80,14 @@ module "mtogo_app" {
   deploy_kafka               = true # Deploy Kafka in cluster
   install_ingress_controller = var.install_ingress
   kafka_bootstrap_servers    = "kafka:9092"
+
+  # Local ingress: HTTPS on localhost (self-signed), internal traffic remains HTTP.
+  ingress_host                = "localhost"
+  ingress_enable_ssl_redirect = true
+  ingress_enable_hsts         = true
+  ingress_hsts_max_age        = 31536000
+  ingress_cert_ip_sans        = ["127.0.0.1"]
+  ingress_cert_dns_sans       = ["localhost"]
 
   management_username = var.management_username
   management_password = var.management_password

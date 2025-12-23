@@ -101,6 +101,16 @@ Adgang styres via **Entra ID + Azure RBAC**.
 
 - Ops/consultancy (dem der driver sitet) får **Grafana Admin** på SLO-instansen via `grafana_slo_admin_principal_ids`.
 
+Hvis du deployer via GitHub Actions, sendes disse lister ind til Terraform via secrets:
+
+- `GRAFANA_SLO_ADMIN_PRINCIPAL_IDS`
+- `GRAFANA_KPI_VIEWER_PRINCIPAL_IDS`
+- `GRAFANA_KPI_EDITOR_PRINCIPAL_IDS`
+
+Format: JSON array, fx `[]` eller `["<objectId1>","<objectId2>"]`.
+
+Anbefaling: brug **Entra ID grupper** fremfor individuelle users, så I kun skal vedligeholde én group objectId pr. rolle.
+
 ## KPI Grafana (Azure)
 
 Terraform opretter også en separat **Azure Managed Grafana** instans dedikeret til KPI-visualisering.

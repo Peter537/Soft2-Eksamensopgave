@@ -137,3 +137,55 @@ variable "grafana_url" {
   type        = string
   default     = ""
 }
+
+# ===========================================
+# Ingress HTTPS/TLS (self-signed) configuration
+# ===========================================
+
+variable "ingress_host" {
+  description = "Public host used to access the ingress (IP address for Azure, typically localhost for local clusters). This is used for Ingress host rules and for generating the self-signed certificate SANs via ingress_cert_* variables."
+  type        = string
+  default     = "localhost"
+}
+
+variable "ingress_load_balancer_ip" {
+  description = "Optional static LoadBalancer IP to assign to ingress-nginx (recommended for Azure so the TLS cert can match the IP). Leave empty for local clusters."
+  type        = string
+  default     = ""
+}
+
+variable "ingress_tls_secret_name" {
+  description = "Kubernetes TLS secret name used by the mtogo ingress"
+  type        = string
+  default     = "mtogo-ingress-tls"
+}
+
+variable "ingress_enable_ssl_redirect" {
+  description = "Whether ingress should redirect HTTP to HTTPS"
+  type        = bool
+  default     = true
+}
+
+variable "ingress_enable_hsts" {
+  description = "Whether ingress should emit Strict-Transport-Security headers"
+  type        = bool
+  default     = true
+}
+
+variable "ingress_hsts_max_age" {
+  description = "HSTS max-age in seconds"
+  type        = number
+  default     = 31536000
+}
+
+variable "ingress_cert_ip_sans" {
+  description = "IP Subject Alternative Names to embed in the self-signed TLS certificate. For IP-only access, include the ingress public IP here."
+  type        = list(string)
+  default     = ["127.0.0.1"]
+}
+
+variable "ingress_cert_dns_sans" {
+  description = "DNS Subject Alternative Names to embed in the self-signed TLS certificate (e.g., localhost)."
+  type        = list(string)
+  default     = ["localhost"]
+}
