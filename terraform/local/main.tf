@@ -95,4 +95,7 @@ module "mtogo_app" {
 
   # Website Management dashboard link target (local monitoring)
   grafana_url = "http://localhost:3000"
+
+  # Local dev clusters often have enough capacity; keep 3 replicas to match HA testing.
+  service_replicas = 3
 }

@@ -139,6 +139,16 @@ variable "grafana_url" {
 }
 
 # ===========================================
+# Scaling
+# ===========================================
+
+variable "service_replicas" {
+  description = "Replica count for the MToGo application services (gateway, website, backend services, websocket services, etc)."
+  type        = number
+  default     = 1
+}
+
+# ===========================================
 # Ingress HTTPS/TLS (self-signed) configuration
 # ===========================================
 

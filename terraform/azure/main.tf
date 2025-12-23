@@ -128,5 +128,9 @@ module "mtogo_app" {
   # Website Management dashboard link target
   grafana_url = azurerm_dashboard_grafana.kpi.endpoint
 
+  # AKS node pools (e.g., Standard_B2s_v2) can be CPU constrained; 3 replicas for every service
+  # easily becomes unschedulable. Scale up later by increasing node size/count.
+  service_replicas = 1
+
   depends_on = [azurerm_kubernetes_cluster.main]
 }
