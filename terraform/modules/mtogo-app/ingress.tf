@@ -21,6 +21,14 @@ resource "kubernetes_ingress_v1" "mtogo" {
       "nginx.ingress.kubernetes.io/proxy-read-timeout" = "3600"
       "nginx.ingress.kubernetes.io/proxy-send-timeout" = "3600"
       "nginx.ingress.kubernetes.io/proxy-http-version" = "1.1"
+
+      # Blazor Server uses SignalR at /_blazor. With multiple replicas, requests must be
+      # routed consistently to the same pod (sticky sessions), otherwise the connection
+      # ID is not found and the client sees intermittent 404s / failed WebSockets.
+      "nginx.ingress.kubernetes.io/affinity"            = "cookie"
+      "nginx.ingress.kubernetes.io/session-cookie-name" = "mtogo-affinity"
+      "nginx.ingress.kubernetes.io/session-cookie-path" = "/"
+
       "nginx.ingress.kubernetes.io/ssl-redirect"       = var.ingress_enable_ssl_redirect ? "true" : "false"
       "nginx.ingress.kubernetes.io/force-ssl-redirect" = var.ingress_enable_ssl_redirect ? "true" : "false"
 
