@@ -249,7 +249,7 @@ resource "kubernetes_deployment" "services" {
   }
 
   spec {
-    replicas = 1
+    replicas = 3
 
     progress_deadline_seconds = 1800
 
