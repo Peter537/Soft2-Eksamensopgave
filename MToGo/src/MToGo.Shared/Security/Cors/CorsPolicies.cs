@@ -10,10 +10,4 @@ public static class CorsPolicies
     /// This is the main policy used for API endpoints.
     /// </summary>
     public const string TrustedOrigins = "TrustedOrigins";
-
-    /// <summary>
-    /// Policy specifically for WebSocket connections.
-    /// Allows credentials and specific headers needed for WebSocket handshake.
-    /// </summary>
-    public const string WebSocketPolicy = "WebSocketPolicy";
 }
