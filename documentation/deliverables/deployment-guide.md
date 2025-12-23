@@ -51,7 +51,13 @@ I repo-roden findes en eksempel-fil:
 Opret en `.env` (repo-roden):
 
 ```bash
+# macOS/Linux/WSL/Git Bash
 cp .env.example .env
+```
+
+```powershell
+# PowerShell
+Copy-Item .env.example .env
 ```
 
 Udfyld minimum disse:
@@ -136,8 +142,10 @@ Kør fra repo-roden:
 
 Hvad `-Build` gør:
 
-- Scriptet bygger Docker images lokalt og tagger dem som `mtogo/<service>:latest`.
-- Det bygger bl.a. gateway, website, alle services og legacy.
+- Scriptet bygger Docker images lokalt og tagger dem som `mtogo/<image>:latest`.
+  - Eksempel: `mtogo/mtogo-gateway:latest`, `mtogo/mtogo-website:latest`, `mtogo/mtogo-legacy:latest`.
+  - `image_registry` i `terraform/local/terraform.tfvars` skal matche registry-delen (default: `mtogo`).
+- Det bygger gateway, website, services og legacy.
 
 Deploy uden build (forudsætter images allerede findes lokalt):
 
@@ -162,9 +170,14 @@ Destroy:
 
 Efter succesfuld deploy printer scriptet Terraform outputs (feltet `endpoints`):
 
-- Website: `http://localhost/`
-- API: `http://localhost/api/v1/`
-- Legacy API: `http://localhost/legacy`
+- Website (Ingress): `https://localhost/`
+- API (Ingress -> Gateway): `https://localhost/api/v1/`
+  - Ingress router alt under `/api*` til gateway, og gateway's versionerede endpoints ligger under `/api/v1/...`.
+- Legacy API (Ingress): `https://localhost/legacy`
+
+Bemærk (vigtigt):
+
+- Terraform local bruger HTTPS med et self-signed certifikat. Browseren vil typisk vise en certifikat-advarsel første gang.
 
 Monitoring (installeres i cluster og eksponeres som LoadBalancer på Docker Desktop):
 
@@ -204,7 +217,9 @@ Vigtigt for Azure:
 
 - PostgreSQL deployes **ikke** i AKS (Azure bruger managed Postgres).
 - Kafka deployes **i** AKS (single-node / cluster-internal).
-- Ingress-NGINX installeres i AKS (så endpoints bliver `http://<ingress-ip>/...`).
+- Ingress-NGINX installeres i AKS.
+  - Platformen er sat op med HTTPS og et self-signed cert (SAN inkluderer ingress public IP), så de primære URLs er typisk `https://<ingress-ip>/...`.
+  - Da der ikke bruges DNS i denne opsætning, vil browseren ofte vise en TLS-advarsel (self-signed).
 
 ### 4.2 Forudsætninger (Azure)
 
@@ -356,7 +371,7 @@ az role assignment create \
 
 **6) Opret federated credentials til GitHub OIDC (dev/staging/prod environments)**
 
-Workflows kører med `environment: dev|staging|prod`. Derfor skal subjects matche:
+Workflows kører med GitHub Environments `dev|staging|prod`. Derfor skal subjects matche:
 
 `repo:<OWNER>/<REPO>:environment:<ENV>`
 
@@ -442,10 +457,14 @@ Workflow: `.github/workflows/azure_deploy.yml`
 
 Startes manuelt via GitHub UI (workflow_dispatch) med inputs:
 
-- `environment`: `dev`, `staging`, `prod`
-- `image_tag`: tom = `${{ github.sha }}` (standard), ellers valgfri tag
-- `node_count`: default `2`
+- `environment`: `dev`, `staging`, `prod` (default: `prod`)
+- `image_tag`: tom = `latest` (default i workflow), ellers valgfri tag
+- `node_count`: default `1` (i workflow)
 - `action`: `plan` eller `apply`
+
+Bemærk om `node_count` (AKS):
+
+- Terraform default har `enable_auto_scaling=true`, så `node_count` fungerer som initial/minimum node count (ikke nødvendigvis et "fast" antal noder).
 
 Hvad der sker:
 
@@ -482,9 +501,11 @@ Flow:
 2. Venter på at alle deployments er klar i namespace `mtogo`
 3. Port-forwarder gateway til localhost:8080
 4. Kører tests:
+
    - Integration tests
    - E2E tests
-   - Performance tests (kører kun med `RUN_PERFORMANCE_TESTS=true` og filter)
+   - Performance tests (workflown sætter `RUN_PERFORMANCE_TESTS=true` og bruger test filter)
+
 5. Kører altid cleanup: `terraform destroy` for staging
 
 ## 5. Azure: Manuelle Terraform-kommandoer (valgfrit)
@@ -526,7 +547,11 @@ Bemærk:
 - `kubectl get pods -n mtogo`
 - `kubectl get svc -n mtogo`
 - `kubectl get ingress -n mtogo`
-- Website: http://localhost/
+- Website: https://localhost/
+
+Bemærk:
+
+- Ingress er konfigureret til at redirecte HTTP -> HTTPS, og TLS er self-signed.
 
 ### 6.3 Azure
 
@@ -539,9 +564,10 @@ Bemærk:
 kubectl get svc -n ingress-nginx ingress-nginx-controller
 ```
 
-- Website: `http://<ingress-ip>/`
-- API: `http://<ingress-ip>/api/v1`
-- Legacy: `http://<ingress-ip>/legacy`
+- Website: `https://<ingress-ip>/`
+- API (Ingress -> Gateway): `https://<ingress-ip>/api/v1`
+  - Ingress router alt under `/api*` til gateway, og gateway’s versionerede endpoints ligger under `/api/v1/...`.
+- Legacy: `https://<ingress-ip>/legacy`
 
 Grafana (Azure Managed Grafana):
 
