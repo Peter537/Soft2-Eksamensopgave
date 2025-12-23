@@ -124,10 +124,13 @@ Adgang styres via **Entra ID + Azure RBAC**.
 
 ## Alerting (Azure)
 
-I Azure-setup’et bruger vi **Grafana Alerting** (i Azure Managed Grafana) sammen med metrics fra **Azure Monitor Workspace (Managed Prometheus)**.
+I Azure-setup’et bruger vi som udgangspunkt **Grafana Alerting** (i Azure Managed Grafana) sammen med metrics fra **Azure Monitor Workspace (Managed Prometheus)**.
 
-- Der er derfor **ingen Alertmanager UI endpoint** i dette setup.
-- For alerts: åbn KPI Grafana (`kpi_grafana_endpoint`) og brug menuen **Alerting**.
+Derudover kan Terraform nu (valgfrit) installere **in-cluster Prometheus + Alertmanager** i AKS, så routing til Discord matcher jeres lokale docker-compose setup.
+
+- In-cluster Alertmanager konfigureres fra [monitoring/alertmanager/alertmanager.yml.template](../../monitoring/alertmanager/alertmanager.yml.template) (samme template som docker-compose).
+- Slå til/fra med `install_monitoring` (default: `true`).
+- UI endpoint eksponeres ikke offentligt; brug evt. `kubectl port-forward` hvis du vil se Alertmanager.
 
 ### Dashboard JSON
 

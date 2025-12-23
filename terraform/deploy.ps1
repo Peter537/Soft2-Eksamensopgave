@@ -13,7 +13,11 @@ param(
     [ValidateSet("local", "azure")]
     [string]$Context = "local",
     [switch]$Build,
-    [switch]$Destroy
+    [switch]$Destroy,
+
+    # Local-only: when set, provision Grafana-managed alerting (Discord contact point + import KPI alert rules)
+    # in addition to Prometheus + Alertmanager. Default is off to avoid Grafana 'DatasourceNoData' alerts.
+    [switch]$ProvisionLocalGrafanaAlerting
 )
 
 $ErrorActionPreference = "Stop"
@@ -1015,6 +1019,39 @@ function Import-GrafanaKpiAlertRulesFromMonitoring {
     }
 }
 
+function Remove-GrafanaProvisionedKpiAlertRules {
+    param(
+        [Parameter(Mandatory = $true)][string]$GrafanaEndpoint,
+        [Parameter(Mandatory = $true)][hashtable]$Headers,
+        [Parameter(Mandatory = $false)][string]$InstanceLabel = "Grafana"
+    )
+
+    $base = $GrafanaEndpoint.TrimEnd('/')
+
+    $existingRules = @()
+    try {
+        $existingRules = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/alert-rules") -Headers $Headers
+    }
+    catch {
+        return
+    }
+
+    $rules = @($existingRules)
+    $toDelete = @($rules | Where-Object { $_.uid -and ($_.uid -like 'mtogo-kpi-*') })
+    if ($toDelete.Count -eq 0) {
+        return
+    }
+
+    foreach ($r in $toDelete) {
+        try {
+            Invoke-RestMethod -Method Delete -Uri ("$base/api/v1/provisioning/alert-rules/$($r.uid)") -Headers $Headers | Out-Null
+        }
+        catch {
+            # Best-effort cleanup
+        }
+    }
+}
+
 function Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring {
     param(
         [Parameter(Mandatory = $true)][string]$ResourceGroupName,
@@ -1800,33 +1837,62 @@ if ($Context -eq "local") {
         Write-Host "  (No 'endpoints' output found; run: terraform output)" -ForegroundColor Yellow
     }
 
-    # Local KPI Grafana: import KPI alert rules into Grafana-managed alerting so they show under Alerting -> Alert rules.
-    try {
-        $grafanaEndpoint = $null
-        if ($outputs.endpoints -and $outputs.endpoints.value -and $outputs.endpoints.value.grafana_kpi) {
-            $grafanaEndpoint = $outputs.endpoints.value.grafana_kpi
+    if ($ProvisionLocalGrafanaAlerting) {
+        # Local KPI Grafana: OPTIONAL import of KPI alert rules into Grafana-managed alerting.
+        # Default is off because it can generate noisy 'DatasourceNoData' alerts.
+        try {
+            $grafanaEndpoint = $null
+            if ($outputs.endpoints -and $outputs.endpoints.value -and $outputs.endpoints.value.grafana_kpi) {
+                $grafanaEndpoint = $outputs.endpoints.value.grafana_kpi
+            }
+            if (-not $grafanaEndpoint) { $grafanaEndpoint = "http://localhost:3000" }
+
+            $grafanaUser = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_username"
+            $grafanaPass = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_password"
+
+            if (-not $grafanaUser) { $grafanaUser = "admin" }
+            if (-not $grafanaPass) { $grafanaPass = "admin" }
+
+            $headers = New-GrafanaBasicAuthHeaders -Username $grafanaUser -Password $grafanaPass
+            Wait-GrafanaReady -GrafanaEndpoint $grafanaEndpoint -Headers $headers
+
+            $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
+            if ($discordWebhookUrl -and $discordWebhookUrl.Trim().Length -gt 0) {
+                Ensure-GrafanaDiscordAlerting -GrafanaEndpoint $grafanaEndpoint -Headers $headers -DiscordWebhookUrl $discordWebhookUrl -InstanceLabel "Local KPI Grafana"
+            }
+
+            $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
+            Import-GrafanaKpiAlertRulesFromMonitoring -GrafanaEndpoint $grafanaEndpoint -Headers $headers -GrafanaPrometheusDatasourceUid "prometheus" -AlertRulesYmlPath $kpiAlertRulesYml -InstanceLabel "Local KPI Grafana"
         }
-        if (-not $grafanaEndpoint) { $grafanaEndpoint = "http://localhost:3000" }
-
-        $grafanaUser = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_username"
-        $grafanaPass = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_password"
-
-        if (-not $grafanaUser) { $grafanaUser = "admin" }
-        if (-not $grafanaPass) { $grafanaPass = "admin" }
-
-        $headers = New-GrafanaBasicAuthHeaders -Username $grafanaUser -Password $grafanaPass
-        Wait-GrafanaReady -GrafanaEndpoint $grafanaEndpoint -Headers $headers
-
-        $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
-        if ($discordWebhookUrl -and $discordWebhookUrl.Trim().Length -gt 0) {
-            Ensure-GrafanaDiscordAlerting -GrafanaEndpoint $grafanaEndpoint -Headers $headers -DiscordWebhookUrl $discordWebhookUrl -InstanceLabel "Local KPI Grafana"
+        catch {
+            Write-Host "Warning: Failed to provision local KPI Grafana alert rules. Details: $($_.Exception.Message)" -ForegroundColor Yellow
         }
-
-        $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
-        Import-GrafanaKpiAlertRulesFromMonitoring -GrafanaEndpoint $grafanaEndpoint -Headers $headers -GrafanaPrometheusDatasourceUid "prometheus" -AlertRulesYmlPath $kpiAlertRulesYml -InstanceLabel "Local KPI Grafana"
     }
-    catch {
-        Write-Host "Warning: Failed to provision local KPI Grafana alert rules. Details: $($_.Exception.Message)" -ForegroundColor Yellow
+    else {
+        Write-Host "`nSkipping Grafana-managed alerting provisioning for local deployment (using Prometheus + Alertmanager for alerts)." -ForegroundColor DarkGray
+        Write-Host "To enable Grafana-managed alerting anyway, re-run with: -ProvisionLocalGrafanaAlerting" -ForegroundColor DarkGray
+
+        # Best-effort cleanup: remove previously provisioned KPI rules that this script created.
+        # This prevents old Grafana rules (and DatasourceNoData notifications) from continuing to spam Discord.
+        try {
+            $grafanaEndpoint = $null
+            if ($outputs.endpoints -and $outputs.endpoints.value -and $outputs.endpoints.value.grafana_kpi) {
+                $grafanaEndpoint = $outputs.endpoints.value.grafana_kpi
+            }
+            if (-not $grafanaEndpoint) { $grafanaEndpoint = "http://localhost:3000" }
+
+            $grafanaUser = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_username"
+            $grafanaPass = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_password"
+            if (-not $grafanaUser) { $grafanaUser = "admin" }
+            if (-not $grafanaPass) { $grafanaPass = "admin" }
+
+            $headers = New-GrafanaBasicAuthHeaders -Username $grafanaUser -Password $grafanaPass
+            Wait-GrafanaReady -GrafanaEndpoint $grafanaEndpoint -Headers $headers
+            Remove-GrafanaProvisionedKpiAlertRules -GrafanaEndpoint $grafanaEndpoint -Headers $headers -InstanceLabel "Local KPI Grafana"
+        }
+        catch {
+            # Best-effort only
+        }
     }
 }
 

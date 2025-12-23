@@ -71,11 +71,9 @@ resource "helm_release" "prometheus" {
           type        = "LoadBalancer"
           servicePort = 9093
         }
-      }
 
-      # Configure Alertmanager routing (Discord) using the same config template as docker-compose.
-      alertmanagerFiles = {
-        "alertmanager.yml" = local.alertmanager_config
+        # Configure Alertmanager routing (Discord) using the same config template as docker-compose.
+        config = local.alertmanager_config
       }
 
       # Disable optional components for local dev (reduces noise and avoids
@@ -104,72 +102,12 @@ resource "helm_release" "prometheus" {
           type        = "LoadBalancer"
           servicePort = 9090
         }
-        serverFiles = {
-          "prometheus.yml" = {
-            global = {
-              scrape_interval     = "15s"
-              evaluation_interval = "15s"
-            }
+      }
 
-            alerting = {
-              alertmanagers = [
-                {
-                  static_configs = [
-                    { targets = ["${local.prometheus_alert_svc}.${local.monitoring_namespace}:9093"] }
-                  ]
-                }
-              ]
-            }
-
-            rule_files = [
-              "alert_rules.yml"
-            ]
-
-            scrape_configs = [
-              {
-                job_name = "prometheus"
-                static_configs = [
-                  { targets = ["localhost:9090"] }
-                ]
-              },
-              {
-                job_name        = "order-service"
-                metrics_path    = "/metrics"
-                scrape_interval = "15s"
-                static_configs = [
-                  { targets = ["order-service.mtogo.svc.cluster.local:8080"] }
-                ]
-              },
-              {
-                job_name        = "partner-service"
-                metrics_path    = "/metrics"
-                scrape_interval = "15s"
-                static_configs = [
-                  { targets = ["partner-service.mtogo.svc.cluster.local:8080"] }
-                ]
-              },
-              {
-                job_name        = "agent-service"
-                metrics_path    = "/metrics"
-                scrape_interval = "15s"
-                static_configs = [
-                  { targets = ["agent-service.mtogo.svc.cluster.local:8080"] }
-                ]
-              },
-              {
-                job_name        = "gateway"
-                metrics_path    = "/metrics"
-                scrape_interval = "15s"
-                static_configs = [
-                  { targets = ["gateway.mtogo.svc.cluster.local:8080"] }
-                ]
-              }
-            ]
-          }
-
-          # Business KPI alert rules shared with docker-compose.
-          "alert_rules.yml" = local.prometheus_alert_rules
-        }
+      # Prometheus chart reads configuration from top-level serverFiles.
+      serverFiles = {
+        # Business KPI alert rules shared with docker-compose.
+        "alerting_rules.yml" = local.prometheus_alert_rules
       }
     })
   ]
@@ -201,10 +139,8 @@ resource "kubernetes_config_map" "grafana_kpi_datasources" {
           uid       = "prometheus"
           editable  = false
           jsonData = {
-            httpMethod      = "POST"
-            manageAlerts    = true
-            prometheusType  = "Prometheus"
-            alertmanagerUid = "alertmanager"
+            httpMethod     = "POST"
+            prometheusType = "Prometheus"
           }
         },
         {

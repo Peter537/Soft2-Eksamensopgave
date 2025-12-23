@@ -366,6 +366,11 @@ resource "kubernetes_service" "services" {
   metadata {
     name      = each.key
     namespace = kubernetes_namespace.mtogo.metadata[0].name
+    annotations = {
+      "prometheus.io/scrape" = "true"
+      "prometheus.io/path"   = "/metrics"
+      "prometheus.io/port"   = "8080"
+    }
     labels = {
       "app.kubernetes.io/name" = each.key
     }

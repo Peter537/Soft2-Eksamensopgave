@@ -137,3 +137,9 @@ variable "discord_webhook_url" {
   default     = null
   sensitive   = true
 }
+
+variable "install_monitoring" {
+  description = "When true, install in-cluster Prometheus + Alertmanager in AKS and configure Alertmanager from monitoring/alertmanager/alertmanager.yml.template (Discord routing)."
+  type        = bool
+  default     = true
+}

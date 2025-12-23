@@ -33,8 +33,7 @@ groups:
         annotations:
           summary: "Active customers declined by {{ $value | humanizePercentage }}"
           description: |
-            Active customers this month: {{ with printf "mtogo_active_customers_monthly" | query }}{{ . | first | value }}{{ end }}
-            Active customers previous month: {{ with printf "mtogo_active_customers_previous_month" | query }}{{ . | first | value }}{{ end }}
+            Active customers have declined compared to the previous month.
             This may indicate customer churn or reduced engagement. Consider investigating recent changes or running a re-engagement campaign.
 
       # Alert when active customers grow by 20% or more (positive trend!)
@@ -53,8 +52,7 @@ groups:
         annotations:
           summary: "🎉 Active customers grew by {{ $value | humanizePercentage }}"
           description: |
-            Active customers this month: {{ with printf "mtogo_active_customers_monthly" | query }}{{ . | first | value }}{{ end }}
-            Active customers previous month: {{ with printf "mtogo_active_customers_previous_month" | query }}{{ . | first | value }}{{ end }}
+            Active customers have grown compared to the previous month.
             Great news! Customer engagement is increasing significantly.
 
       # Alert when active customers drops to critically low levels
@@ -93,8 +91,7 @@ groups:
         annotations:
           summary: "Daily orders down {{ $value | humanizePercentage }} vs last week"
           description: |
-            Orders today: {{ with printf "mtogo_orders_last_day" | query }}{{ . | first | value }}{{ end }}
-            Orders same day last week: {{ with printf "mtogo_orders_same_day_last_week" | query }}{{ . | first | value }}{{ end }}
+            Daily orders are down compared to the same day last week.
             Demand is lower than usual. This could be seasonal or indicate an issue worth investigating.
 
       # Alert when daily orders surge by 30% or more (capacity planning!)
@@ -113,8 +110,7 @@ groups:
         annotations:
           summary: "📈 Order surge: up {{ $value | humanizePercentage }} vs last week"
           description: |
-            Orders today: {{ with printf "mtogo_orders_last_day" | query }}{{ . | first | value }}{{ end }}
-            Orders same day last week: {{ with printf "mtogo_orders_same_day_last_week" | query }}{{ . | first | value }}{{ end }}
+            Daily orders are up compared to the same day last week.
             High demand detected! Ensure sufficient partner and agent capacity.
 
       # Alert when no orders in the last hour during business hours
@@ -182,7 +178,7 @@ groups:
           summary: "🎉 Partner network growing: +{{ $value }} new partners this week"
           description: |
             The partner network has grown by {{ $value }} active partners compared to last week.
-            Current active partners: {{ with printf "mtogo_active_partners" | query }}{{ . | first | value }}{{ end }}
+            This is a positive signal for platform supply.
 
   # ===========================================
   # Agent Availability Alerts
