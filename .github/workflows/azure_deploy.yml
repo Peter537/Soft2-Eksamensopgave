@@ -156,6 +156,11 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # Azure Managed Grafana access is controlled by Azure RBAC.
+          # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
+          TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
+          TF_VAR_grafana_kpi_viewer_principal_ids: ${{ secrets.GRAFANA_KPI_VIEWER_PRINCIPAL_IDS || '[]' }}
+          TF_VAR_grafana_kpi_editor_principal_ids: ${{ secrets.GRAFANA_KPI_EDITOR_PRINCIPAL_IDS || '[]' }}
         run: terraform plan -out=tfplan -input=false -no-color
         continue-on-error: true
 
@@ -180,6 +185,11 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # Azure Managed Grafana access is controlled by Azure RBAC.
+          # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
+          TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
+          TF_VAR_grafana_kpi_viewer_principal_ids: ${{ secrets.GRAFANA_KPI_VIEWER_PRINCIPAL_IDS || '[]' }}
+          TF_VAR_grafana_kpi_editor_principal_ids: ${{ secrets.GRAFANA_KPI_EDITOR_PRINCIPAL_IDS || '[]' }}
         shell: bash
         run: |
           set -euo pipefail
