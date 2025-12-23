@@ -263,14 +263,28 @@ public class PartnersController : ControllerBase
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(IEnumerable<PublicPartnerResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllPartners()
+    [ProducesResponseType(typeof(PaginatedPartnersResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllPartners([FromQuery] int? offset, [FromQuery] int? limit)
     {
-        _logger.LogInformation("Received GetAllPartners request");
+        _logger.LogInformation("Received GetAllPartners request: Offset={Offset}, Limit={Limit}", offset, limit);
 
-        var result = await _partnerService.GetAllActivePartnersAsync();
+        // Set default values if not provided
+        var actualOffset = offset ?? 0;
+        var actualLimit = limit ?? 10; // Default to 10 if not specified
+
+        // Validate parameters
+        if (actualOffset < 0)
+        {
+            return BadRequest(new { error = "Offset must be non-negative." });
+        }
+        if (actualLimit <= 0 || actualLimit > 100)
+        {
+            return BadRequest(new { error = "Limit must be between 1 and 100." });
+        }
+
+        var result = await _partnerService.GetAllActivePartnersAsync(actualOffset, actualLimit);
         
-        _logger.LogInformation("GetAllPartners completed: Count={Count}", result.Count());
+        _logger.LogInformation("GetAllPartners completed: Offset={Offset}, Limit={Limit}, Count={Count}, Total={Total}", actualOffset, actualLimit, result.Partners.Count(), result.TotalCount);
 
         return Ok(result);
     }

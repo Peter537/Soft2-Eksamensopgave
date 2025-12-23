@@ -47,9 +47,13 @@ public class PublicBrowsingIntegrationTests : IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<PublicPartnerResponse>>();
+        var result = await response.Content.ReadFromJsonAsync<PaginatedPartnersResponse>();
         result.Should().NotBeNull();
-        result!.Should().HaveCount(2);
+        result!.Partners.Should().HaveCount(2);
+        result.TotalCount.Should().Be(2);
+        result.Page.Should().Be(1);
+        result.PageSize.Should().Be(10);
+        result.TotalPages.Should().Be(1);
     }
 
     [Fact]
@@ -62,9 +66,13 @@ public class PublicBrowsingIntegrationTests : IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<PublicPartnerResponse>>();
+        var result = await response.Content.ReadFromJsonAsync<PaginatedPartnersResponse>();
         result.Should().NotBeNull();
-        result.Should().BeEmpty();
+        result!.Partners.Should().BeEmpty();
+        result.TotalCount.Should().Be(0);
+        result.Page.Should().Be(1);
+        result.PageSize.Should().Be(10);
+        result.TotalPages.Should().Be(0);
     }
 
     [Fact]
@@ -79,11 +87,12 @@ public class PublicBrowsingIntegrationTests : IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<PublicPartnerResponse>>();
+        var result = await response.Content.ReadFromJsonAsync<PaginatedPartnersResponse>();
         result.Should().NotBeNull();
-        var partners = result!;
+        var partners = result.Partners.ToList();
         partners.Should().HaveCount(1);
         partners[0].Name.Should().Be("Active Partner");
+        result.TotalCount.Should().Be(1);
     }
 
     [Fact]
@@ -97,12 +106,13 @@ public class PublicBrowsingIntegrationTests : IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<PublicPartnerResponse>>();
+        var result = await response.Content.ReadFromJsonAsync<PaginatedPartnersResponse>();
         result.Should().NotBeNull();
-        var partners = result!;
+        var partners = result.Partners.ToList();
         partners.Should().HaveCount(1);
         partners[0].Name.Should().Be("Pizza Palace");
         partners[0].Address.Should().Be("123 Test Street");
+        result.TotalCount.Should().Be(1);
     }
 
     #endregion

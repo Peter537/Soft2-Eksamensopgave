@@ -62,6 +62,36 @@
                             </div>
                         }
                     </div>
+                    
+                    @if (partnersResponse != null && partnersResponse.TotalPages > 1)
+                    {
+                        <nav aria-label="Partners pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                    <a class="page-link" href="#" @onclick="() => ChangePage(currentPage - 1)" @onclick:preventDefault>
+                                        <span aria-hidden="true">&laquo;</span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </a>
+                                </li>
+                                
+                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(partnersResponse.TotalPages, currentPage + 2); i++)
+                                {
+                                    var pageNumber = i; // Capture loop variable
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <a class="page-link" href="#" @onclick="() => ChangePage(pageNumber)" @onclick:preventDefault>@i</a>
+                                    </li>
+                                }
+                                
+                                <li class="page-item @(currentPage >= partnersResponse.TotalPages ? "disabled" : "")">
+                                    <a class="page-link" href="#" @onclick="() => ChangePage(currentPage + 1)" @onclick:preventDefault>
+                                        <span aria-hidden="true">&raquo;</span>
+                                        <span class="visually-hidden">Next</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                    
                     @if (Auth.IsLoggedIn)
                     {
                         <div class="text-center mt-4">
@@ -81,9 +111,12 @@
 </div>
 
 @code {
+    private PaginatedPartnersResponse? partnersResponse;
     private List<PartnerResponse>? partners;
     private string? errorMessage;
     private bool isLoading = true;
+    private int currentPage = 1;
+    private const int PageSize = 10;
 
     protected override void OnInitialized()
     {
@@ -124,12 +157,13 @@
 
         try
         {
-            var response = await Http.GetAsync("/api/v1/partners");
+            var offset = (currentPage - 1) * PageSize;
+            var response = await Http.GetAsync($"/api/v1/partners?offset={offset}&limit={PageSize}");
 
             if (response.IsSuccessStatusCode)
             {
-                var allPartners = await response.Content.ReadFromJsonAsync<List<PartnerResponse>>();
-                partners = allPartners?.Take(6).ToList();
+                partnersResponse = await response.Content.ReadFromJsonAsync<PaginatedPartnersResponse>();
+                partners = partnersResponse?.Partners?.ToList();
             }
             else
             {
@@ -146,10 +180,31 @@
         }
     }
 
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || (partnersResponse != null && page > partnersResponse.TotalPages))
+        {
+            return;
+        }
+        
+        currentPage = page;
+        await LoadPartners();
+        StateHasChanged();
+    }
+
     public class PartnerResponse
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
+    }
+
+    public class PaginatedPartnersResponse
+    {
+        public IEnumerable<PartnerResponse> Partners { get; set; } = new List<PartnerResponse>();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
     }
 }
