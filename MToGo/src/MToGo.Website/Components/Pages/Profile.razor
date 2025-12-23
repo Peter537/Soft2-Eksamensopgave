@@ -81,7 +81,6 @@
                                     <InputSelect id="notificationMethod" class="form-select" @bind-Value="model.NotificationMethod">
                                         <option value="Email">@L["Pages.Profile.NotificationEmail"]</option>
                                         <option value="Sms">@L["Pages.Profile.NotificationSms"]</option>
-                                        <option value="Push">@L["Pages.Profile.NotificationPush"]</option>
                                     </InputSelect>
                                     <ValidationMessage For="@(() => model.NotificationMethod)" />
                                 </div>

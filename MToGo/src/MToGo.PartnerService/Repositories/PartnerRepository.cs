@@ -15,6 +15,7 @@ public interface IPartnerRepository
     Task<MenuItem> UpdateMenuItemAsync(MenuItem menuItem);
     Task DeleteMenuItemAsync(MenuItem menuItem);
     Task<IEnumerable<Partner>> GetAllActivePartnersAsync();
+    Task<(IEnumerable<Partner>, int)> GetAllActivePartnersAsync(int offset, int limit);
     Task<Partner?> GetPartnerWithMenuAsync(int partnerId);
     Task UpdatePartnerActiveStatusAsync(int partnerId, bool isActive);
 }
@@ -89,6 +90,21 @@ public class PartnerRepository : IPartnerRepository
             .Where(p => !p.IsDeleted && p.IsActive)
             .OrderBy(p => p.Name)
             .ToListAsync();
+    }
+
+    public async Task<(IEnumerable<Partner>, int)> GetAllActivePartnersAsync(int offset, int limit)
+    {
+        var query = _context.Partners
+            .Where(p => !p.IsDeleted && p.IsActive)
+            .OrderBy(p => p.Name);
+
+        var totalCount = await query.CountAsync();
+        var partners = await query
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync();
+
+        return (partners, totalCount);
     }
 
     public async Task<Partner?> GetPartnerWithMenuAsync(int partnerId)

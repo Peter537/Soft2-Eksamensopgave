@@ -12,6 +12,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="PageHeader" xml:space="preserve">
+    <value>MToGo - Madlevering Platform</value>
+  </data>
   <data name="PageTitle" xml:space="preserve">
     <value>Hjem - MToGo</value>
   </data>
@@ -20,5 +23,29 @@
   </data>
   <data name="Welcome" xml:space="preserve">
     <value>Velkommen til MToGo - din madleveringsservice.</value>
+  </data>
+  <data name="TeaserMessage" xml:space="preserve">
+    <value>Se alle de dejlige steder, du kan bestille fra</value>
+  </data>
+  <data name="SeeAllRestaurants" xml:space="preserve">
+    <value>Se alle restauranter</value>
+  </data>
+  <data name="ViewMenu" xml:space="preserve">
+    <value>Se menu</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Indlæser...</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Kunne ikke indlæse restauranter.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Der opstod en fejl: {0}</value>
+  </data>
+  <data name="NoRestaurants" xml:space="preserve">
+    <value>Ingen restauranter tilgængelige.</value>
+  </data>
+  <data name="LoginToViewAllRestaurants" xml:space="preserve">
+    <value>Log ind for at se alle restauranter</value>
   </data>
 </root>

@@ -54,9 +54,6 @@
   <data name="NotificationSms" xml:space="preserve">
     <value>SMS</value>
   </data>
-  <data name="NotificationPush" xml:space="preserve">
-    <value>Push Notification</value>
-  </data>
   <data name="LanguagePreference" xml:space="preserve">
     <value>Language Preference</value>
   </data>
