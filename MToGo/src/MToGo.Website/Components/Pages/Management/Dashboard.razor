@@ -133,7 +133,11 @@
     {
         CultureService.OnChange += OnCultureChanged;
 
-        grafanaUrl = Configuration["GrafanaUrl"] ?? "http://localhost:3000";
+        var envGrafanaUrl = Environment.GetEnvironmentVariable("GrafanaUrl");
+        var configuredGrafanaUrl = Configuration["GrafanaUrl"];
+        grafanaUrl = !string.IsNullOrWhiteSpace(envGrafanaUrl)
+            ? envGrafanaUrl
+            : (!string.IsNullOrWhiteSpace(configuredGrafanaUrl) ? configuredGrafanaUrl : "http://localhost:3000");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
