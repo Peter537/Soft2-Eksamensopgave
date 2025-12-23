@@ -44,6 +44,10 @@ public interface IPartnerService
     /// </summary>
     Task<IEnumerable<PublicPartnerResponse>> GetAllActivePartnersAsync();
     /// <summary>
+    /// Lists active partners for customers with pagination.
+    /// </summary>
+    Task<PaginatedPartnersResponse> GetAllActivePartnersAsync(int offset, int limit);
+    /// <summary>
     /// Returns the public menu for a partner.
     /// </summary>
     Task<PublicMenuResponse?> GetPartnerMenuAsync(int partnerId);
@@ -308,6 +312,35 @@ public class PartnerService : IPartnerService
         });
 
         _logger.LogInformation("Active partners retrieved: Count={Count}", partners.Count());
+
+        return result;
+    }
+
+    /// <summary>
+    /// Retrieves active partners for public listing with pagination.
+    /// </summary>
+    public async Task<PaginatedPartnersResponse> GetAllActivePartnersAsync(int offset, int limit)
+    {
+        _logger.LogInformation("Getting active partners with pagination: Offset={Offset}, Limit={Limit}", offset, limit);
+
+        var (partners, totalCount) = await _partnerRepository.GetAllActivePartnersAsync(offset, limit);
+
+        var partnerResponses = partners.Select(p => new PublicPartnerResponse
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Address = p.Address
+        });
+
+        var result = new PaginatedPartnersResponse
+        {
+            Partners = partnerResponses,
+            TotalCount = totalCount,
+            Page = (offset / limit) + 1,
+            PageSize = limit
+        };
+
+        _logger.LogInformation("Active partners retrieved: Count={Count}, Total={Total}, Page={Page}", partners.Count(), totalCount, result.Page);
 
         return result;
     }

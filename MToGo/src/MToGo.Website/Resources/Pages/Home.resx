@@ -12,6 +12,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="PageHeader" xml:space="preserve">
+    <value>MToGo - Food Delivery Platform</value>
+  </data>
   <data name="PageTitle" xml:space="preserve">
     <value>Home - MToGo</value>
   </data>
@@ -20,5 +23,29 @@
   </data>
   <data name="Welcome" xml:space="preserve">
     <value>Welcome to MToGo - your food delivery service.</value>
+  </data>
+  <data name="TeaserMessage" xml:space="preserve">
+    <value>See all the nice places you can order from</value>
+  </data>
+  <data name="SeeAllRestaurants" xml:space="preserve">
+    <value>See all restaurants</value>
+  </data>
+  <data name="ViewMenu" xml:space="preserve">
+    <value>View Menu</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="LoadFailed" xml:space="preserve">
+    <value>Failed to load restaurants.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>An error occurred: {0}</value>
+  </data>
+  <data name="NoRestaurants" xml:space="preserve">
+    <value>No restaurants available.</value>
+  </data>
+  <data name="LoginToViewAllRestaurants" xml:space="preserve">
+    <value>Login to view all restaurants</value>
   </data>
 </root>

@@ -71,6 +71,7 @@
 </div>
 
 @code {
+    private PaginatedPartnersResponse? partnersResponse;
     private List<PartnerResponse>? partners;
     private string? errorMessage;
     private bool isLoading = true;
@@ -110,7 +111,8 @@
 
             if (response.IsSuccessStatusCode)
             {
-                partners = await response.Content.ReadFromJsonAsync<List<PartnerResponse>>();
+                partnersResponse = await response.Content.ReadFromJsonAsync<PaginatedPartnersResponse>();
+                partners = partnersResponse?.Partners?.ToList();
             }
             else
             {
@@ -132,5 +134,14 @@
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
+    }
+
+    public class PaginatedPartnersResponse
+    {
+        public IEnumerable<PartnerResponse> Partners { get; set; } = new List<PartnerResponse>();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int TotalPages { get; set; }
     }
 }

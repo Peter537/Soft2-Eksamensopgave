@@ -1,3 +1,5 @@
+using System;
+
 namespace MToGo.PartnerService.Models;
 
 /// <summary>
@@ -8,6 +10,18 @@ public class PublicPartnerResponse
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Paginated response for partners
+/// </summary>
+public class PaginatedPartnersResponse
+{
+    public IEnumerable<PublicPartnerResponse> Partners { get; set; } = new List<PublicPartnerResponse>();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
 }
 
 /// <summary>

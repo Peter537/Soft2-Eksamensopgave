@@ -57,9 +57,6 @@
   <data name="NotificationSms" xml:space="preserve">
     <value>SMS</value>
   </data>
-  <data name="NotificationPush" xml:space="preserve">
-    <value>Push Notification</value>
-  </data>
   <data name="RegisterButton" xml:space="preserve">
     <value>Register</value>
   </data>
