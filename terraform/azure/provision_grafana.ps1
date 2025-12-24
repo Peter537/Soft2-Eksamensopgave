@@ -5,8 +5,9 @@
 # - KPI instance: ONLY dashboards from /monitoring
 # - SLO instance: ONLY dashboards from /monitoring-infrastructure
 #
-# It also provisions KPI alerting:
-# - Discord contact point (requires DISCORD_WEBHOOK_URL)
+# KPI alerting (Grafana-managed alerting) is OPTIONAL and disabled by default.
+# When enabled, it:
+# - Creates/updates a Discord contact point (requires DISCORD_WEBHOOK_URL)
 # - Imports Grafana-managed alert rules from /monitoring/prometheus/alert_rules.yml
 
 [CmdletBinding()]
@@ -16,6 +17,7 @@ param(
     [Parameter(Mandatory = $true)][string]$SloGrafanaName,
     [Parameter(Mandatory = $true)][string]$PrometheusQueryEndpoint,
     [Parameter(Mandatory = $false)][string]$DiscordWebhookUrl = $env:DISCORD_WEBHOOK_URL,
+    [Parameter(Mandatory = $false)][switch]$ProvisionKpiAlerting,
     [Parameter(Mandatory = $false)][string]$RepoRoot = $(Resolve-Path (Join-Path $PSScriptRoot "..\.."))
 )
 
@@ -646,9 +648,15 @@ $sloDsUid = Get-OrCreate-PrometheusDatasourceUid -GrafanaName $SloGrafanaName
 if (-not $kpiDsUid) { $kpiDsUid = 'prometheus' }
 if (-not $sloDsUid) { $sloDsUid = 'prometheus' }
 
-Write-Host "Provisioning KPI alerting (Discord + alert rules)..." -ForegroundColor Yellow
-Ensure-KpiDiscordAlerting -GrafanaName $KpiGrafanaName
-Import-KpiAlertRules -GrafanaName $KpiGrafanaName -PrometheusDatasourceUid $kpiDsUid
+if ($ProvisionKpiAlerting) {
+    Write-Host "Provisioning KPI alerting (Discord + alert rules)..." -ForegroundColor Yellow
+    Ensure-KpiDiscordAlerting -GrafanaName $KpiGrafanaName
+    Import-KpiAlertRules -GrafanaName $KpiGrafanaName -PrometheusDatasourceUid $kpiDsUid
+}
+else {
+    Write-Host "Skipping KPI alerting provisioning (Grafana-managed alerting)." -ForegroundColor DarkGray
+    Write-Host "To enable it, re-run with: -ProvisionKpiAlerting" -ForegroundColor DarkGray
+}
 
 Write-Host "Syncing dashboards with strict repo-only enforcement..." -ForegroundColor Yellow
 $kpiDashDir = Join-Path $RepoRoot 'monitoring/grafana/dashboards'

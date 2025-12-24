@@ -17,7 +17,11 @@ param(
 
     # Local-only: when set, provision Grafana-managed alerting (Discord contact point + import KPI alert rules)
     # in addition to Prometheus + Alertmanager. Default is off to avoid Grafana 'DatasourceNoData' alerts.
-    [switch]$ProvisionLocalGrafanaAlerting
+    [switch]$ProvisionLocalGrafanaAlerting,
+
+    # Azure-only: when set, provision Azure Managed Grafana alerting (Discord contact point + import KPI alert rules).
+    # Default is off so Discord only receives Alertmanager template embeds from in-cluster Alertmanager.
+    [switch]$ProvisionAzureGrafanaAlerting
 )
 
 $ErrorActionPreference = "Stop"
@@ -553,6 +557,173 @@ function Ensure-AzureManagedGrafanaKpiDiscordAlerting {
     }
     finally {
         # Best-effort cleanup of the short-lived token.
+        if ($tokenId) {
+            Invoke-AzCliWithTimeout -Args @(
+                "grafana", "service-account", "token", "delete",
+                "-g", $ResourceGroupName,
+                "-n", $GrafanaName,
+                "--service-account", $serviceAccountName,
+                "--token", $tokenId,
+                "-o", "none"
+            ) -TimeoutSeconds 120 -AllowFailure | Out-Null
+        }
+    }
+}
+
+function Remove-AzureManagedGrafanaKpiDiscordAlerting {
+    param(
+        [Parameter(Mandatory = $true)][string]$ResourceGroupName,
+        [Parameter(Mandatory = $true)][string]$GrafanaName
+    )
+
+    $endpointResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "show",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "--query", "properties.endpoint",
+        "-o", "tsv"
+    ) -TimeoutSeconds 60 -AllowFailure
+
+    if (-not $endpointResult -or $endpointResult.ExitCode -ne 0) {
+        return
+    }
+
+    $grafanaEndpoint = ($endpointResult.StdOut | Out-String).Trim()
+    if (-not $grafanaEndpoint) {
+        return
+    }
+
+    $serviceAccountName = "mtogo-provisioner"
+
+    $saListResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "service-account", "list",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "-o", "json"
+    ) -TimeoutSeconds 120 -AllowFailure
+
+    if (-not $saListResult -or $saListResult.ExitCode -ne 0) {
+        return
+    }
+
+    $serviceAccounts = @()
+    try { $serviceAccounts = ($saListResult.StdOut | ConvertFrom-Json) } catch { $serviceAccounts = @() }
+    $existingSa = $serviceAccounts | Where-Object { $_.name -eq $serviceAccountName } | Select-Object -First 1
+    if (-not $existingSa) {
+        return
+    }
+
+    $tokenName = "cleanup-" + [Guid]::NewGuid().ToString("N")
+    $tokenId = $null
+    $apiToken = $null
+
+    try {
+        $tokenCreateResult = Invoke-AzCliWithTimeout -Args @(
+            "grafana", "service-account", "token", "create",
+            "-g", $ResourceGroupName,
+            "-n", $GrafanaName,
+            "--service-account", $serviceAccountName,
+            "--token", $tokenName,
+            "--time-to-live", "1h",
+            "-o", "json"
+        ) -TimeoutSeconds 180 -AllowFailure
+
+        if (-not $tokenCreateResult -or $tokenCreateResult.ExitCode -ne 0) {
+            return
+        }
+
+        $tokenObj = $null
+        try { $tokenObj = ($tokenCreateResult.StdOut | ConvertFrom-Json) } catch { $tokenObj = $null }
+        if ($null -eq $tokenObj) {
+            return
+        }
+
+        foreach ($prop in @("key", "token", "secret", "value")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $apiToken = $tokenObj.$prop
+                break
+            }
+        }
+
+        foreach ($prop in @("id", "tokenId", "uid")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $tokenId = $tokenObj.$prop
+                break
+            }
+        }
+
+        if (-not $apiToken) {
+            return
+        }
+
+        $headers = @{
+            Authorization  = "Bearer $apiToken"
+            "Content-Type" = "application/json"
+            Accept         = "application/json"
+        }
+
+        $base = $grafanaEndpoint.TrimEnd('/')
+        $contactPointName = "discord-business-alerts"
+
+        # Fetch contact points; if we don't see our Discord CP, nothing to do.
+        $existingCps = $null
+        try {
+            $existingCps = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/contact-points") -Headers $headers
+        }
+        catch {
+            return
+        }
+
+        $cpList = @($existingCps)
+        $cp = $cpList | Where-Object { $_.name -eq $contactPointName } | Select-Object -First 1
+        if (-not $cp) {
+            return
+        }
+
+        # If the root notification policy routes to our Discord CP, redirect it first.
+        try {
+            $policy = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/policies") -Headers $headers
+            if ($policy -and ($policy.PSObject.Properties.Name -contains 'receiver') -and $policy.receiver -eq $contactPointName) {
+                $fallback = $null
+
+                # Prefer Grafana's default email receiver when present.
+                $fallbackCandidate = $cpList | Where-Object { $_.name -eq 'grafana-default-email' } | Select-Object -First 1
+                if ($fallbackCandidate) {
+                    $fallback = $fallbackCandidate.name
+                }
+                else {
+                    $fallbackCandidate = $cpList | Where-Object { $_.name -and $_.name -ne $contactPointName } | Select-Object -First 1
+                    if ($fallbackCandidate) {
+                        $fallback = $fallbackCandidate.name
+                    }
+                }
+
+                if ($fallback) {
+                    $policy.receiver = $fallback
+                }
+                else {
+                    # Last resort: remove receiver property so Grafana can fall back to its defaults.
+                    $policy.PSObject.Properties.Remove('receiver')
+                }
+
+                Invoke-RestMethod -Method Put -Uri ("$base/api/v1/provisioning/policies") -Headers $headers -Body ($policy | ConvertTo-Json -Depth 50) | Out-Null
+            }
+        }
+        catch {
+            # Best-effort only
+        }
+
+        # Delete the Discord contact point.
+        try {
+            if ($cp.PSObject.Properties.Name -contains 'uid' -and $cp.uid) {
+                Invoke-RestMethod -Method Delete -Uri ("$base/api/v1/provisioning/contact-points/$($cp.uid)") -Headers $headers | Out-Null
+            }
+        }
+        catch {
+            # Best-effort only
+        }
+    }
+    finally {
         if ($tokenId) {
             Invoke-AzCliWithTimeout -Args @(
                 "grafana", "service-account", "token", "delete",
@@ -1256,6 +1427,134 @@ function Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring {
     }
 }
 
+function Remove-AzureManagedGrafanaProvisionedKpiAlertRules {
+    param(
+        [Parameter(Mandatory = $true)][string]$ResourceGroupName,
+        [Parameter(Mandatory = $true)][string]$GrafanaName
+    )
+
+    $endpointResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "show",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "--query", "properties.endpoint",
+        "-o", "tsv"
+    ) -TimeoutSeconds 60 -AllowFailure
+
+    if (-not $endpointResult -or $endpointResult.ExitCode -ne 0) {
+        return
+    }
+
+    $grafanaEndpoint = ($endpointResult.StdOut | Out-String).Trim()
+    if (-not $grafanaEndpoint) {
+        return
+    }
+
+    $serviceAccountName = "mtogo-provisioner"
+
+    $saListResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "service-account", "list",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "-o", "json"
+    ) -TimeoutSeconds 120 -AllowFailure
+
+    if (-not $saListResult -or $saListResult.ExitCode -ne 0) {
+        return
+    }
+
+    $serviceAccounts = @()
+    try { $serviceAccounts = ($saListResult.StdOut | ConvertFrom-Json) } catch { $serviceAccounts = @() }
+
+    $existingSa = $serviceAccounts | Where-Object { $_.name -eq $serviceAccountName } | Select-Object -First 1
+    if (-not $existingSa) {
+        # No service account => nothing provisioned by our scripts.
+        return
+    }
+
+    $tokenName = "cleanup-" + [Guid]::NewGuid().ToString("N")
+    $tokenId = $null
+    $apiToken = $null
+
+    try {
+        $tokenCreateResult = Invoke-AzCliWithTimeout -Args @(
+            "grafana", "service-account", "token", "create",
+            "-g", $ResourceGroupName,
+            "-n", $GrafanaName,
+            "--service-account", $serviceAccountName,
+            "--token", $tokenName,
+            "--time-to-live", "1h",
+            "-o", "json"
+        ) -TimeoutSeconds 180 -AllowFailure
+
+        if (-not $tokenCreateResult -or $tokenCreateResult.ExitCode -ne 0) {
+            return
+        }
+
+        $tokenObj = $null
+        try { $tokenObj = ($tokenCreateResult.StdOut | ConvertFrom-Json) } catch { $tokenObj = $null }
+        if ($null -eq $tokenObj) {
+            return
+        }
+
+        foreach ($prop in @("key", "token", "secret", "value")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $apiToken = $tokenObj.$prop
+                break
+            }
+        }
+
+        foreach ($prop in @("id", "tokenId", "uid")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $tokenId = $tokenObj.$prop
+                break
+            }
+        }
+
+        if (-not $apiToken) {
+            return
+        }
+
+        $headers = @{
+            Authorization  = "Bearer $apiToken"
+            "Content-Type" = "application/json"
+            Accept         = "application/json"
+        }
+
+        $base = $grafanaEndpoint.TrimEnd('/')
+        $existingRules = @()
+        try {
+            $existingRules = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/alert-rules") -Headers $headers
+        }
+        catch {
+            return
+        }
+
+        $rules = @($existingRules)
+        $toDelete = @($rules | Where-Object { $_.uid -and ($_.uid -like 'mtogo-kpi-*') })
+        foreach ($r in $toDelete) {
+            try {
+                Invoke-RestMethod -Method Delete -Uri ("$base/api/v1/provisioning/alert-rules/$($r.uid)") -Headers $headers | Out-Null
+            }
+            catch {
+                # Best-effort cleanup
+            }
+        }
+    }
+    finally {
+        if ($tokenId) {
+            Invoke-AzCliWithTimeout -Args @(
+                "grafana", "service-account", "token", "delete",
+                "-g", $ResourceGroupName,
+                "-n", $GrafanaName,
+                "--service-account", $serviceAccountName,
+                "--token", $tokenId,
+                "-o", "none"
+            ) -TimeoutSeconds 120 -AllowFailure | Out-Null
+        }
+    }
+}
+
 function Get-AzureManagedGrafanaPrometheusDatasourceUid {
     param(
         [Parameter(Mandatory = $true)][string]$ResourceGroupName,
@@ -1937,13 +2236,30 @@ if ($Context -eq "azure") {
     if (-not $kpiDsUid) { $kpiDsUid = "prometheus" }
     if (-not $sloDsUid) { $sloDsUid = "prometheus" }
 
-    # KPI alerting -> Discord + KPI alert rules (everything in /monitoring should be included).
-    # The webhook URL is configured in terraform/azure/terraform.tfvars as discord_webhook_url.
-    $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
-    Ensure-AzureManagedGrafanaKpiDiscordAlerting -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -DiscordWebhookUrl $discordWebhookUrl
+    if ($ProvisionAzureGrafanaAlerting) {
+        # OPTIONAL: KPI alerting -> Discord + KPI alert rules (Grafana-managed alerting).
+        # Default is off to avoid Grafana 'DatasourceNoData' alerts and to ensure Discord only receives
+        # Alertmanager template embeds.
+        $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
+        Ensure-AzureManagedGrafanaKpiDiscordAlerting -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -DiscordWebhookUrl $discordWebhookUrl
 
-    $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
-    Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -GrafanaPrometheusDatasourceUid $kpiDsUid -AlertRulesYmlPath $kpiAlertRulesYml
+        $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
+        Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -GrafanaPrometheusDatasourceUid $kpiDsUid -AlertRulesYmlPath $kpiAlertRulesYml
+    }
+    else {
+        Write-Host "`nSkipping Azure Managed Grafana alerting provisioning (using Prometheus + Alertmanager for alerts)." -ForegroundColor DarkGray
+        Write-Host "To enable Azure Grafana-managed alerting anyway, re-run with: -ProvisionAzureGrafanaAlerting" -ForegroundColor DarkGray
+
+        # Best-effort cleanup: remove previously provisioned KPI rules that this script created.
+        # This prevents old Grafana rules (and DatasourceNoData notifications) from continuing to spam Discord.
+        try {
+            Remove-AzureManagedGrafanaKpiDiscordAlerting -ResourceGroupName $rg -GrafanaName $kpiGrafanaName
+            Remove-AzureManagedGrafanaProvisionedKpiAlertRules -ResourceGroupName $rg -GrafanaName $kpiGrafanaName
+        }
+        catch {
+            # Best-effort only
+        }
+    }
 
     $kpiDashDir = Join-Path $RootDir "monitoring\grafana\dashboards"
 
