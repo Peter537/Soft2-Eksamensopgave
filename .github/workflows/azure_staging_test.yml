@@ -14,7 +14,7 @@ permissions:
   id-token: write
 
 env:
-  TERRAFORM_VERSION: "1.6.0"
+  TERRAFORM_VERSION: "1.6.6"
   TF_IN_AUTOMATION: "true"
   DOTNET_VERSION: "8.0.x"
 
