@@ -100,6 +100,7 @@ jobs:
             -backend-config="key=mtogo.${{ github.event.inputs.environment }}.tfstate"
 
       - name: Terraform Destroy Plan
+        shell: bash
         env:
           ARM_USE_OIDC: "true"
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -114,13 +115,50 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
         run: |
+          set -euo pipefail
+
           echo "============================================"
           echo "⚠️  DESTROYING ENVIRONMENT: ${{ github.event.inputs.environment }}"
           echo "============================================"
 
-          terraform plan -destroy -input=false -no-color
+          max_attempts=5
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo ""
+            echo "Destroy plan (attempt $attempt/$max_attempts)"
+
+            set +e
+            output=$(terraform plan -destroy -input=false -no-color -lock-timeout=5m 2>&1)
+            exit_code=$?
+            set -e
+
+            echo "$output"
+
+            if [ $exit_code -eq 0 ]; then
+              exit 0
+            fi
+
+            if echo "$output" | grep -q "state blob is already locked"; then
+              lock_id=$(echo "$output" | sed -n 's/^  ID:[[:space:]]*//p' | head -n 1)
+              if [ -n "${lock_id:-}" ]; then
+                echo "Detected Terraform state lock: $lock_id"
+                echo "Waiting briefly, then forcing unlock (stale lock cleanup)..."
+                sleep 20
+                terraform force-unlock -force "$lock_id" || true
+                attempt=$((attempt+1))
+                continue
+              fi
+            fi
+
+            echo "Terraform destroy plan failed."
+            exit $exit_code
+          done
+
+          echo "Terraform destroy plan failed after $max_attempts attempts."
+          exit 1
 
       - name: Terraform Destroy
+        shell: bash
         env:
           ARM_USE_OIDC: "true"
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -135,7 +173,43 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
         run: |
-          terraform destroy -auto-approve -input=false
+          set -euo pipefail
+
+          max_attempts=5
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            echo ""
+            echo "Destroy (attempt $attempt/$max_attempts)"
+
+            set +e
+            output=$(terraform destroy -auto-approve -input=false -lock-timeout=5m 2>&1)
+            exit_code=$?
+            set -e
+
+            echo "$output"
+
+            if [ $exit_code -eq 0 ]; then
+              exit 0
+            fi
+
+            if echo "$output" | grep -q "state blob is already locked"; then
+              lock_id=$(echo "$output" | sed -n 's/^  ID:[[:space:]]*//p' | head -n 1)
+              if [ -n "${lock_id:-}" ]; then
+                echo "Detected Terraform state lock: $lock_id"
+                echo "Waiting briefly, then forcing unlock (stale lock cleanup)..."
+                sleep 20
+                terraform force-unlock -force "$lock_id" || true
+                attempt=$((attempt+1))
+                continue
+              fi
+            fi
+
+            echo "Terraform destroy failed."
+            exit $exit_code
+          done
+
+          echo "Terraform destroy failed after $max_attempts attempts."
+          exit 1
 
       - name: Summary
         run: |
