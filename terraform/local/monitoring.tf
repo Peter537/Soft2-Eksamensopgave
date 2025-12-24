@@ -40,7 +40,7 @@ locals {
   # same template shape, and when no webhook is configured we inject a non-working
   # placeholder URL (matching the docker-compose entrypoint default behavior).
   discord_webhook_url_effective = (
-    trimspace(coalesce(local.discord_webhook_url, "")) != ""
+    try(trimspace(local.discord_webhook_url), "") != ""
     ? local.discord_webhook_url
     : "https://discord.com/api/webhooks/not-configured/please-set-DISCORD_WEBHOOK_ALERT"
   )
