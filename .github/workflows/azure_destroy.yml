@@ -29,7 +29,7 @@ permissions:
   id-token: write
 
 env:
-  TERRAFORM_VERSION: "1.6.0"
+  TERRAFORM_VERSION: "1.6.6"
   TF_IN_AUTOMATION: "true"
 
 jobs:
