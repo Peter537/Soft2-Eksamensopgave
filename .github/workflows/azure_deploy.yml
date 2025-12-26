@@ -167,7 +167,15 @@ jobs:
 
           if [ -n "${rg:-}" ] && [ -n "${aks:-}" ]; then
             echo "Fetching AKS credentials for pre-apply seed cleanup..."
+            set +e
             az aks get-credentials --resource-group "$rg" --name "$aks" --overwrite-existing
+            creds_exit=$?
+            set -e
+
+            if [ "$creds_exit" -ne 0 ]; then
+              echo "Warning: Failed to fetch AKS credentials (exit code $creds_exit). Skipping pre-apply demo seed Job cleanup; seeding will still be validated post-apply."
+              exit 0
+            fi
 
             echo "Deleting any existing demo seed Job(s) so it re-runs..."
             kubectl delete job -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed --ignore-not-found=true || true
