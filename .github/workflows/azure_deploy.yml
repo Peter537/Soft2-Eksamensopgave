@@ -413,7 +413,7 @@ jobs:
             exit 1
           fi
 
-          if ! kubectl wait --for=condition=complete --timeout=900s -n mtogo "job/${seed_job}"; then
+          if ! kubectl wait --for=condition=complete --timeout=1800s -n mtogo "job/${seed_job}"; then
             echo "Demo seed Job did not complete successfully. Showing diagnostics..."
             kubectl describe -n mtogo "job/${seed_job}" || true
             echo "\nDemo seed Job logs:"
