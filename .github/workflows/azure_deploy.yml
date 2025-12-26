@@ -38,6 +38,11 @@ on:
         options:
           - plan
           - apply
+      seed_demo_data:
+        description: "Seed demo data into databases (showcase only)"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -80,6 +85,7 @@ jobs:
           echo "Image Tag: ${{ steps.get_tag.outputs.tag }}"
           echo "Action: ${{ github.event.inputs.action || 'apply' }}"
           echo "Node Count: ${{ github.event.inputs.node_count || '2' }}"
+          echo "Seed Demo Data: ${{ github.event.inputs.seed_demo_data }}"
           echo "============================================"
 
   # ===========================================
@@ -156,6 +162,7 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TF_VAR_seed_demo_data: ${{ github.event.inputs.seed_demo_data }}
           # Azure Managed Grafana access is controlled by Azure RBAC.
           # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
           TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
@@ -185,6 +192,7 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TF_VAR_seed_demo_data: ${{ github.event.inputs.seed_demo_data }}
           # Azure Managed Grafana access is controlled by Azure RBAC.
           # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
           TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
