@@ -132,5 +132,7 @@ module "mtogo_app" {
   # easily becomes unschedulable. Scale up later by increasing node size/count.
   service_replicas = 1
 
+  seed_demo_data = var.seed_demo_data
+
   depends_on = [azurerm_kubernetes_cluster.main]
 }

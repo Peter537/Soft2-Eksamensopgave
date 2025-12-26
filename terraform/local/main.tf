@@ -98,4 +98,6 @@ module "mtogo_app" {
 
   # Local dev clusters often have enough capacity; keep 3 replicas to match HA testing.
   service_replicas = 3
+
+  seed_demo_data = var.seed_demo_data
 }

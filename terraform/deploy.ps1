@@ -6,14 +6,19 @@
 # Usage (from repository root):
 #   .\terraform\deploy.ps1 -Context local -Build
 #   .\terraform\deploy.ps1 -Context local -Destroy
+#   .\terraform\deploy.ps1 -Context local -Build -SeedDemoData
 #   .\terraform\deploy.ps1 -Context azure
 #   .\terraform\deploy.ps1 -Context azure -Destroy
+#   .\terraform\deploy.ps1 -Context azure -SeedDemoData
 
 param(
     [ValidateSet("local", "azure")]
     [string]$Context = "local",
     [switch]$Build,
     [switch]$Destroy,
+
+    # When set, Terraform will run an in-cluster job that seeds demo data into the databases.
+    [switch]$SeedDemoData,
 
     # Local-only: when set, provision Grafana-managed alerting (Discord contact point + import KPI alert rules)
     # in addition to Prometheus + Alertmanager. Default is off to avoid Grafana 'DatasourceNoData' alerts.
@@ -2058,6 +2063,76 @@ if (-not $initSucceeded) {
 
 Write-Host "`nApplying Terraform configuration..." -ForegroundColor Yellow
 
+# Pass optional demo seeding toggle to Terraform via TF_VAR_*.
+$env:TF_VAR_seed_demo_data = $(if ($SeedDemoData) { "true" } else { "false" })
+
+# Local-only: if demo seeding is requested, ensure the seed Job will re-run.
+# (Jobs are one-shot; if the Job already exists/completed from a previous run, Terraform will not re-execute it.)
+if ($Context -eq "local" -and $SeedDemoData) {
+    Write-Host "`nCleaning up any previous demo seed job (so it re-runs)..." -ForegroundColor Yellow
+    try {
+        kubectl delete job -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" --ignore-not-found=true 1>$null 2>$null
+    }
+    catch {
+        # Best-effort only (namespace may not exist yet)
+    }
+}
+
+# Azure-only: if demo seeding is requested, try to clean up any previous seed Job BEFORE apply.
+# This ensures the Job will re-run on repeated deployments.
+if ($Context -eq "azure" -and $SeedDemoData) {
+    if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: kubectl is not installed" -ForegroundColor Red
+        Fail "kubectl is not installed"
+    }
+
+    Write-Host "`nAttempting to clean up any previous demo seed job on AKS (so it re-runs)..." -ForegroundColor Yellow
+
+    # Best-effort: if outputs/state exist, we can fetch AKS credentials and delete the job.
+    $preOutputs = $null
+    try {
+        $preOutputs = Get-TerraformOutputs -WorkingDirectory $tfDir
+    }
+    catch {
+        $preOutputs = $null
+    }
+
+    $rgPre = $null
+    $aksPre = $null
+    try {
+        if ($preOutputs -and $preOutputs.resource_group_name) { $rgPre = $preOutputs.resource_group_name.value }
+        if ($preOutputs -and $preOutputs.aks_cluster_name) { $aksPre = $preOutputs.aks_cluster_name.value }
+    }
+    catch {
+        $rgPre = $null
+        $aksPre = $null
+    }
+
+    if ($rgPre -and $aksPre) {
+        try {
+            Invoke-AzCliWithTimeout -Args @(
+                "aks", "get-credentials",
+                "-g", $rgPre,
+                "-n", $aksPre,
+                "--overwrite-existing"
+            ) -TimeoutSeconds 300 | Out-Null
+        }
+        catch {
+            Write-Host "Warning: Failed to fetch AKS credentials for pre-apply seed cleanup. Demo seeding may not re-run." -ForegroundColor Yellow
+        }
+
+        try {
+            kubectl delete job -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" --ignore-not-found=true 1>$null 2>$null
+        }
+        catch {
+            Write-Host "Warning: Failed to delete existing demo seed Job before apply. Demo seeding may not re-run." -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "(Skipping pre-apply seed Job cleanup: Terraform outputs not available yet.)" -ForegroundColor DarkGray
+    }
+}
+
 $maxApplyAttempts = 10
 $applySucceeded = $false
 for ($attempt = 1; $attempt -le $maxApplyAttempts; $attempt++) {
@@ -2118,6 +2193,40 @@ if (-not $applySucceeded) {
 if ($Context -eq "local") {
     Write-Host "`nWaiting for deployments to be ready..." -ForegroundColor Yellow
     kubectl wait --for=condition=available --timeout=300s deployment --all -n mtogo
+
+    if ($SeedDemoData) {
+        Write-Host "`nWaiting for demo seed job to complete..." -ForegroundColor Yellow
+
+        $seedJobName = ""
+        try {
+            $seedJobName = (kubectl get jobs -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" -o jsonpath="{.items[0].metadata.name}" 2>$null).Trim()
+        }
+        catch {
+            $seedJobName = ""
+        }
+
+        if (-not $seedJobName) {
+            Write-Host "SeedDemoData was requested, but no demo seed Job was found in namespace 'mtogo'." -ForegroundColor Red
+            Write-Host "Hint: kubectl get jobs -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed" -ForegroundColor Yellow
+            Fail "Demo seed Job was not found"
+        }
+
+        $waitSucceeded = $true
+        try {
+            kubectl wait --for=condition=complete --timeout=900s job/$seedJobName -n mtogo
+        }
+        catch {
+            $waitSucceeded = $false
+        }
+
+        if (-not $waitSucceeded) {
+            Write-Host "`nDemo seed Job did not complete successfully. Showing diagnostics..." -ForegroundColor Red
+            try { kubectl describe job $seedJobName -n mtogo | Out-Host } catch { }
+            Write-Host "`nDemo seed Job logs:" -ForegroundColor Yellow
+            try { kubectl logs job/$seedJobName -n mtogo --all-containers=true --tail=-1 | Out-Host } catch { }
+            Fail "Demo seed Job failed"
+        }
+    }
 
     Write-Host "`n================================================" -ForegroundColor Green
     Write-Host "  Deployment Complete!" -ForegroundColor Green
@@ -2197,6 +2306,58 @@ if ($Context -eq "local") {
 
 if ($Context -eq "azure") {
     $outputs = Get-TerraformOutputs -WorkingDirectory $tfDir
+
+    if ($SeedDemoData) {
+        if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
+            Write-Host "Error: kubectl is not installed" -ForegroundColor Red
+            Fail "kubectl is not installed"
+        }
+
+        $rg = $outputs.resource_group_name.value
+        $aksName = $outputs.aks_cluster_name.value
+        if (-not $rg -or -not $aksName) {
+            Fail "SeedDemoData requires Terraform outputs 'resource_group_name' and 'aks_cluster_name'."
+        }
+
+        Write-Host "`nFetching AKS credentials..." -ForegroundColor Yellow
+        Invoke-AzCliWithTimeout -Args @(
+            "aks", "get-credentials",
+            "-g", $rg,
+            "-n", $aksName,
+            "--overwrite-existing"
+        ) -TimeoutSeconds 300 | Out-Null
+
+        Write-Host "`nWaiting for demo seed job to complete..." -ForegroundColor Yellow
+        $seedJobName = ""
+        try {
+            $seedJobName = (kubectl get jobs -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" -o jsonpath="{.items[0].metadata.name}" 2>$null).Trim()
+        }
+        catch {
+            $seedJobName = ""
+        }
+
+        if (-not $seedJobName) {
+            Write-Host "SeedDemoData was requested, but no demo seed Job was found in namespace 'mtogo'." -ForegroundColor Red
+            Write-Host "Hint: kubectl get jobs -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed" -ForegroundColor Yellow
+            Fail "Demo seed Job was not found"
+        }
+
+        $waitSucceeded = $true
+        try {
+            kubectl wait --for=condition=complete --timeout=900s job/$seedJobName -n mtogo
+        }
+        catch {
+            $waitSucceeded = $false
+        }
+
+        if (-not $waitSucceeded) {
+            Write-Host "`nDemo seed Job did not complete successfully. Showing diagnostics..." -ForegroundColor Red
+            try { kubectl describe job $seedJobName -n mtogo | Out-Host } catch { }
+            Write-Host "`nDemo seed Job logs:" -ForegroundColor Yellow
+            try { kubectl logs job/$seedJobName -n mtogo --all-containers=true --tail=-1 | Out-Host } catch { }
+            Fail "Demo seed Job failed"
+        }
+    }
 
     # Mandatory: ensure Azure instances contain ONLY repo dashboards.
     Ensure-AzureCliExtension -Name "amg"

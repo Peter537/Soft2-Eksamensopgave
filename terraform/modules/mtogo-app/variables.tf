@@ -138,6 +138,12 @@ variable "grafana_url" {
   default     = ""
 }
 
+variable "seed_demo_data" {
+  description = "When true, run a Kubernetes Job that seeds demo data into the service databases. Intended for showcase environments only."
+  type        = bool
+  default     = false
+}
+
 # ===========================================
 # Scaling
 # ===========================================

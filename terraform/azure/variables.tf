@@ -143,3 +143,9 @@ variable "install_monitoring" {
   type        = bool
   default     = true
 }
+
+variable "seed_demo_data" {
+  description = "When true, run a Kubernetes Job that seeds demo data into the service databases."
+  type        = bool
+  default     = false
+}
