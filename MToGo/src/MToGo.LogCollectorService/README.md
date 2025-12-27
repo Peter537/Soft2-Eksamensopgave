@@ -27,7 +27,7 @@ Log Collector Service er ansvarlig for at samle og opbevare logs fra alle servic
 | `/api/v1/logs/audit/services` | GET    | Henter liste over unikke service navne         |
 | `/api/v1/logs/audit/actions`  | GET    | Henter liste over unikke actions               |
 
-**Query Parameters for GET /api/v1/logs/audit:**
+**Query Parameters (GET /api/v1/logs/audit)**
 
 | Parameter     | Type   | Beskrivelse                                                   |
 | :------------ | :----- | :------------------------------------------------------------ |

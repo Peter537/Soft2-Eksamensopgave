@@ -5,14 +5,16 @@ Performance-test ved hjælp af **NBomber** som er et .NET load testing-bibliotek
 ## Hurtig start
 
 ```bash
+# Kør kommandoerne fra repository root
+
 # 1. Start hele systemet (alle services + gateway)
-docker-compose up -d
+docker compose up -d --build
 
 # 2. Vent på at services bliver sunde (healthy)
 # Ex. tjek http://localhost:8080/health
 
 # 3. Kør performance-tests
-cd MToGo/tests/MToGo.Performance.Tests
+cd ./MToGo/tests/MToGo.Performance.Tests
 dotnet test -e RUN_PERFORMANCE_TESTS=true
 ```
 
