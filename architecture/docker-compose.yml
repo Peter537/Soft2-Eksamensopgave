@@ -1,0 +1,29 @@
+# LikeC4 preview (no local Node.js needed)
+#
+# Usage from repo root:
+#   cd architecture
+#   docker compose up
+# Then open:
+#   http://localhost:3000
+#
+# Notes:
+# - LikeC4 dev server runs on port 5173 inside the container (Vite).
+# - We map host 3000 -> container 5173 for convenience.
+# - On Windows/macOS, filesystem notifications can be unreliable in Linux containers;
+#   polling is enabled to ensure hot-reload works.
+
+services:
+  likec4:
+    image: likec4/likec4:latest
+    container_name: mtogo-likec4
+    working_dir: /data
+    volumes:
+      - ./:/data
+    command: ["start", "--host", "0.0.0.0", "--port", "5173"]
+    environment:
+      CHOKIDAR_USEPOLLING: "1"
+      CHOKIDAR_INTERVAL: "200"
+    ports:
+      - "3000:5173"
+      # Vite HMR port (helps realtime updates when supported)
+      - "24678:24678"

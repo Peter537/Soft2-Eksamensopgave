@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "*.likec4": "likec4",
+    "*.c4": "likec4"
+  }
+}

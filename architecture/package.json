@@ -1,0 +1,13 @@
+{
+  "name": "mtogo-architecture",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "likec4": "^1.46.1"
+  },
+  "scripts": {
+    "start": "likec4 start",
+    "build": "likec4 build -o dist",
+    "export:png": "likec4 export png --output assets"
+  }
+}

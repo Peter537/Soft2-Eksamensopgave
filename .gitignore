@@ -451,3 +451,9 @@ terraform.rc
 # Plan files
 *.tfplan
 tfplan
+
+# Local architecture files
+architecture/node_modules/
+architecture/dist/
+architecture/.cache/
+architecture/assets/

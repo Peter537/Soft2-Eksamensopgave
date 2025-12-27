@@ -1,0 +1,297 @@
+specification {
+  element actor {
+    style {
+      shape person
+      color muted
+    }
+  }
+
+  element system {
+    style {
+      color primary
+    }
+  }
+
+  element externalSystem {
+    style {
+      color gray
+    }
+  }
+
+  element website {
+    style {
+      shape browser
+    }
+  }
+
+  element container {
+    style {
+      color secondary
+    }
+  }
+
+  element service {
+    style {
+      color secondary
+    }
+  }
+
+  element database {
+    style {
+      shape storage
+      color indigo
+      icon tech:postgresql
+    }
+  }
+
+  element messageBus {
+    style {
+      shape queue
+      color amber
+      icon tech:kafka
+    }
+  }
+
+  element component {
+    style {
+      color green
+    }
+  }
+
+  relationship async {
+    color amber
+    line dotted
+  }
+}
+
+model {
+  // People
+  customer = actor 'Customer'
+  partner = actor 'Partner'
+  agent = actor 'Agent'
+  management = actor 'Management'
+
+  // External systems
+  paymentProvider = externalSystem 'Nets Payment Provider' {
+    description 'Processes secure payments for orders.'
+  }
+
+  analyticsApp = externalSystem 'Analytics App (Grafana)' {
+    description 'Dashboards and reporting based on MToGo telemetry.'
+  }
+
+  legacy = externalSystem 'Legacy MToGo App' {
+    description 'Legacy API used for customer-related operations and notifications.'
+  }
+
+  // New system (everything under /MToGo)
+  mtogo = system 'MToGo App' {
+    description 'Food delivery platform built as containerized .NET microservices.'
+
+    website = website 'Website' {
+      description 'Blazor Server frontend for Customer, Partner, Agent and Management UIs.'
+      technology 'ASP.NET Core 8 (Blazor Server)'
+      icon tech:dotnet
+    }
+
+    gateway = container 'API Gateway' {
+      description 'Single entry point; routes requests to internal services and enforces JWT auth.'
+      technology 'ASP.NET Core 8 + YARP'
+      icon tech:dotnet
+
+      jwt = component 'JWT Authentication' {
+        description 'Validates JWT Bearer tokens for protected routes.'
+      }
+      yarp = component 'YARP Reverse Proxy' {
+        description 'Routes /api/v1/* to internal services and /legacy to the legacy system.'
+      }
+      cors = component 'CORS Policy' {
+        description 'Restricts allowed origins (Website) and credentials.'
+      }
+
+      jwt -> yarp 'allows request routing'
+      cors -> yarp 'applies cross-origin rules'
+    }
+
+    orderService = service 'Order Service' {
+      description 'Order creation, lifecycle management and tracking.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    partnerService = service 'Partner Service' {
+      description 'Partner onboarding, menu management and partner state.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    customerService = service 'Customer Service' {
+      description 'Customer authentication and profiles (integrates with Legacy MToGo).' 
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    agentService = service 'Agent Service' {
+      description 'Delivery agent management.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    agentBonusService = service 'Agent Bonus Service' {
+      description 'Calculates agent bonuses by aggregating data from other services.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    feedbackHubService = service 'Feedback Hub Service' {
+      description 'Reviews and feedback collection.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    notificationService = service 'Notification Service' {
+      description 'Consumes Kafka events and sends notifications via Legacy Notification API.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    managementService = service 'Management Service' {
+      description 'Administration endpoints and management functions.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    logCollectorService = service 'Log Collector Service' {
+      description 'Central log ingestion and storage.'
+      technology '.NET 8'
+      icon tech:dotnet
+    }
+
+    wsCustomer = service 'WebSocket Customer Service' {
+      description 'Realtime updates for customers via WebSockets (Kafka-driven).' 
+      technology '.NET 8 (WebSockets)'
+      icon tech:dotnet
+    }
+
+    wsPartner = service 'WebSocket Partner Service' {
+      description 'Realtime updates for partners via WebSockets (Kafka-driven).' 
+      technology '.NET 8 (WebSockets)'
+      icon tech:dotnet
+    }
+
+    wsAgent = service 'WebSocket Agent Service' {
+      description 'Realtime updates for agents via WebSockets (Kafka-driven).' 
+      technology '.NET 8 (WebSockets)'
+      icon tech:dotnet
+    }
+
+    kafka = messageBus 'Kafka' {
+      description 'Event streaming used for asynchronous communication (order-* topics).' 
+      technology 'Apache Kafka'
+    }
+
+    postgres = database 'PostgreSQL' {
+      description 'Shared PostgreSQL server with separate databases per service.'
+      technology 'PostgreSQL 16'
+    }
+  }
+
+  // =========================
+  // Relationships (Context)
+  // =========================
+
+  customer -> mtogo.website 'Uses MToGo via browser'
+  partner -> mtogo.website 'Uses MToGo via browser'
+  agent -> mtogo.website 'Uses MToGo via browser'
+  management -> mtogo.website 'Admin UI'
+
+  management -> analyticsApp 'Views dashboards and reports'
+  mtogo -> analyticsApp 'Exports telemetry (metrics/logs)'
+
+  mtogo.website -> paymentProvider 'Processes payment'
+
+  // =========================
+  // Relationships (Containers)
+  // =========================
+
+  mtogo.website -> mtogo.gateway 'Calls REST API + connects WebSockets'
+
+  // Gateway routing (YARP)
+  mtogo.gateway -> mtogo.orderService 'Routes /api/v1/orders/* (HTTP)'
+  mtogo.gateway -> mtogo.customerService 'Routes /api/v1/customers/* (HTTP)'
+  mtogo.gateway -> mtogo.partnerService 'Routes /api/v1/partners/* (HTTP)'
+  mtogo.gateway -> mtogo.agentService 'Routes /api/v1/agents/* (HTTP)'
+  mtogo.gateway -> mtogo.agentBonusService 'Routes /api/v1/agent-bonus/* (HTTP)'
+  mtogo.gateway -> mtogo.feedbackHubService 'Routes /api/v1/feedback-hub/* (HTTP)'
+  mtogo.gateway -> mtogo.managementService 'Routes /api/v1/management/* (HTTP)'
+  mtogo.gateway -> mtogo.logCollectorService 'Routes /api/v1/logs/* (HTTP)'
+
+  mtogo.gateway -> mtogo.wsCustomer 'Routes /api/v1/ws/customers/* (WebSockets)'
+  mtogo.gateway -> mtogo.wsPartner 'Routes /api/v1/ws/partners/* (WebSockets)'
+  mtogo.gateway -> mtogo.wsAgent 'Routes /api/v1/ws/agents/* (WebSockets)'
+
+  // Legacy integration is both proxied and consumed by internal services
+  mtogo.gateway -> legacy 'Proxies /api/v1/legacy/* and /api/v1/notifications/*'
+  mtogo.customerService -> legacy 'Uses legacy customer API'
+  mtogo.notificationService -> legacy 'Calls legacy notification API'
+
+  // Persistence (compose shows DB-per-service on same postgres server)
+  mtogo.orderService -> mtogo.postgres 'Reads/writes mtogo_orders'
+  mtogo.partnerService -> mtogo.postgres 'Reads/writes mtogo_partners'
+  mtogo.agentService -> mtogo.postgres 'Reads/writes mtogo_agents'
+  mtogo.feedbackHubService -> mtogo.postgres 'Reads/writes mtogo_feedback'
+  mtogo.managementService -> mtogo.postgres 'Reads/writes mtogo_management'
+  mtogo.logCollectorService -> mtogo.postgres 'Stores mtogo_logs'
+  legacy -> mtogo.postgres 'Reads/writes mtogo_legacy'
+
+  // Eventing (Kafka topics described in system-architecture.md)
+  mtogo.orderService -[async]-> mtogo.kafka 'Publishes order-* events'
+
+  mtogo.notificationService -[async]-> mtogo.kafka 'Consumes order events'
+
+  mtogo.wsCustomer -[async]-> mtogo.kafka 'Consumes: order-accepted, order-rejected, order-pickedup, order-delivered'
+  mtogo.wsPartner -[async]-> mtogo.kafka 'Consumes: order-created, agent-assigned, order-pickedup'
+  mtogo.wsAgent -[async]-> mtogo.kafka 'Consumes: order-accepted, agent-assigned, order-ready'
+
+  mtogo.logCollectorService -[async]-> mtogo.kafka 'Consumes events for observability'
+
+  // Bonus service aggregates via internal HTTP calls (implementation chooses targets)
+  mtogo.agentBonusService -> mtogo.gateway 'Calls internal APIs for bonus calculation'
+}
+
+views {
+  view index {
+    title 'MToGo - System Context'
+    description '''
+      System Context view for MToGo.
+      Matches documentation/project/architecture/resources/system-context-diagram.png.
+    '''
+
+    include customer, partner, agent, management
+    include mtogo
+    include legacy, paymentProvider, analyticsApp
+  }
+
+  view containers of mtogo {
+    title 'MToGo - Container View'
+    description '''
+      Container view for MToGo.
+      Matches documentation/project/architecture/resources/container-diagram.png.
+    '''
+
+    include *
+    include legacy, paymentProvider
+  }
+
+  view gateway_components of mtogo.gateway {
+    title 'Gateway - Component View'
+    description '''
+      Component view for the API Gateway (YARP + JWT + CORS).
+      This is optional but based on the Gateway README and project docs.
+    '''
+
+    include *
+    include mtogo.website
+    include mtogo.gateway.*
+  }
+}
