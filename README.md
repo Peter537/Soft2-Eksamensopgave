@@ -38,6 +38,8 @@ MToGo er bygget med:
 
 Dette er en hurtig guide til at køre MToGo-platformen lokalt ved hjælp af Docker Compose.
 
+En mere detaljeret beskrivelse af hvordan man kører og udvikler til systemet kan findes i [/documentation/deliverables/deployment-guide.md](./documentation/deliverables/deployment-guide.md).
+
 ### Forudsætninger
 
 - Docker & Docker Compose kører på din maskine
@@ -62,6 +64,12 @@ Dette vil køre alle tests i programmet og du kan se testresultaterne.
    cp .env.example .env
    ```
 
+   Hvis du bruger PowerShell (Windows):
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
 2. Konfigurer `.env`-filen med dine værdier
 
    Hvis `DISCORD_WEBHOOK_ALERT` ikke er opdateret, vil Alertmanager ikke sende notifikationer, men i stedet logge fejl i konsollen.
@@ -75,14 +83,15 @@ Dette vil køre alle tests i programmet og du kan se testresultaterne.
 
 ### Tjenester
 
-| Service      | URL                   |
-| ------------ | --------------------- |
-| Website      | http://localhost:8081 |
-| API Gateway  | http://localhost:8080 |
-| Legacy API   | http://localhost:8082 |
-| Prometheus   | http://localhost:9090 |
-| Grafana      | http://localhost:3000 |
-| Alertmanager | http://localhost:9093 |
+| Service       | URL                   |
+| ------------- | --------------------- |
+| Website       | http://localhost:8081 |
+| API Gateway   | http://localhost:8080 |
+| Legacy API    | http://localhost:8082 |
+| Prometheus    | http://localhost:9090 |
+| Grafana       | http://localhost:3000 |
+| Grafana (SLO) | http://localhost:3001 |
+| Alertmanager  | http://localhost:9093 |
 
 ## Repository-struktur
 
