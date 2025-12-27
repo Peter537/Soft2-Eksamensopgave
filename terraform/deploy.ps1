@@ -6,14 +6,27 @@
 # Usage (from repository root):
 #   .\terraform\deploy.ps1 -Context local -Build
 #   .\terraform\deploy.ps1 -Context local -Destroy
+#   .\terraform\deploy.ps1 -Context local -Build -SeedDemoData
 #   .\terraform\deploy.ps1 -Context azure
 #   .\terraform\deploy.ps1 -Context azure -Destroy
+#   .\terraform\deploy.ps1 -Context azure -SeedDemoData
 
 param(
     [ValidateSet("local", "azure")]
     [string]$Context = "local",
     [switch]$Build,
-    [switch]$Destroy
+    [switch]$Destroy,
+
+    # When set, Terraform will run an in-cluster job that seeds demo data into the databases.
+    [switch]$SeedDemoData,
+
+    # Local-only: when set, provision Grafana-managed alerting (Discord contact point + import KPI alert rules)
+    # in addition to Prometheus + Alertmanager. Default is off to avoid Grafana 'DatasourceNoData' alerts.
+    [switch]$ProvisionLocalGrafanaAlerting,
+
+    # Azure-only: when set, provision Azure Managed Grafana alerting (Discord contact point + import KPI alert rules).
+    # Default is off so Discord only receives Alertmanager template embeds from in-cluster Alertmanager.
+    [switch]$ProvisionAzureGrafanaAlerting
 )
 
 $ErrorActionPreference = "Stop"
@@ -562,6 +575,173 @@ function Ensure-AzureManagedGrafanaKpiDiscordAlerting {
     }
 }
 
+function Remove-AzureManagedGrafanaKpiDiscordAlerting {
+    param(
+        [Parameter(Mandatory = $true)][string]$ResourceGroupName,
+        [Parameter(Mandatory = $true)][string]$GrafanaName
+    )
+
+    $endpointResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "show",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "--query", "properties.endpoint",
+        "-o", "tsv"
+    ) -TimeoutSeconds 60 -AllowFailure
+
+    if (-not $endpointResult -or $endpointResult.ExitCode -ne 0) {
+        return
+    }
+
+    $grafanaEndpoint = ($endpointResult.StdOut | Out-String).Trim()
+    if (-not $grafanaEndpoint) {
+        return
+    }
+
+    $serviceAccountName = "mtogo-provisioner"
+
+    $saListResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "service-account", "list",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "-o", "json"
+    ) -TimeoutSeconds 120 -AllowFailure
+
+    if (-not $saListResult -or $saListResult.ExitCode -ne 0) {
+        return
+    }
+
+    $serviceAccounts = @()
+    try { $serviceAccounts = ($saListResult.StdOut | ConvertFrom-Json) } catch { $serviceAccounts = @() }
+    $existingSa = $serviceAccounts | Where-Object { $_.name -eq $serviceAccountName } | Select-Object -First 1
+    if (-not $existingSa) {
+        return
+    }
+
+    $tokenName = "cleanup-" + [Guid]::NewGuid().ToString("N")
+    $tokenId = $null
+    $apiToken = $null
+
+    try {
+        $tokenCreateResult = Invoke-AzCliWithTimeout -Args @(
+            "grafana", "service-account", "token", "create",
+            "-g", $ResourceGroupName,
+            "-n", $GrafanaName,
+            "--service-account", $serviceAccountName,
+            "--token", $tokenName,
+            "--time-to-live", "1h",
+            "-o", "json"
+        ) -TimeoutSeconds 180 -AllowFailure
+
+        if (-not $tokenCreateResult -or $tokenCreateResult.ExitCode -ne 0) {
+            return
+        }
+
+        $tokenObj = $null
+        try { $tokenObj = ($tokenCreateResult.StdOut | ConvertFrom-Json) } catch { $tokenObj = $null }
+        if ($null -eq $tokenObj) {
+            return
+        }
+
+        foreach ($prop in @("key", "token", "secret", "value")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $apiToken = $tokenObj.$prop
+                break
+            }
+        }
+
+        foreach ($prop in @("id", "tokenId", "uid")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $tokenId = $tokenObj.$prop
+                break
+            }
+        }
+
+        if (-not $apiToken) {
+            return
+        }
+
+        $headers = @{
+            Authorization  = "Bearer $apiToken"
+            "Content-Type" = "application/json"
+            Accept         = "application/json"
+        }
+
+        $base = $grafanaEndpoint.TrimEnd('/')
+        $contactPointName = "discord-business-alerts"
+
+        # Fetch contact points; if we don't see our Discord CP, nothing to do.
+        $existingCps = $null
+        try {
+            $existingCps = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/contact-points") -Headers $headers
+        }
+        catch {
+            return
+        }
+
+        $cpList = @($existingCps)
+        $cp = $cpList | Where-Object { $_.name -eq $contactPointName } | Select-Object -First 1
+        if (-not $cp) {
+            return
+        }
+
+        # If the root notification policy routes to our Discord CP, redirect it first.
+        try {
+            $policy = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/policies") -Headers $headers
+            if ($policy -and ($policy.PSObject.Properties.Name -contains 'receiver') -and $policy.receiver -eq $contactPointName) {
+                $fallback = $null
+
+                # Prefer Grafana's default email receiver when present.
+                $fallbackCandidate = $cpList | Where-Object { $_.name -eq 'grafana-default-email' } | Select-Object -First 1
+                if ($fallbackCandidate) {
+                    $fallback = $fallbackCandidate.name
+                }
+                else {
+                    $fallbackCandidate = $cpList | Where-Object { $_.name -and $_.name -ne $contactPointName } | Select-Object -First 1
+                    if ($fallbackCandidate) {
+                        $fallback = $fallbackCandidate.name
+                    }
+                }
+
+                if ($fallback) {
+                    $policy.receiver = $fallback
+                }
+                else {
+                    # Last resort: remove receiver property so Grafana can fall back to its defaults.
+                    $policy.PSObject.Properties.Remove('receiver')
+                }
+
+                Invoke-RestMethod -Method Put -Uri ("$base/api/v1/provisioning/policies") -Headers $headers -Body ($policy | ConvertTo-Json -Depth 50) | Out-Null
+            }
+        }
+        catch {
+            # Best-effort only
+        }
+
+        # Delete the Discord contact point.
+        try {
+            if ($cp.PSObject.Properties.Name -contains 'uid' -and $cp.uid) {
+                Invoke-RestMethod -Method Delete -Uri ("$base/api/v1/provisioning/contact-points/$($cp.uid)") -Headers $headers | Out-Null
+            }
+        }
+        catch {
+            # Best-effort only
+        }
+    }
+    finally {
+        if ($tokenId) {
+            Invoke-AzCliWithTimeout -Args @(
+                "grafana", "service-account", "token", "delete",
+                "-g", $ResourceGroupName,
+                "-n", $GrafanaName,
+                "--service-account", $serviceAccountName,
+                "--token", $tokenId,
+                "-o", "none"
+            ) -TimeoutSeconds 120 -AllowFailure | Out-Null
+        }
+    }
+}
+
 function New-StableGrafanaUid {
     param(
         [Parameter(Mandatory = $true)][string]$Prefix,
@@ -1015,6 +1195,39 @@ function Import-GrafanaKpiAlertRulesFromMonitoring {
     }
 }
 
+function Remove-GrafanaProvisionedKpiAlertRules {
+    param(
+        [Parameter(Mandatory = $true)][string]$GrafanaEndpoint,
+        [Parameter(Mandatory = $true)][hashtable]$Headers,
+        [Parameter(Mandatory = $false)][string]$InstanceLabel = "Grafana"
+    )
+
+    $base = $GrafanaEndpoint.TrimEnd('/')
+
+    $existingRules = @()
+    try {
+        $existingRules = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/alert-rules") -Headers $Headers
+    }
+    catch {
+        return
+    }
+
+    $rules = @($existingRules)
+    $toDelete = @($rules | Where-Object { $_.uid -and ($_.uid -like 'mtogo-kpi-*') })
+    if ($toDelete.Count -eq 0) {
+        return
+    }
+
+    foreach ($r in $toDelete) {
+        try {
+            Invoke-RestMethod -Method Delete -Uri ("$base/api/v1/provisioning/alert-rules/$($r.uid)") -Headers $Headers | Out-Null
+        }
+        catch {
+            # Best-effort cleanup
+        }
+    }
+}
+
 function Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring {
     param(
         [Parameter(Mandatory = $true)][string]$ResourceGroupName,
@@ -1202,6 +1415,134 @@ function Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring {
                 else {
                     Invoke-RestMethod -Method Post -Uri ("$base/api/v1/provisioning/alert-rules") -Headers $headers -Body $payload | Out-Null
                 }
+            }
+        }
+    }
+    finally {
+        if ($tokenId) {
+            Invoke-AzCliWithTimeout -Args @(
+                "grafana", "service-account", "token", "delete",
+                "-g", $ResourceGroupName,
+                "-n", $GrafanaName,
+                "--service-account", $serviceAccountName,
+                "--token", $tokenId,
+                "-o", "none"
+            ) -TimeoutSeconds 120 -AllowFailure | Out-Null
+        }
+    }
+}
+
+function Remove-AzureManagedGrafanaProvisionedKpiAlertRules {
+    param(
+        [Parameter(Mandatory = $true)][string]$ResourceGroupName,
+        [Parameter(Mandatory = $true)][string]$GrafanaName
+    )
+
+    $endpointResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "show",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "--query", "properties.endpoint",
+        "-o", "tsv"
+    ) -TimeoutSeconds 60 -AllowFailure
+
+    if (-not $endpointResult -or $endpointResult.ExitCode -ne 0) {
+        return
+    }
+
+    $grafanaEndpoint = ($endpointResult.StdOut | Out-String).Trim()
+    if (-not $grafanaEndpoint) {
+        return
+    }
+
+    $serviceAccountName = "mtogo-provisioner"
+
+    $saListResult = Invoke-AzCliWithTimeout -Args @(
+        "grafana", "service-account", "list",
+        "-g", $ResourceGroupName,
+        "-n", $GrafanaName,
+        "-o", "json"
+    ) -TimeoutSeconds 120 -AllowFailure
+
+    if (-not $saListResult -or $saListResult.ExitCode -ne 0) {
+        return
+    }
+
+    $serviceAccounts = @()
+    try { $serviceAccounts = ($saListResult.StdOut | ConvertFrom-Json) } catch { $serviceAccounts = @() }
+
+    $existingSa = $serviceAccounts | Where-Object { $_.name -eq $serviceAccountName } | Select-Object -First 1
+    if (-not $existingSa) {
+        # No service account => nothing provisioned by our scripts.
+        return
+    }
+
+    $tokenName = "cleanup-" + [Guid]::NewGuid().ToString("N")
+    $tokenId = $null
+    $apiToken = $null
+
+    try {
+        $tokenCreateResult = Invoke-AzCliWithTimeout -Args @(
+            "grafana", "service-account", "token", "create",
+            "-g", $ResourceGroupName,
+            "-n", $GrafanaName,
+            "--service-account", $serviceAccountName,
+            "--token", $tokenName,
+            "--time-to-live", "1h",
+            "-o", "json"
+        ) -TimeoutSeconds 180 -AllowFailure
+
+        if (-not $tokenCreateResult -or $tokenCreateResult.ExitCode -ne 0) {
+            return
+        }
+
+        $tokenObj = $null
+        try { $tokenObj = ($tokenCreateResult.StdOut | ConvertFrom-Json) } catch { $tokenObj = $null }
+        if ($null -eq $tokenObj) {
+            return
+        }
+
+        foreach ($prop in @("key", "token", "secret", "value")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $apiToken = $tokenObj.$prop
+                break
+            }
+        }
+
+        foreach ($prop in @("id", "tokenId", "uid")) {
+            if ($tokenObj.PSObject.Properties.Name -contains $prop) {
+                $tokenId = $tokenObj.$prop
+                break
+            }
+        }
+
+        if (-not $apiToken) {
+            return
+        }
+
+        $headers = @{
+            Authorization  = "Bearer $apiToken"
+            "Content-Type" = "application/json"
+            Accept         = "application/json"
+        }
+
+        $base = $grafanaEndpoint.TrimEnd('/')
+        $existingRules = @()
+        try {
+            $existingRules = Invoke-RestMethod -Method Get -Uri ("$base/api/v1/provisioning/alert-rules") -Headers $headers
+        }
+        catch {
+            return
+        }
+
+        $rules = @($existingRules)
+        $toDelete = @($rules | Where-Object { $_.uid -and ($_.uid -like 'mtogo-kpi-*') })
+        foreach ($r in $toDelete) {
+            try {
+                Invoke-RestMethod -Method Delete -Uri ("$base/api/v1/provisioning/alert-rules/$($r.uid)") -Headers $headers | Out-Null
+            }
+            catch {
+                # Best-effort cleanup
             }
         }
     }
@@ -1722,6 +2063,76 @@ if (-not $initSucceeded) {
 
 Write-Host "`nApplying Terraform configuration..." -ForegroundColor Yellow
 
+# Pass optional demo seeding toggle to Terraform via TF_VAR_*.
+$env:TF_VAR_seed_demo_data = $(if ($SeedDemoData) { "true" } else { "false" })
+
+# Local-only: if demo seeding is requested, ensure the seed Job will re-run.
+# (Jobs are one-shot; if the Job already exists/completed from a previous run, Terraform will not re-execute it.)
+if ($Context -eq "local" -and $SeedDemoData) {
+    Write-Host "`nCleaning up any previous demo seed job (so it re-runs)..." -ForegroundColor Yellow
+    try {
+        kubectl delete job -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" --ignore-not-found=true 1>$null 2>$null
+    }
+    catch {
+        # Best-effort only (namespace may not exist yet)
+    }
+}
+
+# Azure-only: if demo seeding is requested, try to clean up any previous seed Job BEFORE apply.
+# This ensures the Job will re-run on repeated deployments.
+if ($Context -eq "azure" -and $SeedDemoData) {
+    if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: kubectl is not installed" -ForegroundColor Red
+        Fail "kubectl is not installed"
+    }
+
+    Write-Host "`nAttempting to clean up any previous demo seed job on AKS (so it re-runs)..." -ForegroundColor Yellow
+
+    # Best-effort: if outputs/state exist, we can fetch AKS credentials and delete the job.
+    $preOutputs = $null
+    try {
+        $preOutputs = Get-TerraformOutputs -WorkingDirectory $tfDir
+    }
+    catch {
+        $preOutputs = $null
+    }
+
+    $rgPre = $null
+    $aksPre = $null
+    try {
+        if ($preOutputs -and $preOutputs.resource_group_name) { $rgPre = $preOutputs.resource_group_name.value }
+        if ($preOutputs -and $preOutputs.aks_cluster_name) { $aksPre = $preOutputs.aks_cluster_name.value }
+    }
+    catch {
+        $rgPre = $null
+        $aksPre = $null
+    }
+
+    if ($rgPre -and $aksPre) {
+        try {
+            Invoke-AzCliWithTimeout -Args @(
+                "aks", "get-credentials",
+                "-g", $rgPre,
+                "-n", $aksPre,
+                "--overwrite-existing"
+            ) -TimeoutSeconds 300 | Out-Null
+        }
+        catch {
+            Write-Host "Warning: Failed to fetch AKS credentials for pre-apply seed cleanup. Demo seeding may not re-run." -ForegroundColor Yellow
+        }
+
+        try {
+            kubectl delete job -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" --ignore-not-found=true 1>$null 2>$null
+        }
+        catch {
+            Write-Host "Warning: Failed to delete existing demo seed Job before apply. Demo seeding may not re-run." -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "(Skipping pre-apply seed Job cleanup: Terraform outputs not available yet.)" -ForegroundColor DarkGray
+    }
+}
+
 $maxApplyAttempts = 10
 $applySucceeded = $false
 for ($attempt = 1; $attempt -le $maxApplyAttempts; $attempt++) {
@@ -1783,6 +2194,40 @@ if ($Context -eq "local") {
     Write-Host "`nWaiting for deployments to be ready..." -ForegroundColor Yellow
     kubectl wait --for=condition=available --timeout=300s deployment --all -n mtogo
 
+    if ($SeedDemoData) {
+        Write-Host "`nWaiting for demo seed job to complete..." -ForegroundColor Yellow
+
+        $seedJobName = ""
+        try {
+            $seedJobName = (kubectl get jobs -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" -o jsonpath="{.items[0].metadata.name}" 2>$null).Trim()
+        }
+        catch {
+            $seedJobName = ""
+        }
+
+        if (-not $seedJobName) {
+            Write-Host "SeedDemoData was requested, but no demo seed Job was found in namespace 'mtogo'." -ForegroundColor Red
+            Write-Host "Hint: kubectl get jobs -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed" -ForegroundColor Yellow
+            Fail "Demo seed Job was not found"
+        }
+
+        $waitSucceeded = $true
+        try {
+            kubectl wait --for=condition=complete --timeout=900s job/$seedJobName -n mtogo
+        }
+        catch {
+            $waitSucceeded = $false
+        }
+
+        if (-not $waitSucceeded) {
+            Write-Host "`nDemo seed Job did not complete successfully. Showing diagnostics..." -ForegroundColor Red
+            try { kubectl describe job $seedJobName -n mtogo | Out-Host } catch { }
+            Write-Host "`nDemo seed Job logs:" -ForegroundColor Yellow
+            try { kubectl logs job/$seedJobName -n mtogo --all-containers=true --tail=-1 | Out-Host } catch { }
+            Fail "Demo seed Job failed"
+        }
+    }
+
     Write-Host "`n================================================" -ForegroundColor Green
     Write-Host "  Deployment Complete!" -ForegroundColor Green
     Write-Host "================================================" -ForegroundColor Green
@@ -1800,38 +2245,119 @@ if ($Context -eq "local") {
         Write-Host "  (No 'endpoints' output found; run: terraform output)" -ForegroundColor Yellow
     }
 
-    # Local KPI Grafana: import KPI alert rules into Grafana-managed alerting so they show under Alerting -> Alert rules.
-    try {
-        $grafanaEndpoint = $null
-        if ($outputs.endpoints -and $outputs.endpoints.value -and $outputs.endpoints.value.grafana_kpi) {
-            $grafanaEndpoint = $outputs.endpoints.value.grafana_kpi
+    if ($ProvisionLocalGrafanaAlerting) {
+        # Local KPI Grafana: OPTIONAL import of KPI alert rules into Grafana-managed alerting.
+        # Default is off because it can generate noisy 'DatasourceNoData' alerts.
+        try {
+            $grafanaEndpoint = $null
+            if ($outputs.endpoints -and $outputs.endpoints.value -and $outputs.endpoints.value.grafana_kpi) {
+                $grafanaEndpoint = $outputs.endpoints.value.grafana_kpi
+            }
+            if (-not $grafanaEndpoint) { $grafanaEndpoint = "http://localhost:3000" }
+
+            $grafanaUser = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_username"
+            $grafanaPass = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_password"
+
+            if (-not $grafanaUser) { $grafanaUser = "admin" }
+            if (-not $grafanaPass) { $grafanaPass = "admin" }
+
+            $headers = New-GrafanaBasicAuthHeaders -Username $grafanaUser -Password $grafanaPass
+            Wait-GrafanaReady -GrafanaEndpoint $grafanaEndpoint -Headers $headers
+
+            $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
+            if ($discordWebhookUrl -and $discordWebhookUrl.Trim().Length -gt 0) {
+                Ensure-GrafanaDiscordAlerting -GrafanaEndpoint $grafanaEndpoint -Headers $headers -DiscordWebhookUrl $discordWebhookUrl -InstanceLabel "Local KPI Grafana"
+            }
+
+            $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
+            Import-GrafanaKpiAlertRulesFromMonitoring -GrafanaEndpoint $grafanaEndpoint -Headers $headers -GrafanaPrometheusDatasourceUid "prometheus" -AlertRulesYmlPath $kpiAlertRulesYml -InstanceLabel "Local KPI Grafana"
         }
-        if (-not $grafanaEndpoint) { $grafanaEndpoint = "http://localhost:3000" }
-
-        $grafanaUser = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_username"
-        $grafanaPass = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_password"
-
-        if (-not $grafanaUser) { $grafanaUser = "admin" }
-        if (-not $grafanaPass) { $grafanaPass = "admin" }
-
-        $headers = New-GrafanaBasicAuthHeaders -Username $grafanaUser -Password $grafanaPass
-        Wait-GrafanaReady -GrafanaEndpoint $grafanaEndpoint -Headers $headers
-
-        $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
-        if ($discordWebhookUrl -and $discordWebhookUrl.Trim().Length -gt 0) {
-            Ensure-GrafanaDiscordAlerting -GrafanaEndpoint $grafanaEndpoint -Headers $headers -DiscordWebhookUrl $discordWebhookUrl -InstanceLabel "Local KPI Grafana"
+        catch {
+            Write-Host "Warning: Failed to provision local KPI Grafana alert rules. Details: $($_.Exception.Message)" -ForegroundColor Yellow
         }
-
-        $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
-        Import-GrafanaKpiAlertRulesFromMonitoring -GrafanaEndpoint $grafanaEndpoint -Headers $headers -GrafanaPrometheusDatasourceUid "prometheus" -AlertRulesYmlPath $kpiAlertRulesYml -InstanceLabel "Local KPI Grafana"
     }
-    catch {
-        Write-Host "Warning: Failed to provision local KPI Grafana alert rules. Details: $($_.Exception.Message)" -ForegroundColor Yellow
+    else {
+        Write-Host "`nSkipping Grafana-managed alerting provisioning for local deployment (using Prometheus + Alertmanager for alerts)." -ForegroundColor DarkGray
+        Write-Host "To enable Grafana-managed alerting anyway, re-run with: -ProvisionLocalGrafanaAlerting" -ForegroundColor DarkGray
+
+        # Best-effort cleanup: remove previously provisioned KPI rules that this script created.
+        # This prevents old Grafana rules (and DatasourceNoData notifications) from continuing to spam Discord.
+        try {
+            $grafanaEndpoint = $null
+            if ($outputs.endpoints -and $outputs.endpoints.value -and $outputs.endpoints.value.grafana_kpi) {
+                $grafanaEndpoint = $outputs.endpoints.value.grafana_kpi
+            }
+            if (-not $grafanaEndpoint) { $grafanaEndpoint = "http://localhost:3000" }
+
+            $grafanaUser = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_username"
+            $grafanaPass = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "grafana_kpi_admin_password"
+            if (-not $grafanaUser) { $grafanaUser = "admin" }
+            if (-not $grafanaPass) { $grafanaPass = "admin" }
+
+            $headers = New-GrafanaBasicAuthHeaders -Username $grafanaUser -Password $grafanaPass
+            Wait-GrafanaReady -GrafanaEndpoint $grafanaEndpoint -Headers $headers
+            Remove-GrafanaProvisionedKpiAlertRules -GrafanaEndpoint $grafanaEndpoint -Headers $headers -InstanceLabel "Local KPI Grafana"
+        }
+        catch {
+            # Best-effort only
+        }
     }
 }
 
 if ($Context -eq "azure") {
     $outputs = Get-TerraformOutputs -WorkingDirectory $tfDir
+
+    if ($SeedDemoData) {
+        if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
+            Write-Host "Error: kubectl is not installed" -ForegroundColor Red
+            Fail "kubectl is not installed"
+        }
+
+        $rg = $outputs.resource_group_name.value
+        $aksName = $outputs.aks_cluster_name.value
+        if (-not $rg -or -not $aksName) {
+            Fail "SeedDemoData requires Terraform outputs 'resource_group_name' and 'aks_cluster_name'."
+        }
+
+        Write-Host "`nFetching AKS credentials..." -ForegroundColor Yellow
+        Invoke-AzCliWithTimeout -Args @(
+            "aks", "get-credentials",
+            "-g", $rg,
+            "-n", $aksName,
+            "--overwrite-existing"
+        ) -TimeoutSeconds 300 | Out-Null
+
+        Write-Host "`nWaiting for demo seed job to complete..." -ForegroundColor Yellow
+        $seedJobName = ""
+        try {
+            $seedJobName = (kubectl get jobs -n mtogo -l "app.kubernetes.io/name=mtogo-demo-seed" -o jsonpath="{.items[0].metadata.name}" 2>$null).Trim()
+        }
+        catch {
+            $seedJobName = ""
+        }
+
+        if (-not $seedJobName) {
+            Write-Host "SeedDemoData was requested, but no demo seed Job was found in namespace 'mtogo'." -ForegroundColor Red
+            Write-Host "Hint: kubectl get jobs -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed" -ForegroundColor Yellow
+            Fail "Demo seed Job was not found"
+        }
+
+        $waitSucceeded = $true
+        try {
+            kubectl wait --for=condition=complete --timeout=900s job/$seedJobName -n mtogo
+        }
+        catch {
+            $waitSucceeded = $false
+        }
+
+        if (-not $waitSucceeded) {
+            Write-Host "`nDemo seed Job did not complete successfully. Showing diagnostics..." -ForegroundColor Red
+            try { kubectl describe job $seedJobName -n mtogo | Out-Host } catch { }
+            Write-Host "`nDemo seed Job logs:" -ForegroundColor Yellow
+            try { kubectl logs job/$seedJobName -n mtogo --all-containers=true --tail=-1 | Out-Host } catch { }
+            Fail "Demo seed Job failed"
+        }
+    }
 
     # Mandatory: ensure Azure instances contain ONLY repo dashboards.
     Ensure-AzureCliExtension -Name "amg"
@@ -1871,13 +2397,30 @@ if ($Context -eq "azure") {
     if (-not $kpiDsUid) { $kpiDsUid = "prometheus" }
     if (-not $sloDsUid) { $sloDsUid = "prometheus" }
 
-    # KPI alerting -> Discord + KPI alert rules (everything in /monitoring should be included).
-    # The webhook URL is configured in terraform/azure/terraform.tfvars as discord_webhook_url.
-    $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
-    Ensure-AzureManagedGrafanaKpiDiscordAlerting -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -DiscordWebhookUrl $discordWebhookUrl
+    if ($ProvisionAzureGrafanaAlerting) {
+        # OPTIONAL: KPI alerting -> Discord + KPI alert rules (Grafana-managed alerting).
+        # Default is off to avoid Grafana 'DatasourceNoData' alerts and to ensure Discord only receives
+        # Alertmanager template embeds.
+        $discordWebhookUrl = Get-TerraformTfvarsStringValue -TerraformDirectory $tfDir -VariableName "discord_webhook_url"
+        Ensure-AzureManagedGrafanaKpiDiscordAlerting -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -DiscordWebhookUrl $discordWebhookUrl
 
-    $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
-    Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -GrafanaPrometheusDatasourceUid $kpiDsUid -AlertRulesYmlPath $kpiAlertRulesYml
+        $kpiAlertRulesYml = Join-Path $RootDir "monitoring\prometheus\alert_rules.yml"
+        Import-AzureManagedGrafanaKpiAlertRulesFromMonitoring -ResourceGroupName $rg -GrafanaName $kpiGrafanaName -GrafanaPrometheusDatasourceUid $kpiDsUid -AlertRulesYmlPath $kpiAlertRulesYml
+    }
+    else {
+        Write-Host "`nSkipping Azure Managed Grafana alerting provisioning (using Prometheus + Alertmanager for alerts)." -ForegroundColor DarkGray
+        Write-Host "To enable Azure Grafana-managed alerting anyway, re-run with: -ProvisionAzureGrafanaAlerting" -ForegroundColor DarkGray
+
+        # Best-effort cleanup: remove previously provisioned KPI rules that this script created.
+        # This prevents old Grafana rules (and DatasourceNoData notifications) from continuing to spam Discord.
+        try {
+            Remove-AzureManagedGrafanaKpiDiscordAlerting -ResourceGroupName $rg -GrafanaName $kpiGrafanaName
+            Remove-AzureManagedGrafanaProvisionedKpiAlertRules -ResourceGroupName $rg -GrafanaName $kpiGrafanaName
+        }
+        catch {
+            # Best-effort only
+        }
+    }
 
     $kpiDashDir = Join-Path $RootDir "monitoring\grafana\dashboards"
 

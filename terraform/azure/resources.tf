@@ -67,6 +67,32 @@ resource "azurerm_kubernetes_cluster" "main" {
 }
 
 # ===========================================
+# Static Public IP for ingress-nginx
+# ===========================================
+# We do not use DNS. To run HTTPS on a stable IP, we must reserve a public IP and
+# assign it to the ingress-nginx LoadBalancer service.
+#
+# IMPORTANT:
+# Azure Kubernetes LoadBalancer services can only use a pre-created Public IP if
+# it exists in the AKS *node resource group*.
+
+resource "azurerm_public_ip" "ingress" {
+  name                = "pip-${var.project_name}-${var.environment}-ingress"
+  location            = azurerm_resource_group.main.location
+  resource_group_name = azurerm_kubernetes_cluster.main.node_resource_group
+
+  allocation_method = "Static"
+  sku               = "Standard"
+
+  tags = {
+    Environment = var.environment
+    Project     = var.project_name
+    ManagedBy   = "terraform"
+    Purpose     = "ingress-nginx"
+  }
+}
+
+# ===========================================
 # Azure Monitor Workspace (Managed Prometheus storage)
 # ===========================================
 

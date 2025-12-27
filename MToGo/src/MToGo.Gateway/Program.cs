@@ -1,7 +1,18 @@
 using MToGo.Shared.Security;
 using MToGo.Shared.Security.Cors;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Trust reverse proxy forwarded headers (ingress-nginx) so the Gateway sees the
+// original client scheme/host when TLS is terminated at the edge.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.RequireHeaderSymmetry = false;
+});
 
 // Add services to the container.
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -26,6 +37,8 @@ else
 builder.Services.AddMToGoSecurityWithWebSockets(builder.Configuration);
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 // Use the trusted origins policy for all requests

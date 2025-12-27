@@ -62,6 +62,35 @@
                                     </div>
                                 }
                             </div>
+
+                            @if (partnersResponse != null && partnersResponse.TotalPages > 1)
+                            {
+                                <nav aria-label="Partners pagination" class="mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                            <button type="button" class="page-link" @onclick="() => ChangePage(currentPage - 1)" disabled="@(currentPage <= 1)">
+                                                <span aria-hidden="true">&laquo;</span>
+                                                <span class="visually-hidden">Previous</span>
+                                            </button>
+                                        </li>
+
+                                        @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(partnersResponse.TotalPages, currentPage + 2); i++)
+                                        {
+                                            var pageNumber = i;
+                                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                                <button type="button" class="page-link" @onclick="() => ChangePage(pageNumber)">@i</button>
+                                            </li>
+                                        }
+
+                                        <li class="page-item @(currentPage >= partnersResponse.TotalPages ? "disabled" : "")">
+                                            <button type="button" class="page-link" @onclick="() => ChangePage(currentPage + 1)" disabled="@(partnersResponse != null && currentPage >= partnersResponse.TotalPages)">
+                                                <span aria-hidden="true">&raquo;</span>
+                                                <span class="visually-hidden">Next</span>
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            }
                         }
                     }
                 </div>
@@ -75,6 +104,8 @@
     private List<PartnerResponse>? partners;
     private string? errorMessage;
     private bool isLoading = true;
+    private int currentPage = 1;
+    private const int PageSize = 10;
 
     protected override void OnInitialized()
     {
@@ -107,7 +138,8 @@
 
         try
         {
-            var response = await Http.GetAsync("/api/v1/partners");
+            var offset = (currentPage - 1) * PageSize;
+            var response = await Http.GetAsync($"/api/v1/partners?offset={offset}&limit={PageSize}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -127,6 +159,18 @@
         {
             isLoading = false;
         }
+    }
+
+    private async Task ChangePage(int page)
+    {
+        if (page < 1 || (partnersResponse != null && page > partnersResponse.TotalPages))
+        {
+            return;
+        }
+
+        currentPage = page;
+        await LoadPartners();
+        StateHasChanged();
     }
 
     public class PartnerResponse

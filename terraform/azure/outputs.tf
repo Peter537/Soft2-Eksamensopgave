@@ -78,44 +78,32 @@ output "prometheus_query_endpoint" {
   value       = azurerm_monitor_workspace.slo.query_endpoint
 }
 
-# Get ingress IP from the nginx service
-data "kubernetes_service" "nginx_ingress" {
-  count = var.use_aks_kubeconfig ? 1 : 0
-
-  metadata {
-    name      = "ingress-nginx-controller"
-    namespace = "ingress-nginx"
-  }
-
-  depends_on = [module.mtogo_app]
-}
-
 output "ingress_ip" {
   description = "IP address of the ingress controller load balancer"
-  value       = try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")
+  value       = azurerm_public_ip.ingress.ip_address
 }
 
 output "website_url" {
   description = "URL for the website"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/"
+  value       = "https://${azurerm_public_ip.ingress.ip_address}/"
 }
 
 output "api_url" {
   description = "URL for the API gateway"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/api/v1"
+  value       = "https://${azurerm_public_ip.ingress.ip_address}/api/v1"
 }
 
 output "legacy_api_url" {
   description = "URL for the legacy API"
-  value       = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/legacy"
+  value       = "https://${azurerm_public_ip.ingress.ip_address}/legacy"
 }
 
 output "endpoints" {
   description = "Primary endpoints for the Azure deployment"
   value = {
-    website     = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/"
-    api         = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/api/v1"
-    legacy_api  = "http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "pending")}/legacy"
+    website     = "https://${azurerm_public_ip.ingress.ip_address}/"
+    api         = "https://${azurerm_public_ip.ingress.ip_address}/api/v1"
+    legacy_api  = "https://${azurerm_public_ip.ingress.ip_address}/legacy"
     grafana_kpi = azurerm_dashboard_grafana.kpi.endpoint
     grafana_slo = azurerm_dashboard_grafana.slo.endpoint
     alerting    = azurerm_dashboard_grafana.kpi.endpoint
@@ -147,8 +135,8 @@ output "connect_instructions" {
        kubectl get pods -n mtogo
     
     6. Access the application:
-         Website: http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "<pending>")}
-         API:     http://${try(data.kubernetes_service.nginx_ingress[0].status[0].load_balancer[0].ingress[0].ip, "<pending>")}/api/v1
+          Website: https://${azurerm_public_ip.ingress.ip_address}
+          API:     https://${azurerm_public_ip.ingress.ip_address}/api/v1
     
     EOT
 }

@@ -66,6 +66,8 @@ Dette vil køre alle tests i programmet og du kan se testresultaterne.
 
    Hvis `DISCORD_WEBHOOK_ALERT` ikke er opdateret, vil Alertmanager ikke sende notifikationer, men i stedet logge fejl i konsollen.
 
+   Hvis du ønsker at der kommer demo-data i databaserne ved opstart, kan du sætte `MTOGO_SEED_DEMO_DATA` til `true`.
+
 3. Start alle services:
    ```bash
    docker compose up -d --build

@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject CultureService CultureService
 @inject ILocalizerService L
+@inject IConfiguration Configuration
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -91,7 +92,7 @@
                             <h5 class="card-title"><i class="bi bi-graph-up text-success"></i> @L["Pages.Management.Dashboard.GrafanaTitle"]</h5>
                             <p class="card-text">@L["Pages.Management.Dashboard.GrafanaDescription"]</p>
                         </div>
-                        <a href="http://localhost:3000" target="_blank" class="btn btn-success align-self-start mt-auto">
+                        <a href="@grafanaUrl" target="_blank" class="btn btn-success align-self-start mt-auto">
                             <i class="bi bi-box-arrow-up-right me-1"></i>@L["Pages.Management.Dashboard.OpenGrafanaButton"]
                         </a>
                     </div>
@@ -126,10 +127,17 @@
 
 @code {
     private bool isInitialized;
+    private string grafanaUrl = "http://localhost:3000";
 
     protected override void OnInitialized()
     {
         CultureService.OnChange += OnCultureChanged;
+
+        var envGrafanaUrl = Environment.GetEnvironmentVariable("GrafanaUrl");
+        var configuredGrafanaUrl = Configuration["GrafanaUrl"];
+        grafanaUrl = !string.IsNullOrWhiteSpace(envGrafanaUrl)
+            ? envGrafanaUrl
+            : (!string.IsNullOrWhiteSpace(configuredGrafanaUrl) ? configuredGrafanaUrl : "http://localhost:3000");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

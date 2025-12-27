@@ -21,6 +21,8 @@
 #   - Grafana (SLO): http://localhost:3001
 #   - Alertmanager: http://localhost:9093
 
+name: soft2-eksamensopgave
+
 services:
   # ===========================================
   # Infrastructure Services
@@ -37,6 +39,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./sql/init/01-create-databases.sql:/docker-entrypoint-initdb.d/01-create-databases.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mtogo -d mtogo"]
       interval: 5s
@@ -124,8 +127,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
+      HttpsSettings__EnableHttpsRedirection: "false"
       GatewayUrl: http://gateway:8080
       GatewayPublicUrl: http://localhost:8080
+      GrafanaUrl: http://localhost:3000
     depends_on:
       - gateway
     networks:
@@ -139,7 +144,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo;Username=mtogo;Password=mtogo_password
+      ConnectionStrings__DefaultConnection: Host=postgres;Database=mtogo_orders;Username=mtogo;Password=mtogo_password
       Kafka__BootstrapServers: kafka:9092
       Gateway__BaseUrl: http://gateway:8080
     depends_on:
@@ -338,6 +343,50 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - mtogo-network
+
+  db-seed:
+    image: postgres:16-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Optional demo seeding: set to "true" to run.
+      MTOGO_SEED_DEMO_DATA: ${MTOGO_SEED_DEMO_DATA:-false}
+      PGHOST: postgres
+      PGUSER: mtogo
+      PGPASSWORD: mtogo_password
+      PGSSLMODE: disable
+      PGCONNECT_TIMEOUT: "5"
+    volumes:
+      - ./sql/seeds/mtogo_demo_seed.sql:/seed/mtogo_demo_seed.sql:ro
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -e
+
+        if [ "${MTOGO_SEED_DEMO_DATA:-false}" != "true" ]; then
+          echo "Demo seeding disabled (set MTOGO_SEED_DEMO_DATA=true to enable)."
+          exit 0
+        fi
+
+        echo "Waiting for EF-created tables to exist..."
+        for i in $(seq 1 60); do
+          if psql -d mtogo_partners -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='Partners'" | grep -q 1 \
+            && psql -d mtogo_agents -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='Agents'" | grep -q 1 \
+            && psql -d mtogo_legacy -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='Customers'" | grep -q 1 \
+            && psql -d mtogo_orders -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='Orders'" | grep -q 1 \
+            && psql -d mtogo_feedback -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='reviews'" | grep -q 1; then
+            echo "Tables are ready. Seeding demo data..."
+            break
+          fi
+          echo "Not ready yet ($$i/60). Sleeping 5s..."
+          sleep 5
+        done
+        psql -v ON_ERROR_STOP=1 -d mtogo -f /seed/mtogo_demo_seed.sql
+        echo "Seed completed."
     networks:
       - mtogo-network
 

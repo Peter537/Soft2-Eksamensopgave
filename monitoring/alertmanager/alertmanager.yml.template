@@ -10,7 +10,9 @@ global:
 route:
   receiver: "discord-business-alerts"
 
-  group_by: ["alertname", "category", "kpi"]
+  # Group by all labels so each alert instance becomes its own notification.
+  # This avoids bundling multiple firing alerts into a single Discord embed.
+  group_by: ["..."]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
@@ -53,9 +55,9 @@ receivers:
 
           {{ .Annotations.description }}
 
-          *Severity:* {{ .Labels.severity }}
-          *KPI:* {{ .Labels.kpi }}
-          *Status:* {{ .Status }}
+          **Severity:** {{ .Labels.severity }}
+          **KPI:** {{ .Labels.kpi }}
+          **Status:** {{ .Status }}
           {{ if eq .Status "resolved" }}*Resolved at:* {{ .EndsAt.Format "2006-01-02 15:04:05" }}{{ end }}
 
           ---

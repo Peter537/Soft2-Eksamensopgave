@@ -50,10 +50,9 @@ builder.Services.AddKafkaLogging("OrderService", LogLevel.Information);
 
 var app = builder.Build();
 
-// Auto-create database tables in development
-if (app.Environment.IsDevelopment())
+// Ensure database is created
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
     dbContext.Database.EnsureCreated();
 }

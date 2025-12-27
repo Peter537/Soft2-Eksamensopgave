@@ -109,6 +109,7 @@ devops:
           - .config/**
           - .github/**
           - terraform/**
+          - sql/**
 
 monitoring:
   - changed-files:

@@ -4,7 +4,7 @@
 # Deploys a staging environment (Azure/AKS) and runs test suites,
 # then always destroys the staging environment.
 
-name: Deploy & Test Staging
+name: Azure Deploy, Test and Destroy in staging
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
   id-token: write
 
 env:
-  TERRAFORM_VERSION: "1.6.0"
+  TERRAFORM_VERSION: "1.6.6"
   TF_IN_AUTOMATION: "true"
   DOTNET_VERSION: "8.0.x"
 
@@ -97,6 +97,11 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # Azure Managed Grafana access is controlled by Azure RBAC.
+          # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
+          TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
+          TF_VAR_grafana_kpi_viewer_principal_ids: ${{ secrets.GRAFANA_KPI_VIEWER_PRINCIPAL_IDS || '[]' }}
+          TF_VAR_grafana_kpi_editor_principal_ids: ${{ secrets.GRAFANA_KPI_EDITOR_PRINCIPAL_IDS || '[]' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -141,9 +146,41 @@ jobs:
             exit 1
           fi
 
+      # NOTE: GitHub OIDC assertions are short-lived. If Terraform apply runs for a long
+      # time, Azure CLI may later try to acquire fresh tokens using an expired assertion.
+      # Re-login right before Azure CLI steps.
+      - name: Azure Login (OIDC refresh for Azure CLI)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Grant Grafana Admin to deploy identity
+        shell: bash
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          set -euo pipefail
+
+          kpi_id=$(terraform output -raw kpi_grafana_id)
+          slo_id=$(terraform output -raw slo_grafana_id)
+
+          az role assignment create --assignee "${{ secrets.AZURE_CLIENT_ID }}" --role "Grafana Admin" --scope "$kpi_id" --only-show-errors || true
+          az role assignment create --assignee "${{ secrets.AZURE_CLIENT_ID }}" --role "Grafana Admin" --scope "$slo_id" --only-show-errors || true
+
+          sleep 20
+
       - name: Provision Azure Managed Grafana (dashboards + alerting)
         shell: pwsh
         env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           az extension add --name amg --upgrade --yes | Out-Null
@@ -155,6 +192,11 @@ jobs:
 
       - name: Get Terraform Outputs
         id: tf_outputs
+        env:
+          ARM_USE_OIDC: "true"
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           echo "resource_group_name=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
           echo "aks_cluster_name=$(terraform output -raw aks_cluster_name)" >> $GITHUB_OUTPUT
@@ -162,14 +204,11 @@ jobs:
           echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
           echo "ingress_ip=$(terraform output -raw ingress_ip)" >> $GITHUB_OUTPUT
 
-          echo "## Staging Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "## Access" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Output | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource Group | $(terraform output -raw resource_group_name) |" >> $GITHUB_STEP_SUMMARY
-          echo "| AKS Cluster | $(terraform output -raw aks_cluster_name) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Website URL | $(terraform output -raw website_url) |" >> $GITHUB_STEP_SUMMARY
-          echo "| API URL | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "website_url: $(terraform output -raw website_url)" >> $GITHUB_STEP_SUMMARY
+          echo "api_url: $(terraform output -raw api_url)" >> $GITHUB_STEP_SUMMARY
+          echo "ingress_ip: $(terraform output -raw ingress_ip)" >> $GITHUB_STEP_SUMMARY
 
   # ===========================================
   # Wait for services to be ready

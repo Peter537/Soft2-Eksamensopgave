@@ -27,6 +27,10 @@ terraform {
       source  = "hashicorp/helm"
       version = "~> 2.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
+    }
   }
 
   # Backend for storing state in Azure - uncomment when needed
@@ -107,9 +111,28 @@ module "mtogo_app" {
   install_ingress_controller = true
   kafka_bootstrap_servers    = "kafka:9092"
 
+  # Public ingress is IP-only (no DNS). Bind ingress-nginx to a static Public IP
+  # and generate a self-signed cert whose SAN contains the IP.
+  ingress_load_balancer_ip    = azurerm_public_ip.ingress.ip_address
+  ingress_host                = azurerm_public_ip.ingress.ip_address
+  ingress_enable_ssl_redirect = true
+  ingress_enable_hsts         = true
+  ingress_hsts_max_age        = 31536000
+  ingress_cert_ip_sans        = [azurerm_public_ip.ingress.ip_address]
+  ingress_cert_dns_sans       = []
+
   management_username = var.management_username
   management_password = var.management_password
   management_name     = var.management_name
+
+  # Website Management dashboard link target
+  grafana_url = azurerm_dashboard_grafana.kpi.endpoint
+
+  # AKS node pools (e.g., Standard_B2s_v2) can be CPU constrained; 3 replicas for every service
+  # easily becomes unschedulable. Scale up later by increasing node size/count.
+  service_replicas = 1
+
+  seed_demo_data = var.seed_demo_data
 
   depends_on = [azurerm_kubernetes_cluster.main]
 }

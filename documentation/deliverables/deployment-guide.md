@@ -51,7 +51,13 @@ I repo-roden findes en eksempel-fil:
 Opret en `.env` (repo-roden):
 
 ```bash
+# macOS/Linux/WSL/Git Bash
 cp .env.example .env
+```
+
+```powershell
+# PowerShell
+Copy-Item .env.example .env
 ```
 
 Udfyld minimum disse:
@@ -136,8 +142,10 @@ Kør fra repo-roden:
 
 Hvad `-Build` gør:
 
-- Scriptet bygger Docker images lokalt og tagger dem som `mtogo/<service>:latest`.
-- Det bygger bl.a. gateway, website, alle services og legacy.
+- Scriptet bygger Docker images lokalt og tagger dem som `mtogo/<image>:latest`.
+  - Eksempel: `mtogo/mtogo-gateway:latest`, `mtogo/mtogo-website:latest`, `mtogo/mtogo-legacy:latest`.
+  - `image_registry` i `terraform/local/terraform.tfvars` skal matche registry-delen (default: `mtogo`).
+- Det bygger gateway, website, services og legacy.
 
 Deploy uden build (forudsætter images allerede findes lokalt):
 
@@ -162,9 +170,14 @@ Destroy:
 
 Efter succesfuld deploy printer scriptet Terraform outputs (feltet `endpoints`):
 
-- Website: `http://localhost/`
-- API: `http://localhost/api/v1/`
-- Legacy API: `http://localhost/legacy`
+- Website (Ingress): `https://localhost/`
+- API (Ingress -> Gateway): `https://localhost/api/v1/`
+  - Ingress router alt under `/api*` til gateway, og gateway's versionerede endpoints ligger under `/api/v1/...`.
+- Legacy API (Ingress): `https://localhost/legacy`
+
+Bemærk (vigtigt):
+
+- Terraform local bruger HTTPS med et self-signed certifikat. Browseren vil typisk vise en certifikat-advarsel første gang.
 
 Monitoring (installeres i cluster og eksponeres som LoadBalancer på Docker Desktop):
 
@@ -204,7 +217,9 @@ Vigtigt for Azure:
 
 - PostgreSQL deployes **ikke** i AKS (Azure bruger managed Postgres).
 - Kafka deployes **i** AKS (single-node / cluster-internal).
-- Ingress-NGINX installeres i AKS (så endpoints bliver `http://<ingress-ip>/...`).
+- Ingress-NGINX installeres i AKS.
+  - Platformen er sat op med HTTPS og et self-signed cert (SAN inkluderer ingress public IP), så de primære URLs er typisk `https://<ingress-ip>/...`.
+  - Da der ikke bruges DNS i denne opsætning, vil browseren ofte vise en TLS-advarsel (self-signed).
 
 ### 4.2 Forudsætninger (Azure)
 
@@ -213,6 +228,8 @@ Vigtigt for Azure:
 - Azure Service Principal + federated credentials til GitHub OIDC
 - Azure Storage Account + container til Terraform remote state
 - GHCR (GitHub Container Registry) images, som AKS kan trække
+
+> Denne sektion viser også en **fuld, konkret kommando-liste** (PowerShell) til at oprette alt det ovenstående og udlede de værdier, der skal sættes som GitHub Secrets.
 
 #### 4.2.1 Service Principal (OIDC) - hvad workflowet forventer
 
@@ -223,6 +240,17 @@ Workflows bruger `azure/login@v2` med OIDC:
 - `AZURE_SUBSCRIPTION_ID`
 
 Service principal skal mindst have **Contributor** på subscription eller på den resource group, hvor der deployes.
+
+**Vigtigt (RBAC for Terraform):**
+
+Terraform-konfigurationen i `terraform/azure` opretter også Azure RBAC role assignments (fx `azurerm_role_assignment.*`). Det kræver rettigheden `Microsoft.Authorization/roleAssignments/write`, som **Contributor ikke giver**.
+
+Derfor skal service principal også have én af disse:
+
+- **User Access Administrator** (anbefalet) på relevant scope, eller
+- **Owner** på relevant scope.
+
+For en enkel “det virker”-opsætning til eksamens/demo: giv **Contributor + User Access Administrator** på subscription-scope.
 
 #### 4.2.2 Terraform remote state backend
 
@@ -237,6 +265,153 @@ State key er miljø-afhængigt:
 - `mtogo.dev.tfstate`
 - `mtogo.staging.tfstate`
 - `mtogo.prod.tfstate`
+
+#### 4.2.3 Kommandoer (PowerShell) til at oprette OIDC + tfstate + udlede GitHub Secrets
+
+Kør nedenstående i **PowerShell** (Windows PowerShell 5.1 eller PowerShell 7+) fra en maskine med Azure CLI installeret.
+
+> Forudsætning: du skal være logget ind i Azure CLI med en bruger, der kan oprette app/SP og tildele roller (typisk Owner eller User Access Administrator på subscription).
+
+**1) Log ind og vælg subscription**
+
+```powershell
+az login
+
+# (valgfrit) hvis du har flere subscriptions
+az account list -o table
+az account set --subscription "<SUBSCRIPTION_ID>"
+
+# Print de værdier, du skal bruge som GitHub Secrets
+az account show --query "{tenantId:tenantId, subscriptionId:id, user:user.name}" -o json
+```
+
+**2) Opret Entra App + Service Principal (OIDC)**
+
+`AZURE_CLIENT_ID` er App (client) ID = `appId`.
+
+```powershell
+# Opret app
+$app = az ad app create --display-name "mtogo-github-oidc" -o json | ConvertFrom-Json
+$appId = $app.appId
+
+# Opret service principal for app'en
+az ad sp create --id $appId -o none
+
+# Find Service Principal objectId (bruges til role assignments)
+$spObjectId = az ad sp show --id $appId --query id -o tsv
+
+Write-Host "AZURE_CLIENT_ID (appId) = $appId"
+Write-Host "Service principal objectId = $spObjectId"
+```
+
+**3) Giv nødvendige Azure roller (RBAC)**
+
+```powershell
+$subId = (az account show --query id -o tsv)
+
+# Terraform skal kunne provisionere ressourcer
+az role assignment create \
+  --assignee-object-id $spObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --role "Contributor" \
+  --scope "/subscriptions/$subId" -o none
+
+# Terraform opretter også role assignments (azurerm_role_assignment.*)
+az role assignment create \
+  --assignee-object-id $spObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --role "User Access Administrator" \
+  --scope "/subscriptions/$subId" -o none
+```
+
+**4) Opret Terraform remote state backend (RG + Storage Account + Container)**
+
+Storage account-navn skal være globalt unikt og kun indeholde små bogstaver/tal.
+
+```powershell
+$location = "northeurope"
+$tfstateRg = "rg-mtogo-tfstate"
+$tfstateContainer = "tfstate"
+
+az group create -n $tfstateRg -l $location -o none
+
+# Lav et unikt storage account navn
+$suffix = ([Guid]::NewGuid().ToString('N').Substring(0,8))
+$tfstateSa = ("mtogotfstate" + $suffix).ToLower()
+
+az storage account create \
+  -g $tfstateRg \
+  -n $tfstateSa \
+  -l $location \
+  --sku Standard_LRS \
+  --kind StorageV2 \
+  --min-tls-version TLS1_2 -o none
+
+az storage container create \
+  --account-name $tfstateSa \
+  -n $tfstateContainer \
+  --auth-mode login -o none
+
+Write-Host "TFSTATE_RESOURCE_GROUP  = $tfstateRg"
+Write-Host "TFSTATE_STORAGE_ACCOUNT = $tfstateSa"
+Write-Host "TFSTATE_CONTAINER       = $tfstateContainer"
+```
+
+**5) Giv SP adgang til at læse/skrive Terraform state i storage account**
+
+```powershell
+$tfstateSaId = az storage account show -g $tfstateRg -n $tfstateSa --query id -o tsv
+
+az role assignment create \
+  --assignee-object-id $spObjectId \
+  --assignee-principal-type ServicePrincipal \
+  --role "Storage Blob Data Contributor" \
+  --scope $tfstateSaId -o none
+```
+
+**6) Opret federated credentials til GitHub OIDC (dev/staging/prod environments)**
+
+Workflows kører med GitHub Environments `dev|staging|prod`. Derfor skal subjects matche:
+
+`repo:<OWNER>/<REPO>:environment:<ENV>`
+
+```powershell
+$owner = "<GITHUB_OWNER>"          # fx "Peter537"
+$repo  = "<GITHUB_REPO>"           # fx "Soft2-Eksamensopgave"
+
+$issuer = "https://token.actions.githubusercontent.com"
+$aud = "api://AzureADTokenExchange"
+
+foreach ($e in @("dev","staging","prod")) {
+  $name = "github-oidc-environment-$e"
+  $subject = "repo:$owner/${repo}:environment:$e"
+
+  $payload = @{
+    name = $name
+    issuer = $issuer
+    subject = $subject
+    audiences = @($aud)
+    description = "GitHub Actions OIDC for $owner/${repo} environment $e"
+  } | ConvertTo-Json -Depth 10
+
+  $tmp = Join-Path $env:TEMP "$name.json"
+  $payload | Out-File -FilePath $tmp -Encoding utf8
+  az ad app federated-credential create --id $appId --parameters $tmp -o none
+}
+
+az ad app federated-credential list --id $appId --query "[].{name:name,subject:subject}" -o table
+```
+
+**7) Hvad skal jeg skrive i GitHub Secrets? (fra ovenstående output)**
+
+- `AZURE_CLIENT_ID` = `$appId`
+- `AZURE_TENANT_ID` = output fra `az account show` (`tenantId`)
+- `AZURE_SUBSCRIPTION_ID` = output fra `az account show` (`subscriptionId`)
+- `TFSTATE_RESOURCE_GROUP` = `$tfstateRg`
+- `TFSTATE_STORAGE_ACCOUNT` = `$tfstateSa`
+- `TFSTATE_CONTAINER` = `$tfstateContainer`
+
+Resten af secrets (GHCR/Discord/Management/Postgres password) oprettes separat som beskrevet i afsnit 4.3.
 
 ### 4.3 Krævede GitHub Secrets
 
@@ -282,10 +457,14 @@ Workflow: `.github/workflows/azure_deploy.yml`
 
 Startes manuelt via GitHub UI (workflow_dispatch) med inputs:
 
-- `environment`: `dev`, `staging`, `prod`
-- `image_tag`: tom = `${{ github.sha }}` (standard), ellers valgfri tag
-- `node_count`: default `2`
+- `environment`: `dev`, `staging`, `prod` (default: `prod`)
+- `image_tag`: tom = `latest` (default i workflow), ellers valgfri tag
+- `node_count`: default `1` (i workflow)
 - `action`: `plan` eller `apply`
+
+Bemærk om `node_count` (AKS):
+
+- Terraform default har `enable_auto_scaling=true`, så `node_count` fungerer som initial/minimum node count (ikke nødvendigvis et "fast" antal noder).
 
 Hvad der sker:
 
@@ -322,9 +501,11 @@ Flow:
 2. Venter på at alle deployments er klar i namespace `mtogo`
 3. Port-forwarder gateway til localhost:8080
 4. Kører tests:
+
    - Integration tests
    - E2E tests
-   - Performance tests (kører kun med `RUN_PERFORMANCE_TESTS=true` og filter)
+   - Performance tests (workflown sætter `RUN_PERFORMANCE_TESTS=true` og bruger test filter)
+
 5. Kører altid cleanup: `terraform destroy` for staging
 
 ## 5. Azure: Manuelle Terraform-kommandoer (valgfrit)
@@ -366,7 +547,11 @@ Bemærk:
 - `kubectl get pods -n mtogo`
 - `kubectl get svc -n mtogo`
 - `kubectl get ingress -n mtogo`
-- Website: http://localhost/
+- Website: https://localhost/
+
+Bemærk:
+
+- Ingress er konfigureret til at redirecte HTTP -> HTTPS, og TLS er self-signed.
 
 ### 6.3 Azure
 
@@ -379,9 +564,10 @@ Bemærk:
 kubectl get svc -n ingress-nginx ingress-nginx-controller
 ```
 
-- Website: `http://<ingress-ip>/`
-- API: `http://<ingress-ip>/api/v1`
-- Legacy: `http://<ingress-ip>/legacy`
+- Website: `https://<ingress-ip>/`
+- API (Ingress -> Gateway): `https://<ingress-ip>/api/v1`
+  - Ingress router alt under `/api*` til gateway, og gateway’s versionerede endpoints ligger under `/api/v1/...`.
+- Legacy: `https://<ingress-ip>/legacy`
 
 Grafana (Azure Managed Grafana):
 

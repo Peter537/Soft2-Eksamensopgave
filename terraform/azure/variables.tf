@@ -137,3 +137,15 @@ variable "discord_webhook_url" {
   default     = null
   sensitive   = true
 }
+
+variable "install_monitoring" {
+  description = "When true, install in-cluster Prometheus + Alertmanager in AKS and configure Alertmanager from monitoring/alertmanager/alertmanager.yml.template (Discord routing)."
+  type        = bool
+  default     = true
+}
+
+variable "seed_demo_data" {
+  description = "When true, run a Kubernetes Job that seeds demo data into the service databases."
+  type        = bool
+  default     = false
+}

@@ -68,7 +68,14 @@ locals {
       use_db       = false
       use_kafka    = true
       extra_config = "gateway-config"
-      extra_env    = {}
+      extra_env = {
+        # Allow browser-origin requests for HTTPS ingress access (e.g., https://<ingress-ip> or https://localhost).
+        # Internal service-to-service calls remain HTTP via ClusterIP.
+        "CorsSettings__AllowedOrigins__0"  = "https://${var.ingress_host}"
+        "CorsSettings__AllowedOrigins__1"  = "http://${var.ingress_host}"
+        "CorsSettings__AllowCredentials"   = "true"
+        "CorsSettings__LogBlockedRequests" = "true"
+      }
     }
     website = {
       image        = "mtogo-website"
@@ -76,7 +83,14 @@ locals {
       use_db       = false
       use_kafka    = false
       extra_config = null
-      extra_env    = { GatewayUrl = "http://gateway:8080" }
+      # GatewayUrl is the internal ClusterIP HTTP address used by the server-side Website.
+      # GatewayPublicUrl is the browser-facing origin used for WebSockets (wss://) and any client-side calls.
+      extra_env = {
+        GatewayUrl                              = "http://gateway:8080"
+        GatewayPublicUrl                        = "https://${var.ingress_host}"
+        GrafanaUrl                              = var.grafana_url
+        "HttpsSettings__EnableHttpsRedirection" = "true"
+      }
     }
     order-service = {
       image        = "mtogo-order"
@@ -217,7 +231,7 @@ locals {
 resource "kubernetes_deployment" "services" {
   for_each = local.services
 
-  wait_for_rollout = each.key == "log-collector-service" ? false : true
+  wait_for_rollout = true
 
   timeouts {
     create = "20m"
@@ -235,7 +249,9 @@ resource "kubernetes_deployment" "services" {
   }
 
   spec {
-    replicas = 1
+    replicas = var.service_replicas
+
+    progress_deadline_seconds = 1800
 
     selector {
       match_labels = {
@@ -350,6 +366,11 @@ resource "kubernetes_service" "services" {
   metadata {
     name      = each.key
     namespace = kubernetes_namespace.mtogo.metadata[0].name
+    annotations = {
+      "prometheus.io/scrape" = "true"
+      "prometheus.io/path"   = "/metrics"
+      "prometheus.io/port"   = "8080"
+    }
     labels = {
       "app.kubernetes.io/name" = each.key
     }
