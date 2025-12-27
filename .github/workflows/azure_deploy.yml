@@ -38,11 +38,6 @@ on:
         options:
           - plan
           - apply
-      seed_demo_data:
-        description: "Seed demo data into databases (showcase only)"
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -85,7 +80,6 @@ jobs:
           echo "Image Tag: ${{ steps.get_tag.outputs.tag }}"
           echo "Action: ${{ github.event.inputs.action || 'apply' }}"
           echo "Node Count: ${{ github.event.inputs.node_count || '2' }}"
-          echo "Seed Demo Data: ${{ github.event.inputs.seed_demo_data }}"
           echo "============================================"
 
   # ===========================================
@@ -116,10 +110,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Setup kubectl
-        if: github.event.inputs.action == 'apply' && github.event.inputs.seed_demo_data
-        uses: azure/setup-kubectl@v4
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -146,43 +136,6 @@ jobs:
             -backend-config="container_name=${{ secrets.TFSTATE_CONTAINER }}" \
             -backend-config="key=mtogo.${{ needs.prepare.outputs.environment }}.tfstate"
 
-      # If a previous demo seed Job exists, it will NOT re-run automatically (Jobs are one-shot).
-      # We therefore delete any existing mtogo-demo-seed job before apply so Terraform recreates it.
-      - name: Pre-apply cleanup demo seed Job (best-effort)
-        if: github.event.inputs.action == 'apply' && github.event.inputs.seed_demo_data
-        shell: bash
-        env:
-          ARM_USE_OIDC: "true"
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: |
-          set -euo pipefail
-
-          # Outputs are only available if infra already exists (state present).
-          set +e
-          rg=$(terraform output -raw resource_group_name 2>/dev/null)
-          aks=$(terraform output -raw aks_cluster_name 2>/dev/null)
-          set -e
-
-          if [ -n "${rg:-}" ] && [ -n "${aks:-}" ]; then
-            echo "Fetching AKS credentials for pre-apply seed cleanup..."
-            set +e
-            az aks get-credentials --resource-group "$rg" --name "$aks" --overwrite-existing
-            creds_exit=$?
-            set -e
-
-            if [ "$creds_exit" -ne 0 ]; then
-              echo "Warning: Failed to fetch AKS credentials (exit code $creds_exit). Skipping pre-apply demo seed Job cleanup; seeding will still be validated post-apply."
-              exit 0
-            fi
-
-            echo "Deleting any existing demo seed Job(s) so it re-runs..."
-            kubectl delete job -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed --ignore-not-found=true || true
-          else
-            echo "(Skipping pre-apply seed cleanup: Terraform outputs not available yet.)"
-          fi
-
       - name: Terraform Validate
         run: terraform validate
 
@@ -203,7 +156,6 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          TF_VAR_seed_demo_data: ${{ github.event.inputs.seed_demo_data }}
           # Azure Managed Grafana access is controlled by Azure RBAC.
           # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
           TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
@@ -233,7 +185,6 @@ jobs:
           TF_VAR_management_username: ${{ secrets.MANAGEMENT_USERNAME }}
           TF_VAR_management_password: ${{ secrets.MANAGEMENT_PASSWORD }}
           TF_VAR_discord_webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          TF_VAR_seed_demo_data: ${{ github.event.inputs.seed_demo_data }}
           # Azure Managed Grafana access is controlled by Azure RBAC.
           # Provide Entra ID object IDs (users or, preferably, groups) as JSON arrays.
           TF_VAR_grafana_slo_admin_principal_ids: ${{ secrets.GRAFANA_SLO_ADMIN_PRINCIPAL_IDS || '[]' }}
@@ -397,29 +348,6 @@ jobs:
         run: |
           echo "Waiting for deployments to be ready..."
           kubectl wait --for=condition=available --timeout=300s deployment --all -n mtogo || true
-
-      - name: Wait for demo seed job (and print logs on failure)
-        if: github.event.inputs.seed_demo_data
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          echo "Waiting for demo seed job to complete..."
-          seed_job=$(kubectl get jobs -n mtogo -l app.kubernetes.io/name=mtogo-demo-seed -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
-          if [ -z "${seed_job:-}" ]; then
-            echo "Seed demo data was requested, but no demo seed Job was found in namespace 'mtogo'."
-            echo "Existing jobs in mtogo:"
-            kubectl get jobs -n mtogo -o wide || true
-            exit 1
-          fi
-
-          if ! kubectl wait --for=condition=complete --timeout=1800s -n mtogo "job/${seed_job}"; then
-            echo "Demo seed Job did not complete successfully. Showing diagnostics..."
-            kubectl describe -n mtogo "job/${seed_job}" || true
-            echo "\nDemo seed Job logs:"
-            kubectl logs -n mtogo "job/${seed_job}" --all-containers=true --tail=-1 || true
-            exit 1
-          fi
 
       - name: Check pod status
         run: |
