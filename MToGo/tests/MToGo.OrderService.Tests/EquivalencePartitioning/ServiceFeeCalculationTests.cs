@@ -126,66 +126,17 @@ namespace MToGo.OrderService.Tests
         #region Boundary Value Analysis Tests
 
         /// <summary>
-        /// BVA: Lower boundary of Partition 1 (minimum valid value)
-        /// Tests edge case with minimal order total
+        /// BVA (Lower Bound): Partition 1 lower boundary at 1 DKK.
+        /// Boundary selection: (-1, 0, +1) => 0, 1, 2.
         /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal1DKK_ShouldApply6PercentServiceFee()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public async Task CreateOrder_LowerBoundaryAt1DKK_ShouldApplyExpectedServiceFee(decimal orderTotal)
         {
-            // Arrange - Lower boundary of Partition 1
-            var orderTotal = 1m;
-            var expectedServiceFee = 0.06m; // 1 * 0.06 = 0.06
-            var request = CreateOrderRequest(orderTotal);
-
-            _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
-                .ReturnsAsync((Entities.Order o) => { o.Id = 1; return o; });
-
-            // Act
-            var result = await _orderService.CreateOrderAsync(request);
-
-            // Assert
-            result.Should().NotBeNull();
-            _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                o.ServiceFee == expectedServiceFee
-            )), Times.Once);
-        }
-
-        /// <summary>
-        /// BVA: Exact boundary at 100 DKK
-        /// Tests the upper limit of 6% fee bracket
-        /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal100DKK_ShouldApply6PercentServiceFee()
-        {
-            // Arrange - Exact boundary value
-            var orderTotal = 100m;
-            var expectedServiceFee = 6.00m; // 100 * 0.06 = 6.00
-            var request = CreateOrderRequest(orderTotal);
-
-            _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
-                .ReturnsAsync((Entities.Order o) => { o.Id = 1; return o; });
-
-            // Act
-            var result = await _orderService.CreateOrderAsync(request);
-
-            // Assert
-            result.Should().NotBeNull();
-            _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                o.ServiceFee == expectedServiceFee
-            )), Times.Once);
-        }
-
-        /// <summary>
-        /// BVA: Just above 100 DKK boundary
-        /// Tests the lower limit of sliding scale bracket
-        /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal101DKK_ShouldApplySlidingScaleServiceFee()
-        {
-            // Arrange - Just above boundary
-            var orderTotal = 101m;
-            var expectedRate = 0.06m - (orderTotal - 100m) / 900m * 0.03m;
-            var expectedServiceFee = orderTotal * expectedRate;
+            // Arrange
+            var expectedServiceFee = ExpectedServiceFee(orderTotal);
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -202,16 +153,16 @@ namespace MToGo.OrderService.Tests
         }
 
         /// <summary>
-        /// BVA: Just below 1000 DKK boundary
-        /// Tests the upper limit of sliding scale bracket
+        /// BVA (Upper Bound): Partition 1 upper boundary at 100 DKK.
+        /// Boundary selection: (0, +1) => 100, 101.
         /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal999DKK_ShouldApplySlidingScaleServiceFee()
+        [Theory]
+        [InlineData(100)]
+        [InlineData(101)]
+        public async Task CreateOrder_UpperBoundaryAt100DKK_ShouldApplyExpectedServiceFee(decimal orderTotal)
         {
-            // Arrange - Just below boundary
-            var orderTotal = 999m;
-            var expectedRate = 0.06m - (orderTotal - 100m) / 900m * 0.03m;
-            var expectedServiceFee = orderTotal * expectedRate;
+            // Arrange
+            var expectedServiceFee = ExpectedServiceFee(orderTotal);
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -228,15 +179,17 @@ namespace MToGo.OrderService.Tests
         }
 
         /// <summary>
-        /// BVA: Exact boundary at 1000 DKK
-        /// Tests the lower limit of 3% fee bracket
+        /// BVA (Lower Bound): Partition 2 lower boundary at 101 DKK.
+        /// Boundary selection: (-1, 0, +1) => 100, 101, 102.
         /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal1000DKK_ShouldApply3PercentServiceFee()
+        [Theory]
+        [InlineData(100)]
+        [InlineData(101)]
+        [InlineData(102)]
+        public async Task CreateOrder_LowerBoundaryAt101DKK_ShouldApplyExpectedServiceFee(decimal orderTotal)
         {
-            // Arrange - Exact boundary value
-            var orderTotal = 1000m;
-            var expectedServiceFee = 30.00m; // 1000 * 0.03 = 30.00
+            // Arrange
+            var expectedServiceFee = ExpectedServiceFee(orderTotal);
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -248,20 +201,21 @@ namespace MToGo.OrderService.Tests
             // Assert
             result.Should().NotBeNull();
             _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                o.ServiceFee == expectedServiceFee
+                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.000001m
             )), Times.Once);
         }
 
         /// <summary>
-        /// BVA: Just above 1000 DKK boundary
-        /// Tests confirmation that 3% fee continues above 1000
+        /// BVA (Upper Bound): Partition 2 upper boundary at 1000 DKK.
+        /// Boundary selection: (0, +1) => 1000, 1001.
         /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal1001DKK_ShouldApply3PercentServiceFee()
+        [Theory]
+        [InlineData(1000)]
+        [InlineData(1001)]
+        public async Task CreateOrder_UpperBoundaryAt1000DKK_ShouldApplyExpectedServiceFee(decimal orderTotal)
         {
-            // Arrange - Just above boundary
-            var orderTotal = 1001m;
-            var expectedServiceFee = 30.03m; // 1001 * 0.03 = 30.03
+            // Arrange
+            var expectedServiceFee = ExpectedServiceFee(orderTotal);
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -273,20 +227,22 @@ namespace MToGo.OrderService.Tests
             // Assert
             result.Should().NotBeNull();
             _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                o.ServiceFee == expectedServiceFee
+                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.000001m
             )), Times.Once);
         }
 
         /// <summary>
-        /// BVA: Very large order total
-        /// Tests upper boundary behavior with high value
+        /// BVA (Lower Bound): Partition 3 lower boundary at 1001 DKK.
+        /// Boundary selection: (-1, 0, +1) => 1000, 1001, 1002.
         /// </summary>
-        [Fact]
-        public async Task CreateOrder_WithOrderTotal10000DKK_ShouldApply3PercentServiceFee()
+        [Theory]
+        [InlineData(1000)]
+        [InlineData(1001)]
+        [InlineData(1002)]
+        public async Task CreateOrder_LowerBoundaryAt1001DKK_ShouldApplyExpectedServiceFee(decimal orderTotal)
         {
-            // Arrange - High boundary value
-            var orderTotal = 10000m;
-            var expectedServiceFee = 300.00m; // 10000 * 0.03 = 300.00
+            // Arrange
+            var expectedServiceFee = ExpectedServiceFee(orderTotal);
             var request = CreateOrderRequest(orderTotal);
 
             _mockRepository.Setup(r => r.CreateOrderAsync(It.IsAny<Entities.Order>()))
@@ -298,13 +254,24 @@ namespace MToGo.OrderService.Tests
             // Assert
             result.Should().NotBeNull();
             _mockRepository.Verify(r => r.CreateOrderAsync(It.Is<Entities.Order>(o =>
-                o.ServiceFee == expectedServiceFee
+                Math.Abs(o.ServiceFee - expectedServiceFee) < 0.000001m
             )), Times.Once);
         }
 
         #endregion
 
         #region Helper Methods
+
+        private static decimal ExpectedServiceFee(decimal orderTotal)
+        {
+            if (orderTotal <= 100m)
+                return orderTotal * 0.06m;
+            if (orderTotal >= 1000m)
+                return orderTotal * 0.03m;
+
+            decimal rate = 0.06m - (orderTotal - 100m) / 900m * 0.03m;
+            return orderTotal * rate;
+        }
 
         private OrderCreateRequest CreateOrderRequest(decimal itemPrice)
         {
