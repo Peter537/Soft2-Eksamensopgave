@@ -186,4 +186,4 @@ Formål: Vise at CI/CD workflows kører og giver en grøn deploy/test.
 
 - Workflow: `.github/workflows/azure_deploy.yml`
 
-- Workflow: `.github/workflows/azure_staging_test.yml`
+![alt text](./resources/deployment-evidence/terraform-workflow-deploy-azure.png)
