@@ -21,18 +21,18 @@ Dette dokument opdateres løbende baseret på erfaringer fra projekter. Testplan
 
 ## Severity & Likelihood Definitioner
 
-| Severity | Beskrivelse |
-|----------|-------------|
-| Severe | Kritisk påvirkning - kan stoppe projektet eller forårsage betydelig skade |
-| Significant | Væsentlig påvirkning - kræver prioriteret handling |
-| Moderate | Mærkbar påvirkning - skal adresseres, men ikke kritisk |
-| Minor | Lille påvirkning - kan accepteres eller udskydes |
+| Severity    | Beskrivelse                                                               |
+| ----------- | ------------------------------------------------------------------------- |
+| Severe      | Kritisk påvirkning - kan stoppe projektet eller forårsage betydelig skade |
+| Significant | Væsentlig påvirkning - kræver prioriteret handling                        |
+| Moderate    | Mærkbar påvirkning - skal adresseres, men ikke kritisk                    |
+| Minor       | Lille påvirkning - kan accepteres eller udskydes                          |
 
-| Likelihood | Beskrivelse |
-|------------|-------------|
-| Likely | Høj sandsynlighed (>60%) for at risikoen indtræffer |
-| Possible | Medium sandsynlighed (30-60%) |
-| Unlikely | Lav sandsynlighed (<30%) |
+| Likelihood | Beskrivelse                                         |
+| ---------- | --------------------------------------------------- |
+| Likely     | Høj sandsynlighed (>60%) for at risikoen indtræffer |
+| Possible   | Medium sandsynlighed (30-60%)                       |
+| Unlikely   | Lav sandsynlighed (<30%)                            |
 
 ---
 

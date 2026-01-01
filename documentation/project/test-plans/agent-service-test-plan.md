@@ -65,7 +65,7 @@ Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platforme
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 ## **Test deliverables**
 

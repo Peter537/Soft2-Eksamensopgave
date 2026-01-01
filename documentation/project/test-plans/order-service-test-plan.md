@@ -89,7 +89,7 @@ Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 **Service-specifikke tilføjelser:**
 

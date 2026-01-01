@@ -64,7 +64,7 @@ Før PR merge til main:
 
 **Branch protection**: Kræver checks. Releases/advanced ting er ikke påkrævet.
 
-## 6. Best Practices
+## 6. Best Practices for Docker og Kubernetes
 
 **Docker**:
 
