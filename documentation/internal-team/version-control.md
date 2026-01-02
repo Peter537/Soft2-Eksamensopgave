@@ -26,9 +26,9 @@ Vi styrer arbejde via GitHub Issues og GitHub Projects.
 
 **Templates**:
 
-- Pull Request: [pull_request_template.md](../.github/PULL_REQUEST_TEMPLATE/pull_request_template.md)
-- Issue: [feature_request.yml](../.github/ISSUE_TEMPLATE/feature_request.yml)
-- Bug Report: [bug_report.yml](../.github/ISSUE_TEMPLATE/bug_report.yml)
+- Pull Request: [pull_request_template.md](../../.github/pull_request_template.md)
+- Issue: [feature_request.yml](../../.github/ISSUE_TEMPLATE/feature_request.yml)
+- Bug Report: [bug_report.yml](../../.github/ISSUE_TEMPLATE/bug_report.yml)
 
 **Labels**:
 

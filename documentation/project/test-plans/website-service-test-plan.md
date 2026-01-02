@@ -18,7 +18,7 @@ Forfattere: Oskar, Peter og Yusuf
 
 **WebsiteService** fungerer som frontend-service for **MToGo** platformen, den håndterer brugerinteraktioner via webapplikationen og kommunikerer med backend API services samt WebSockets for realtidsopdateringer.
 
-**Modenhedsniveau:** Level 5 (System Integration) - Se [project-test-plan.md](project-test-plan.md#level-5-system-integration--quality)
+**Modenhedsniveau:** Level 5 (System Maturity) - Se [project-test-plan.md](project-test-plan.md#level-5-system-maturity)
 
 Projektet skal:
 
@@ -51,10 +51,10 @@ Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R
 
 ### Website-specifikke Risici
 
-| Risk ID | Risk | Mitigation | Severity | Likelihood |
-|:--------|:-----|:-----------|:---------|:-----------|
-| R1.8 | Browser-inkompatibilitet fører til dårlig brugeroplevelse | Implementer cross-browser testing (Chrome, Firefox, Safari, Edge); brug moderne CSS/JS med fallbacks | Moderate | Possible |
-| R2.6 | XSS/CSRF sårbarheder i frontend kode | Implementer Content Security Policy; validér input; brug anti-CSRF tokens; kør OWASP ZAP scans | Critical | Unlikely |
+| Risk ID | Risk                                                      | Mitigation                                                                                           | Severity | Likelihood |
+| :------ | :-------------------------------------------------------- | :--------------------------------------------------------------------------------------------------- | :------- | :--------- |
+| R1.8    | Browser-inkompatibilitet fører til dårlig brugeroplevelse | Implementer cross-browser testing (Chrome, Firefox, Safari, Edge); brug moderne CSS/JS med fallbacks | Moderate | Possible   |
+| R2.6    | XSS/CSRF sårbarheder i frontend kode                      | Implementer Content Security Policy; validér input; brug anti-CSRF tokens; kør OWASP ZAP scans       | Critical | Unlikely   |
 
 ## **Test fremgangsmåde**
 
@@ -67,6 +67,7 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
+
 - UI/UX tests via Selenium
 - Cross-browser compatibility tests
 - WebSocket connection tests
@@ -76,9 +77,10 @@ Website indgår som central del af **E2E tests** på Level 5, hvor hele platform
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 **Service-specifikke tilføjelser:**
+
 - **Selenium**: UI automation og cross-browser testing
 - **Playwright** (optional): Moderne browser automation alternative
 

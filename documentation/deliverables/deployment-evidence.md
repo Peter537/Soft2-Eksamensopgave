@@ -20,13 +20,13 @@ Formål: Vise at UI'et loader og at platformen er tilgængelig for slutbrugere.
 ![alt text](./resources/deployment-evidence/website-local.png)
 
 - Miljø: Terraform local (lokal Kubernetes)
-- URL: http://localhost/
+- URL: https://localhost/
 - Forventning: Ingress route `/` går til website-service.
 
 ![alt text](./resources/deployment-evidence/website-terraform-local.png)
 
 - Miljø: Azure (AKS)
-- URL: http://ingress-ip/
+- URL: https://ingress-ip/
 - Forventning: Ingress i AKS router `/` til website-service.
 
 ![alt text](./resources/deployment-evidence/website-azure-aks.png)
@@ -186,4 +186,4 @@ Formål: Vise at CI/CD workflows kører og giver en grøn deploy/test.
 
 - Workflow: `.github/workflows/azure_deploy.yml`
 
-- Workflow: `.github/workflows/azure_staging_test.yml`
+![alt text](./resources/deployment-evidence/terraform-workflow-deploy-azure.png)

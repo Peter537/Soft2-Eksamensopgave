@@ -9,50 +9,12 @@ using MToGo.OrderService.Services;
 using MToGo.Shared.Kafka;
 using MToGo.Testing;
 using Moq;
-using Testcontainers.Kafka;
-using Testcontainers.PostgreSql;
 
 namespace MToGo.OrderService.Tests.Fixtures
 {
-    public class SharedContainerFixture : IAsyncLifetime
-    {
-        private readonly PostgreSqlContainer _postgresContainer;
-        private readonly KafkaContainer _kafkaContainer;
-        private bool _databaseInitialized;
-
-        public string PostgresConnectionString => _postgresContainer.GetConnectionString();
-        public string KafkaBootstrapServers => _kafkaContainer.GetBootstrapAddress();
-
-        public SharedContainerFixture()
-        {
-            _postgresContainer = PostgreSqlContainerHelper.CreatePostgreSqlContainer();
-            _kafkaContainer = KafkaContainerHelper.CreateKafkaContainer();
-        }
-
-        public async Task InitializeAsync()
-        {
-            // Start both containers in parallel for faster startup
-            await Task.WhenAll(
-                _postgresContainer.StartAsync(),
-                _kafkaContainer.StartAsync()
-            );
-        }
-
-        public async Task DisposeAsync()
-        {
-            await Task.WhenAll(
-                _postgresContainer.DisposeAsync().AsTask(),
-                _kafkaContainer.DisposeAsync().AsTask()
-            );
-        }
-
-        public bool IsDatabaseInitialized => _databaseInitialized;
-        public void MarkDatabaseInitialized() => _databaseInitialized = true;
-    }
-
     public class SharedTestWebApplicationFactory : WebApplicationFactory<Program>
     {
-        private readonly SharedContainerFixture _fixture;
+        private readonly string _databaseName = $"OrderServiceTests_{Guid.NewGuid():N}";
         private readonly Mock<IKafkaProducer> _kafkaMock;
         private readonly Mock<IPartnerServiceClient> _partnerServiceClientMock;
         private readonly Mock<IAgentServiceClient> _agentServiceClientMock;
@@ -61,9 +23,8 @@ namespace MToGo.OrderService.Tests.Fixtures
         public Mock<IPartnerServiceClient> PartnerServiceClientMock => _partnerServiceClientMock;
         public Mock<IAgentServiceClient> AgentServiceClientMock => _agentServiceClientMock;
 
-        public SharedTestWebApplicationFactory(SharedContainerFixture fixture)
+        public SharedTestWebApplicationFactory()
         {
-            _fixture = fixture;
             _kafkaMock = new Mock<IKafkaProducer>();
             _partnerServiceClientMock = new Mock<IPartnerServiceClient>();
             _partnerServiceClientMock
@@ -77,27 +38,19 @@ namespace MToGo.OrderService.Tests.Fixtures
 
         public async Task InitializeDatabaseAsync()
         {
-            if (!_fixture.IsDatabaseInitialized)
-            {
-                using var scope = Services.CreateScope();
-                var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
-                await dbContext.Database.EnsureCreatedAsync();
-                _fixture.MarkDatabaseInitialized();
-            }
+            using var scope = Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+            await dbContext.Database.EnsureCreatedAsync();
         }
 
         public async Task CleanupDatabaseAsync()
         {
             using var scope = Services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
-            
-            // Clear all data but keep the schema using raw SQL for efficiency
-            await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"OrderItems\" CASCADE;");
-            await dbContext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Orders\" CASCADE;");
-            
-            // Reset identity sequences for predictable IDs in tests
-            await dbContext.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"Orders_Id_seq\" RESTART WITH 1;");
-            await dbContext.Database.ExecuteSqlRawAsync("ALTER SEQUENCE \"OrderItems_Id_seq\" RESTART WITH 1;");
+
+            // For in-memory provider, EnsureDeleted/EnsureCreated is the simplest clean reset.
+            await dbContext.Database.EnsureDeletedAsync();
+            await dbContext.Database.EnsureCreatedAsync();
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -106,14 +59,31 @@ namespace MToGo.OrderService.Tests.Fixtures
             {
                 var testConfig = new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:DefaultConnection"] = _fixture.PostgresConnectionString,
-                    ["Kafka:BootstrapServers"] = _fixture.KafkaBootstrapServers
+                    // The real DB/Kafka are not used in tests; we override DB and mock IKafkaProducer.
+                    ["ConnectionStrings:DefaultConnection"] = "InMemory",
+                    ["Kafka:BootstrapServers"] = "Mock"
                 };
                 config.AddInMemoryCollection(testConfig);
             });
 
             builder.ConfigureServices(services =>
             {
+                // Replace the real DB provider with an in-memory one for tests.
+                var dbContextOptionsDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<OrderDbContext>));
+                if (dbContextOptionsDescriptor != null)
+                {
+                    services.Remove(dbContextOptionsDescriptor);
+                }
+                var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(OrderDbContext));
+                if (dbContextDescriptor != null)
+                {
+                    services.Remove(dbContextDescriptor);
+                }
+                services.AddDbContext<OrderDbContext>(options =>
+                {
+                    options.UseInMemoryDatabase(_databaseName);
+                });
+
                 services.AddSingleton<IKafkaProducer>(_kafkaMock.Object);
 
                 // Remove existing IPartnerServiceClient registration and add mock

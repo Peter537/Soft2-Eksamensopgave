@@ -172,7 +172,7 @@ Efter succesfuld deploy printer scriptet Terraform outputs (feltet `endpoints`):
 
 - Website (Ingress): `https://localhost/`
 - API (Ingress -> Gateway): `https://localhost/api/v1/`
-  - Ingress router alt under `/api*` til gateway, og gateway's versionerede endpoints ligger under `/api/v1/...`.
+  - Ingress router alt under `/api*` til gateway, og gateway's versionerede endpoints ligger under `/api/v1/` (resten afhænger af service).
 - Legacy API (Ingress): `https://localhost/legacy`
 
 Bemærk (vigtigt):
@@ -566,7 +566,7 @@ kubectl get svc -n ingress-nginx ingress-nginx-controller
 
 - Website: `https://<ingress-ip>/`
 - API (Ingress -> Gateway): `https://<ingress-ip>/api/v1`
-  - Ingress router alt under `/api*` til gateway, og gateway’s versionerede endpoints ligger under `/api/v1/...`.
+  - Ingress router alt under `/api*` til gateway, og gateway’s versionerede endpoints ligger under `/api/v1/` (resten afhænger af service).
 - Legacy: `https://<ingress-ip>/legacy`
 
 Grafana (Azure Managed Grafana):

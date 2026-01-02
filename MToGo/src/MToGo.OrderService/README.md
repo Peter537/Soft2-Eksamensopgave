@@ -21,15 +21,15 @@ Order Service håndterer alle ordre-relaterede operationer:
 ## Ordre Livscyklus
 
 ```
-Created → Accepted → Preparing → Ready → PickedUp → Delivered
-        ↘ Rejected
+Placed → Accepted → Ready → PickedUp → Delivered
+       ↘ Rejected
 ```
 
 ## API Endpoints
 
 | Metode | Endpoint                                      | Beskrivelse                    |
 | ------ | --------------------------------------------- | ------------------------------ |
-| POST   | `/api/v1/orders`                              | Opret en ny ordre              |
+| POST   | `/api/v1/orders/order`                        | Opret en ny ordre              |
 | GET    | `/api/v1/orders/order/{id}`                   | Hent ordre efter ID            |
 | POST   | `/api/v1/orders/order/{id}/accept`            | Accepter ordre (partner)       |
 | POST   | `/api/v1/orders/order/{id}/reject`            | Afvis ordre (partner)          |
@@ -43,6 +43,7 @@ Created → Accepted → Preparing → Ready → PickedUp → Delivered
 | GET    | `/api/v1/orders/agent/{id}/active`            | Hent aktive ordrer for agent   |
 | GET    | `/api/v1/orders/partner/{id}`                 | Hent ordrer for partner        |
 | GET    | `/api/v1/orders/partner/{id}/active`          | Hent aktive ordrer for partner |
+| GET    | `/api/v1/orders/available`                    | Hent tilgængelige jobs (agent) |
 
 ## Kafka Topics
 

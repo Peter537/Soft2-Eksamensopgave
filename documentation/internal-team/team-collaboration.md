@@ -24,7 +24,7 @@ At have høj kvalitet gennem en enkel og disciplinerede proces, der kombinerer S
 1. **Flyt issue** fra Backlog til In Progress.
 2. **Opret branch** som hedder `feature/<issueid>-<kort-issue-navn>`.
 3. **Udvikling** med små commits, tests løbende.
-4. **Opret PR** med mindst 1 reviewer, og backlog item rykkkes automatisk til Review.
+4. **Opret PR** med mindst 1 reviewer, og backlog item rykkes automatisk til Review.
 5. **Review og godkendelse** af PR fra reviewer.
 6. **Issue assignee merger** til main, sletter branch, issue og flyttes automatisk Done.
 

@@ -330,7 +330,14 @@
                 queryParams.Add($"search={Uri.EscapeDataString(searchQuery)}");
 
             var url = $"/api/v1/logs/audit?{string.Join("&", queryParams)}";
-            var response = await Http.GetAsync(url);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrWhiteSpace(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
             {

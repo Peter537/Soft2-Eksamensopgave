@@ -51,11 +51,11 @@ Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R
 
 ### Order-specifikke Risici
 
-| Risk ID | Risk                                                                                               | Mitigation                                                                                                                                | Severity | Likelihood |
-| :------ | :------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :------- | :--------- |
-| R9.3    | Race conditions: Samme ordre assignes til flere agents pga. concurrent requests                    | Brug pessimistic concurrency control med database locking for assignment; test med multi-threaded scenarios; stress test assignment logic | Severe   | Likely     |
-| R10.6   | [OrderAggregate](../domain-driven-design.md#orderaggregate) business invariants fra DDD overtrædes | Test alle business rules i OrderAggregate via BDD og mutation testing                                                                     | Severe   | Possible   |
-| R10.7   | Invalid order states eller transitions ikke håndteret korrekt                                      | Test alle state transitions; test invalid transitions er rejected; strikt opsættelse af state transitions; brug state machine pattern     | Moderate | Possible   |
+| Risk ID | Risk                                                                                                        | Mitigation                                                                                                                                | Severity | Likelihood |
+| :------ | :---------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :------- | :--------- |
+| R9.3    | Race conditions: Samme ordre assignes til flere agents pga. concurrent requests                             | Brug pessimistic concurrency control med database locking for assignment; test med multi-threaded scenarios; stress test assignment logic | Severe   | Likely     |
+| R10.6   | [OrderAggregate](../business/domain-driven-design.md#orderaggregate) business invariants fra DDD overtrædes | Test alle business rules i OrderAggregate via BDD og mutation testing                                                                     | Severe   | Possible   |
+| R10.7   | Invalid order states eller transitions ikke håndteret korrekt                                               | Test alle state transitions; test invalid transitions er rejected; strikt opsættelse af state transitions; brug state machine pattern     | Moderate | Possible   |
 
 ## **Test fremgangsmåde**
 
@@ -89,7 +89,7 @@ Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 **Service-specifikke tilføjelser:**
 

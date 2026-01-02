@@ -43,4 +43,7 @@ Alle API-endpoints proxies gennem Gateway:
 dotnet run
 ```
 
-**Port**: `8080`
+**Port**:
+
+- Docker Compose: `8080` (containeren eksponerer `8080`)
+- Lokal udvikling (`dotnet run`): se `Properties/launchSettings.json` (typisk `http://localhost:5229`)

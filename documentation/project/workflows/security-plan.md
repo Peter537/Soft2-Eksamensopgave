@@ -64,7 +64,7 @@ Før PR merge til main:
 
 **Branch protection**: Kræver checks. Releases/advanced ting er ikke påkrævet.
 
-## 6. Best Practices
+## 6. Best Practices for Docker og Kubernetes
 
 **Docker**:
 
@@ -77,7 +77,7 @@ Før PR merge til main:
 
 - **Deployment**: Service og minimum 2 replicas
 - Ingress med HTTPS
-- **Probes**: /health/live og /health/ready
+- **Probes**: /health og /ready
 - **securityContext**: runAsNonRoot, allowPrivilegeEscalation=false, readOnlyRootFilesystem=true
 - **Resources**: CPU/memory requests/limits
 
