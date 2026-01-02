@@ -106,21 +106,21 @@ Da mappen `bin/Debug/net8.0/reports/` genereres ved runtime og ikke er committed
 ├── order-flow/  
 │ ├── [index.html](./resources/performance-test/reports/order-flow/index.html)  
 │ ├── [statistics.csv](./resources/performance-test/reports/order-flow/statistics.csv)  
-│ └── [statistics.md](./resources/performance-test/reports/order-flow/statistics.md)  
-│ └── [statistics.txt](./resources/performance-test/reports/order-flow/statistics.txt)  
+│ ├── [statistics.md](./resources/performance-test/reports/order-flow/statistics.md)  
+│ ├── [statistics.txt](./resources/performance-test/reports/order-flow/statistics.txt)  
 │ └── [nbomber-order-flow-test-log.txt](./resources/performance-test/reports/order-flow/nbomber-order-flow-test-log.txt)  
 ├── smoke/  
 │ ├── [index.html](./resources/performance-test/reports/smoke/index.html)  
 │ ├── [statistics.csv](./resources/performance-test/reports/smoke/statistics.csv)  
-│ └── [statistics.md](./resources/performance-test/reports/smoke/statistics.md)  
-│ └── [statistics.txt](./resources/performance-test/reports/smoke/statistics.txt)  
+│ ├── [statistics.md](./resources/performance-test/reports/smoke/statistics.md)  
+│ ├── [statistics.txt](./resources/performance-test/reports/smoke/statistics.txt)  
 │ └── [nbomber-smoke-test-log.txt](./resources/performance-test/reports/smoke/nbomber-smoke-test-log.txt)  
-└── stress/  
- ├── [index.html](./resources/performance-test/reports/stress/index.html)  
- ├── [statistics.csv](./resources/performance-test/reports/stress/statistics.csv)  
- └── [statistics.md](./resources/performance-test/reports/stress/statistics.md)  
- └── [statistics.txt](./resources/performance-test/reports/stress/statistics.txt)  
- └── [nbomber-stress-test-log.txt](./resources/performance-test/reports/stress/nbomber-stress-test-log.txt)
+├── stress/  
+│ ├── [index.html](./resources/performance-test/reports/stress/index.html)  
+│ ├── [statistics.csv](./resources/performance-test/reports/stress/statistics.csv)  
+│ ├── [statistics.md](./resources/performance-test/reports/stress/statistics.md)  
+│ ├── [statistics.txt](./resources/performance-test/reports/stress/statistics.txt)  
+│ └── [nbomber-stress-test-log.txt](./resources/performance-test/reports/stress/nbomber-stress-test-log.txt)
 
 #### Load .html-eksempel
 
