@@ -11,6 +11,11 @@
 Vores projektstyring kan findes her:  
 [https://github.com/users/Peter537/projects/15](https://github.com/users/Peter537/projects/15)
 
+## Demo Video
+
+Vi har lavet en kort demo video af ordreflowet i MToGo systemet:  
+[https://www.youtube.com/watch?v=fGPiHuL_0vY](https://www.youtube.com/watch?v=fGPiHuL_0vY)
+
 ## MToGo projektet
 
 MToGo er en madleveringsplatform bygget med en service-orienteret arkitektur, der forbinder kunder med restauranter og leveringsagenter.
