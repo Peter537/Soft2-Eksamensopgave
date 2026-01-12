@@ -229,7 +229,13 @@
 
         try
         {
-            var response = await Http.GetAsync("/api/v1/logs/system/files");
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/logs/system/files");
+            if (!string.IsNullOrWhiteSpace(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 logFiles = await response.Content.ReadFromJsonAsync<List<LogFileInfo>>() ?? new();
@@ -261,7 +267,13 @@
 
         try
         {
-            var response = await Http.GetAsync($"/api/v1/logs/system/files/{date}");
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/logs/system/files/{date}");
+            if (!string.IsNullOrWhiteSpace(Auth.Token))
+            {
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Auth.Token);
+            }
+
+            var response = await Http.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 fileContent = await response.Content.ReadAsStringAsync();

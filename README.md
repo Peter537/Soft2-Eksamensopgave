@@ -11,6 +11,11 @@
 Vores projektstyring kan findes her:  
 [https://github.com/users/Peter537/projects/15](https://github.com/users/Peter537/projects/15)
 
+## Demo Video
+
+Vi har lavet en kort demo video af ordreflowet i MToGo systemet:  
+[https://www.youtube.com/watch?v=fGPiHuL_0vY](https://www.youtube.com/watch?v=fGPiHuL_0vY)
+
 ## MToGo projektet
 
 MToGo er en madleveringsplatform bygget med en service-orienteret arkitektur, der forbinder kunder med restauranter og leveringsagenter.
@@ -38,6 +43,8 @@ MToGo er bygget med:
 
 Dette er en hurtig guide til at køre MToGo-platformen lokalt ved hjælp af Docker Compose.
 
+En mere detaljeret beskrivelse af hvordan man kører og udvikler til systemet kan findes i [/documentation/deliverables/deployment-guide.md](./documentation/deliverables/deployment-guide.md).
+
 ### Forudsætninger
 
 - Docker & Docker Compose kører på din maskine
@@ -62,6 +69,12 @@ Dette vil køre alle tests i programmet og du kan se testresultaterne.
    cp .env.example .env
    ```
 
+   Hvis du bruger PowerShell (Windows):
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
 2. Konfigurer `.env`-filen med dine værdier
 
    Hvis `DISCORD_WEBHOOK_ALERT` ikke er opdateret, vil Alertmanager ikke sende notifikationer, men i stedet logge fejl i konsollen.
@@ -75,21 +88,26 @@ Dette vil køre alle tests i programmet og du kan se testresultaterne.
 
 ### Tjenester
 
-| Service      | URL                   |
-| ------------ | --------------------- |
-| Website      | http://localhost:8081 |
-| API Gateway  | http://localhost:8080 |
-| Legacy API   | http://localhost:8082 |
-| Prometheus   | http://localhost:9090 |
-| Grafana      | http://localhost:3000 |
-| Alertmanager | http://localhost:9093 |
+| Service       | URL                   |
+| ------------- | --------------------- |
+| Website       | http://localhost:8081 |
+| API Gateway   | http://localhost:8080 |
+| Legacy API    | http://localhost:8082 |
+| Prometheus    | http://localhost:9090 |
+| Grafana       | http://localhost:3000 |
+| Grafana (SLO) | http://localhost:3001 |
+| Alertmanager  | http://localhost:9093 |
 
 ## Repository-struktur
 
-| Mappe                              | Beskrivelse                                                                                                                                                                                                                                                                               |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [.github/](./.github/)             | GitHub Actions workflows og issue-skabeloner                                                                                                                                                                                                                                              |
-| [documentation/](./documentation/) | - [deliverables/](./documentation/deliverables/) indeholder projektets leverancer<br>- [internal-team/](./documentation/internal-team/) indeholder dokumentation til internt brug<br>- [project/](./documentation/project/) indeholder projektets overordnede dokumentation og arkitektur |
-| [LegacyMToGo/](./LegacyMToGo/)     | Legacy-applikation til kunder & notifikationer                                                                                                                                                                                                                                            |
-| [MToGo/](./MToGo/)                 | Hovedapplikation med alle services.<br>Koden til servicesne ligger i [MToGo/src/](./MToGo/src/)<br>Tests til programmet ligger i [MToGo/tests/](./MToGo/tests/)                                                                                                                           |
-| [monitoring/](./monitoring/)       | Prometheus, Grafana og Alertmanager konfiguration                                                                                                                                                                                                                                         |
+| Mappe                                                      | Beskrivelse                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [.config/](./.config/)                                     | Konfigurationsfiler til dotnet tools                                                                                                                                                                                                                                                      |
+| [.github/](./.github/)                                     | GitHub Actions workflows og issue-skabeloner                                                                                                                                                                                                                                              |
+| [documentation/](./documentation/)                         | - [deliverables/](./documentation/deliverables/) indeholder projektets leverancer<br>- [internal-team/](./documentation/internal-team/) indeholder dokumentation til internt brug<br>- [project/](./documentation/project/) indeholder projektets overordnede dokumentation og arkitektur |
+| [LegacyMToGo/](./LegacyMToGo/)                             | Legacy-applikation til kunder & notifikationer                                                                                                                                                                                                                                            |
+| [MToGo/](./MToGo/)                                         | Hovedapplikation med alle services.<br>Koden til servicesne ligger i [MToGo/src/](./MToGo/src/)<br>Tests til programmet ligger i [MToGo/tests/](./MToGo/tests/)                                                                                                                           |
+| [monitoring/](./monitoring/)                               | Prometheus, Grafana og Alertmanager konfiguration til KPI'er                                                                                                                                                                                                                              |
+| [monitoring-infrastructure/](./monitoring-infrastructure/) | Yderligere overvågningsinfrastruktur og dashboards til SLO'er                                                                                                                                                                                                                             |
+| [sql/](./sql/)                                             | Database initialisering scripts og demo data                                                                                                                                                                                                                                              |
+| [terraform/](./terraform/)                                 | Infrastructure as Code med Terraform til deployment                                                                                                                                                                                                                                       |

@@ -1,18 +1,18 @@
-# Deliverables
+# Leverancer
 
-Denne mappe indeholder test strategy deliverables, guides og manualer.
+Denne mappe indeholder projektets leverancer (fx deployment guides, test-rapporter og øvrige afleveringsdokumenter).
 
 ## Indhold
 
-Denne mappe er forberedt til leverancedokumenter og vil blive opdateret med:
+Eksempler på leverancer i denne mappe:
 
 - Deployment guides
-- Brugerguides
-- Leverancedokumenter til kunder
+- Rapportering fra tests (fx performance, mutation, static code analysis)
+- Afleveringsdokumentation
 
 ## Formål
 
-Deliverables-mappen er beregnet til:
+Leverancer-mappen er beregnet til:
 
 - Slutbruger-dokumentation
 - Guides og manualer

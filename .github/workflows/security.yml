@@ -178,44 +178,77 @@ jobs:
         run: |
           set -euo pipefail
 
-          needs_mtogo=false
-          needs_legacy=false
+          restore_target() {
+            echo "Restoring: $1"
+            dotnet restore "$1" --verbosity minimal
+          }
 
-          if [[ "${{ needs.detect_changed_services.outputs.shared }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.customerservice }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.feedbackhub }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.gateway }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.notification }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.order }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.partner }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.logcollector }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.website }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.websocketagent }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.websocketcustomer }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.websocketpartner }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.management }}" == "true" ]]; then
-            needs_mtogo=true
+          # Match the compile list below: if Shared changed, restore the full solution.
+          if [[ "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            echo "Shared changed -> restoring full MToGo solution"
+            restore_target MToGo/MToGo.sln
+          else
+            # Fast path: restore only the projects that will be built.
+            if [[ "${{ needs.detect_changed_services.outputs.agentbonus }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.AgentBonusService/MToGo.AgentBonusService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.agentservice }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.AgentService/MToGo.AgentService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.customerservice }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.CustomerService/MToGo.CustomerService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.feedbackhub }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.FeedbackHubService/MToGo.FeedbackHubService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.gateway }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.Gateway/MToGo.Gateway.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.notification }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.NotificationService/MToGo.NotificationService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.order }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.OrderService/MToGo.OrderService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.partner }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.PartnerService/MToGo.PartnerService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.logcollector }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.LogCollectorService/MToGo.LogCollectorService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.website }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.Website/MToGo.Website.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.websocketagent }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.WebSocketAgentService/MToGo.WebSocketAgentService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.websocketcustomer }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.WebSocketCustomerService/MToGo.WebSocketCustomerService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.websocketpartner }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.WebSocketPartnerService/MToGo.WebSocketPartnerService.csproj
+            fi
+
+            if [[ "${{ needs.detect_changed_services.outputs.management }}" == "true" ]]; then
+              restore_target MToGo/src/MToGo.ManagementService/MToGo.ManagementService.csproj
+            fi
           fi
 
-          if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" \
-            || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
-            needs_legacy=true
+          if [[ "${{ needs.detect_changed_services.outputs.legacy }}" == "true" || "${{ needs.detect_changed_services.outputs.shared }}" == "true" ]]; then
+            restore_target LegacyMToGo/LegacyMToGo.csproj
           fi
-
-          targets=()
-          if [[ "$needs_mtogo" == "true" ]]; then
-            targets+=( "MToGo/MToGo.sln" )
-          fi
-          if [[ "$needs_legacy" == "true" ]]; then
-            targets+=( "LegacyMToGo/LegacyMToGo.csproj" )
-          fi
-
-          for t in "${targets[@]}"; do
-            echo "Restoring: $t"
-            dotnet restore "$t" --verbosity minimal
-          done
 
       - name: Build for CodeQL (compile only what matters)
         run: |

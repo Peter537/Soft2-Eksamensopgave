@@ -51,10 +51,10 @@ Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R
 
 ### WebSocket Agent-specifikke Risici
 
-| Risk ID | Risk | Mitigation | Severity | Likelihood |
-|:--------|:-----|:-----------|:---------|:-----------|
-| R1.9 | WebSocket connection overload ved mange simultane agents | Implementer connection pooling; load test med realistisk antal connections; implementer graceful degradation | Significant | Possible |
-| R6.7 | WebSocket connections droppes ved netværksproblemer | Implementer auto-reconnect logik i client; test reconnection scenarios; implementer heartbeat/ping-pong | Moderate | Likely |
+| Risk ID | Risk                                                     | Mitigation                                                                                                   | Severity    | Likelihood |
+| :------ | :------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- | :---------- | :--------- |
+| R1.9    | WebSocket connection overload ved mange simultane agents | Implementer connection pooling; load test med realistisk antal connections; implementer graceful degradation | Significant | Possible   |
+| R6.7    | WebSocket connections droppes ved netværksproblemer      | Implementer auto-reconnect logik i client; test reconnection scenarios; implementer heartbeat/ping-pong      | Moderate    | Likely     |
 
 ## **Test fremgangsmåde**
 
@@ -67,23 +67,24 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
+
 - Kafka consumer tests med real Kafka container
 - WebSocket connection management tests
 - Multi-client broadcast tests
 
 **Kafka Topics Konsumeret:**
 
-| Topic | Handling |
-|-------|----------|
-| `order-created` | Broadcast til relevante agents |
-| `order-accepted` | Notificér tildelt agent |
-| `order-ready` | Notificér agent om pickup |
+| Topic            | Handling                       |
+| ---------------- | ------------------------------ |
+| `order-created`  | Broadcast til relevante agents |
+| `order-accepted` | Notificér tildelt agent        |
+| `order-ready`    | Notificér agent om pickup      |
 
 Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platformens flow valideres samlet.
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 ## **Test deliverables**
 

@@ -50,10 +50,10 @@ Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R
 
 ### AgentBonus-specifikke Risici
 
-| Risk ID | Risk | Mitigation | Severity | Likelihood |
-|:--------|:-----|:-----------|:---------|:-----------|
-| R7.7 | Gateway API ændringer bryder AgentBonusService | Implementer contract tests mod Gateway; mock Gateway responses i unit tests; køre integrationstest med real Gateway | Significant | Possible |
-| R10.8 | Forkert bonus-beregning giver agents for meget/lidt bonus | Implementer omfattende unit tests med boundary analysis; validér beregningslogik i code review; tilføj acceptance tests for alle bonus-scenarier | Critical | Possible |
+| Risk ID | Risk                                                      | Mitigation                                                                                                                                       | Severity    | Likelihood |
+| :------ | :-------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :---------- | :--------- |
+| R7.7    | Gateway API ændringer bryder AgentBonusService            | Implementer contract tests mod Gateway; mock Gateway responses i unit tests; køre integrationstest med real Gateway                              | Significant | Possible   |
+| R10.8   | Forkert bonus-beregning giver agents for meget/lidt bonus | Implementer omfattende unit tests med boundary analysis; validér beregningslogik i code review; tilføj acceptance tests for alle bonus-scenarier | Critical    | Possible   |
 
 ## **Test fremgangsmåde**
 

@@ -50,9 +50,9 @@ Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R
 
 ### Customer-specifikke Risici
 
-| Risk ID | Risk | Mitigation | Severity | Likelihood |
-|:--------|:-----|:-----------|:---------|:-----------|
-| R7.6 | LegacyMToGo API ændringer bryder CustomerService adapter | Implementer contract tests mod Legacy API; overvåg for breaking changes; test med mocked Legacy responses | Significant | Possible |
+| Risk ID | Risk                                                     | Mitigation                                                                                                | Severity    | Likelihood |
+| :------ | :------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- | :---------- | :--------- |
+| R7.6    | LegacyMToGo API ændringer bryder CustomerService adapter | Implementer contract tests mod Legacy API; overvåg for breaking changes; test med mocked Legacy responses | Significant | Possible   |
 
 ## **Test fremgangsmåde**
 
@@ -65,13 +65,14 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
+
 - Legacy API adapter tests (mock LegacyMToGo responses)
 
 Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platformens flow valideres samlet.
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 ## **Test deliverables**
 

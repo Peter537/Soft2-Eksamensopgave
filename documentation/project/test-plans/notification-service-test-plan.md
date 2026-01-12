@@ -49,9 +49,9 @@ Shared risks fra [shared-risks.md](shared-risks.md) gælder for denne service (R
 
 ### Notification-specifikke Risici
 
-| Risk ID | Risk | Mitigation | Severity | Likelihood |
-|:--------|:-----|:-----------|:---------|:-----------|
-| R7.6 | LegacyMToGo notification API ændringer bryder NotificationService | Implementer contract tests mod Legacy API; overvåg for breaking changes; test med mocked Legacy responses | Significant | Possible |
+| Risk ID | Risk                                                              | Mitigation                                                                                                | Severity    | Likelihood |
+| :------ | :---------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------- | :---------- | :--------- |
+| R7.6    | LegacyMToGo notification API ændringer bryder NotificationService | Implementer contract tests mod Legacy API; overvåg for breaking changes; test med mocked Legacy responses | Significant | Possible   |
 
 ## **Test fremgangsmåde**
 
@@ -64,22 +64,23 @@ Test-After tilgangen anvendes for at sikre hurtig levering af funktionalitet, ef
 Standard testtyper anvendes. Se [project-test-plan.md](project-test-plan.md#test-typer) for definitioner.
 
 **Service-specifikke tilføjelser:**
+
 - Kafka consumer tests med real Kafka container
 - Legacy API adapter tests (mock LegacyMToGo responses)
 
 **Kafka Topics Konsumeret:**
 
-| Topic | Handling |
-|-------|----------|
-| `order-accepted` | Send notification til kunde |
-| `agent-assigned` | Send notification til kunde |
+| Topic             | Handling                    |
+| ----------------- | --------------------------- |
+| `order-accepted`  | Send notification til kunde |
+| `agent-assigned`  | Send notification til kunde |
 | `order-delivered` | Send notification til kunde |
 
 Servicen indgår i de system-wide **E2E tests** på Level 5, hvor hele platformens flow valideres samlet.
 
 ### Værktøjer
 
-Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#værktøjer).
+Standard værktøjer anvendes. Se [project-test-plan.md](project-test-plan.md#standard-værktøjer).
 
 ## **Test deliverables**
 

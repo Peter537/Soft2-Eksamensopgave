@@ -26,11 +26,14 @@ Monitoring-stacken giver fuld observerbarhed af MToGo-platformen:
 
 ## Adgang
 
-| Service      | URL                   |
-| ------------ | --------------------- |
-| Grafana      | http://localhost:3000 |
-| Prometheus   | http://localhost:9090 |
-| Alertmanager | http://localhost:9093 |
+| Service       | URL                   |
+| ------------- | --------------------- |
+| Grafana       | http://localhost:3000 |
+| Grafana (SLO) | http://localhost:3001 |
+| Prometheus    | http://localhost:9090 |
+| Alertmanager  | http://localhost:9093 |
+
+Bemærk: Grafana (SLO) er en separat instans med egne dashboards i [monitoring-infrastructure/](../monitoring-infrastructure/).
 
 ## KPI Dashboards
 

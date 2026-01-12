@@ -5,14 +5,16 @@ Performance-test ved hjælp af **NBomber** som er et .NET load testing-bibliotek
 ## Hurtig start
 
 ```bash
+# Kør kommandoerne fra repository root
+
 # 1. Start hele systemet (alle services + gateway)
-docker-compose up -d
+docker compose up -d --build
 
 # 2. Vent på at services bliver sunde (healthy)
 # Ex. tjek http://localhost:8080/health
 
 # 3. Kør performance-tests
-cd MToGo/tests/MToGo.Performance.Tests
+cd ./MToGo/tests/MToGo.Performance.Tests
 dotnet test -e RUN_PERFORMANCE_TESTS=true
 ```
 
@@ -104,21 +106,21 @@ Da mappen `bin/Debug/net8.0/reports/` genereres ved runtime og ikke er committed
 ├── order-flow/  
 │ ├── [index.html](./resources/performance-test/reports/order-flow/index.html)  
 │ ├── [statistics.csv](./resources/performance-test/reports/order-flow/statistics.csv)  
-│ └── [statistics.md](./resources/performance-test/reports/order-flow/statistics.md)  
-│ └── [statistics.txt](./resources/performance-test/reports/order-flow/statistics.txt)  
+│ ├── [statistics.md](./resources/performance-test/reports/order-flow/statistics.md)  
+│ ├── [statistics.txt](./resources/performance-test/reports/order-flow/statistics.txt)  
 │ └── [nbomber-order-flow-test-log.txt](./resources/performance-test/reports/order-flow/nbomber-order-flow-test-log.txt)  
 ├── smoke/  
 │ ├── [index.html](./resources/performance-test/reports/smoke/index.html)  
 │ ├── [statistics.csv](./resources/performance-test/reports/smoke/statistics.csv)  
-│ └── [statistics.md](./resources/performance-test/reports/smoke/statistics.md)  
-│ └── [statistics.txt](./resources/performance-test/reports/smoke/statistics.txt)  
+│ ├── [statistics.md](./resources/performance-test/reports/smoke/statistics.md)  
+│ ├── [statistics.txt](./resources/performance-test/reports/smoke/statistics.txt)  
 │ └── [nbomber-smoke-test-log.txt](./resources/performance-test/reports/smoke/nbomber-smoke-test-log.txt)  
-└── stress/  
- ├── [index.html](./resources/performance-test/reports/stress/index.html)  
- ├── [statistics.csv](./resources/performance-test/reports/stress/statistics.csv)  
- └── [statistics.md](./resources/performance-test/reports/stress/statistics.md)  
- └── [statistics.txt](./resources/performance-test/reports/stress/statistics.txt)  
- └── [nbomber-stress-test-log.txt](./resources/performance-test/reports/stress/nbomber-stress-test-log.txt)
+├── stress/  
+│ ├── [index.html](./resources/performance-test/reports/stress/index.html)  
+│ ├── [statistics.csv](./resources/performance-test/reports/stress/statistics.csv)  
+│ ├── [statistics.md](./resources/performance-test/reports/stress/statistics.md)  
+│ ├── [statistics.txt](./resources/performance-test/reports/stress/statistics.txt)  
+│ └── [nbomber-stress-test-log.txt](./resources/performance-test/reports/stress/nbomber-stress-test-log.txt)
 
 #### Load .html-eksempel
 
